@@ -1,0 +1,23 @@
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      # Mount source code for hot reload
+      - ./app:/app/app
+      - ./templates:/app/templates
+      - ./static:/app/static
+      - ./migrations:/app/migrations
+      - ./seed_data:/app/seed_data
+      - ./run.py:/app/run.py
+      # Persist data between restarts
+      - ./instance:/app/instance
+      - ./uploads:/app/uploads
+    environment:
+      - FLASK_DEBUG=1
+      - FLASK_ENV=development
+      - FLASK_RUN_IN_DOCKER=1
+      - SECRET_KEY=dev-secret-key-change-in-production
+      - DEFAULT_ADMIN_PASSWORD=admin
+    restart: unless-stopped

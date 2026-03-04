@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\coverage\version.py
+# hypothesis_version: 6.151.6
+
+['%d.%d.%d', 'a', 'alpha', 'b', 'beta', 'candidate', 'final', 'rc']

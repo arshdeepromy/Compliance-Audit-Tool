@@ -1,0 +1,312 @@
+{% extends "base.html" %}
+
+{% block title %}Audit #{{ audit.id }} — {{ branding.company_name if branding else 'Tōtika Audit Tool' }}{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container detail-container">
+  <div class="page-header">
+    <h1>Audit #{{ audit.id }}</h1>
+    <a href="{{ url_for('audits.audit_list') }}" class="back-link">← Back to Audits</a>
+  </div>
+
+  {# ── 1. Status & Transition Actions ── #}
+  <div class="card">
+    <div class="status-row">
+      <div>
+        <span class="label">Status</span>
+        {% set status_class = {
+          'Draft': 'badge-draft',
+          'In_Progress': 'badge-progress',
+          'Review': 'badge-review',
+          'Completed': 'badge-completed',
+          'Archived': 'badge-archived'
+        } %}
+        <span class="badge badge-lg {{ status_class.get(audit.status, 'badge-draft') }}">
+          {{ audit.status | replace('_', ' ') }}
+        </span>
+      </div>
+      <div class="status-actions">
+        {% if audit.status == 'In_Progress' %}
+        <form method="post" action="{{ url_for('audits.audit_review', audit_id=audit.id) }}" class="inline-form">
+          <button type="submit" class="btn btn-review">Submit for Review</button>
+        </form>
+        {% endif %}
+        {% if audit.status == 'Review' %}
+        <form method="post" action="{{ url_for('audits.audit_finalise', audit_id=audit.id) }}" class="inline-form">
+          <button type="submit" class="btn btn-complete">Finalise</button>
+        </form>
+        {% endif %}
+        {% if audit.status == 'Completed' %}
+        <form method="post" action="{{ url_for('audits.audit_archive', audit_id=audit.id) }}" class="inline-form">
+          <button type="submit" class="btn btn-archive">Archive</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  {# ── 2. Audit Metadata Header ── #}
+  <div class="card">
+    <div class="card-title">Audit Details</div>
+    <div class="meta-grid">
+      <div class="meta-item">
+        <span class="label">Template</span>
+        <span class="value">{{ audit.template.name if audit.template else 'N/A' }}</span>
+      </div>
+      <div class="meta-item">
+        <span class="label">Assessor</span>
+        <span class="value">{{ audit.auditor.display_name if audit.auditor else '—' }}</span>
+      </div>
+      <div class="meta-item">
+        <span class="label">Auditee</span>
+        <span class="value">{{ audit.auditee.display_name if audit.auditee else '—' }}</span>
+      </div>
+      <div class="meta-item">
+        <span class="label">Audit Date</span>
+        <span class="value">{{ audit.audit_date.strftime('%d %b %Y') if audit.audit_date else '—' }}</span>
+      </div>
+      <div class="meta-item">
+        <span class="label">Assessment Period</span>
+        <span class="value">{{ audit.assessment_period or '—' }}</span>
+      </div>
+      <div class="meta-item">
+        <span class="label">Next Review Due</span>
+        <span class="value">{{ audit.next_review_due.strftime('%d %b %Y') if audit.next_review_due else '—' }}</span>
+      </div>
+    </div>
+  </div>
+
+  {# ── 3. Statistics Cards Row (Req 6.1, 6.2) ── #}
+  <div class="card">
+    <div class="card-title">Statistics</div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-value">{{ stats.total }}</span>
+        <span class="stat-label">Total Criteria</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value">{{ stats.completed }}</span>
+        <span class="stat-label">Completed</span>
+      </div>
+      <div class="stat-card stat-card--red">
+        <span class="stat-value">{{ stats.gap_count }}</span>
+        <span class="stat-label">Gaps (Score 0)</span>
+      </div>
+      <div class="stat-card stat-card--amber">
+        <span class="stat-value">{{ stats.partial_count }}</span>
+        <span class="stat-label">Partial (1–2)</span>
+      </div>
+      <div class="stat-card stat-card--grey">
+        <span class="stat-value">{{ stats.na_count }}</span>
+        <span class="stat-label">N/A</span>
+      </div>
+      <div class="stat-card stat-card--orange">
+        <span class="stat-value">
+          {% if stats.average_score is not none %}
+            {{ '%.1f' | format(stats.average_score) }}
+          {% else %}
+            —
+          {% endif %}
+        </span>
+        <span class="stat-label">Average Score</span>
+      </div>
+    </div>
+  </div>
+
+  {# ── 4. Score Distribution Progress Bar (Req 6.2) ── #}
+  <div class="card">
+    <div class="card-title">Score Distribution</div>
+    {% set total_scored = score_distribution.values() | sum %}
+    {% if total_scored > 0 %}
+    <div class="score-distribution-bar" role="img" aria-label="Score distribution bar chart">
+      {% for level in [0, 1, 2, 3, 4] %}
+        {% set count = score_distribution.get(level, 0) %}
+        {% if count > 0 %}
+          {% set pct = (count / total_scored * 100) | round(1) %}
+          {% set colours = {0: '#ef4444', 1: '#ef4444', 2: '#f59e0b', 3: '#22c55e', 4: '#22c55e'} %}
+          <div class="dist-segment" style="width: {{ pct }}%; background: {{ colours[level] }};" title="Score {{ level }}: {{ count }} ({{ pct }}%)">
+            <span class="dist-label">{{ level }}</span>
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+    <div class="dist-legend">
+      {% for level in [0, 1, 2, 3, 4] %}
+        {% set count = score_distribution.get(level, 0) %}
+        {% set colours = {0: '#ef4444', 1: '#ef4444', 2: '#f59e0b', 3: '#22c55e', 4: '#22c55e'} %}
+        <span class="legend-item">
+          <span class="legend-dot" style="background: {{ colours[level] }};"></span>
+          Score {{ level }}: {{ count }}
+        </span>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-muted">No scores recorded yet.</p>
+    {% endif %}
+  </div>
+
+  {# ── 5. Section Summary Table (Req 6.3, 6.5) ── #}
+  <div class="card">
+    <div class="card-title">Section Summary</div>
+    {% if section_summary %}
+    <div class="table-wrap">
+      <table class="section-table">
+        <thead>
+          <tr>
+            <th>Section</th>
+            <th>Criteria</th>
+            <th>Avg Score</th>
+            <th>Gaps</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sec in section_summary %}
+          <tr class="section-row" onclick="window.location='{{ url_for('audits.audit_score', audit_id=audit.id, code=sec.first_code) }}';" style="cursor: pointer;" title="Go to {{ sec.first_code }}">
+            <td>{{ sec.name }}</td>
+            <td>{{ sec.criteria_count }}</td>
+            <td>
+              {% if sec.average_score is not none %}
+                {% if sec.average_score >= 3 %}
+                  <span class="score-pill score-green">{{ '%.1f' | format(sec.average_score) }}</span>
+                {% elif sec.average_score >= 2 %}
+                  <span class="score-pill score-amber">{{ '%.1f' | format(sec.average_score) }}</span>
+                {% else %}
+                  <span class="score-pill score-red">{{ '%.1f' | format(sec.average_score) }}</span>
+                {% endif %}
+              {% else %}
+                <span class="score-pill score-grey">—</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if sec.gap_count > 0 %}
+                <span class="score-pill score-red">{{ sec.gap_count }}</span>
+              {% else %}
+                <span class="text-muted">0</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="text-muted">No sections available.</p>
+    {% endif %}
+  </div>
+
+  {# ── 6. Compliance Trend Chart (Req 6.4) ── #}
+  <div class="card">
+    <div class="card-title">Compliance Trend</div>
+    {% if compliance_trend and compliance_trend | length > 0 %}
+    <div class="chart-container">
+      <canvas id="complianceTrendChart" aria-label="Compliance trend line chart" role="img"></canvas>
+    </div>
+    {% else %}
+    <p class="text-muted">No completed audits to display trend data.</p>
+    {% endif %}
+  </div>
+
+  {# ── 7. Upcoming Reminders (Req 14.2, 14.4) ── #}
+  {% if upcoming_reminders %}
+  <div class="card">
+    <div class="card-title">Upcoming Reminders</div>
+    <ul class="reminder-list">
+      {% for reminder in upcoming_reminders %}
+      <li class="reminder-item">
+        <a href="{{ url_for('audits.audit_detail', audit_id=reminder.id) }}">
+          Audit #{{ reminder.id }}
+        </a>
+        <span class="reminder-date">
+          Due: {{ reminder.next_review_due.strftime('%d %b %Y') if reminder.next_review_due else '—' }}
+        </span>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {# ── 8. Sign-off Status ── #}
+  {% if audit.sign_off %}
+  <div class="card">
+    <div class="card-title">Sign-off Status</div>
+    <div class="meta-grid">
+      <div class="meta-item">
+        <span class="label">Auditor Finalised</span>
+        <span class="value">
+          {% if audit.sign_off.auditor_finalised_at %}
+          {{ audit.sign_off.auditor_finalised_at.strftime('%d %b %Y %H:%M') }}
+          {% else %}
+          <span class="text-muted">Pending</span>
+          {% endif %}
+        </span>
+      </div>
+      <div class="meta-item">
+        <span class="label">Auditee Acknowledged</span>
+        <span class="value">
+          {% if audit.sign_off.auditee_acknowledged_at %}
+          {{ audit.sign_off.auditee_acknowledged_at.strftime('%d %b %Y %H:%M') }}
+          — {{ audit.sign_off.auditee_typed_name or '' }}
+          {% else %}
+          <span class="text-muted">Pending</span>
+          {% endif %}
+        </span>
+      </div>
+    </div>
+    {% if audit.status in ('Review', 'Completed') and not audit.sign_off.auditee_acknowledged_at %}
+    <div style="margin-top: 1rem;">
+      <a href="{{ url_for('audits.audit_signoff', audit_id=audit.id) }}" class="btn btn-review">Acknowledge Audit</a>
+    </div>
+    {% endif %}
+  </div>
+  {% elif audit.status in ('Review', 'Completed') %}
+  <div class="card">
+    <div class="card-title">Sign-off Status</div>
+    <div class="meta-grid">
+      <div class="meta-item">
+        <span class="label">Auditor Finalised</span>
+        <span class="value"><span class="text-muted">Pending</span></span>
+      </div>
+      <div class="meta-item">
+        <span class="label">Auditee Acknowledged</span>
+        <span class="value"><span class="text-muted">Pending</span></span>
+      </div>
+    </div>
+    <div style="margin-top: 1rem;">
+      <a href="{{ url_for('audits.audit_signoff', audit_id=audit.id) }}" class="btn btn-review">Acknowledge Audit</a>
+    </div>
+  </div>
+  {% endif %}
+
+  {# ── 9. Action Buttons ── #}
+  <div class="card action-buttons">
+    {% if audit.status not in ('Completed', 'Archived') %}
+    <a href="{{ url_for('audits.audit_score', audit_id=audit.id, code=section_summary[0].first_code) if section_summary else '#' }}" class="btn btn-primary">Score Criteria</a>
+    <label class="btn btn-secondary btn-import" for="import-scores-file" style="cursor:pointer;">
+      &#8593; Import JSON
+      <input type="file" id="import-scores-file" accept=".json" style="display:none;"
+             onchange="document.getElementById('import-scores-hidden').files=this.files;document.getElementById('import-scores-form').submit();">
+    </label>
+    <form id="import-scores-form" method="post"
+          action="{{ url_for('audits.audit_import_scores', audit_id=audit.id) }}"
+          enctype="multipart/form-data" style="display:none;">
+      <input type="file" name="file" id="import-scores-hidden">
+    </form>
+    {% endif %}
+    <a href="{{ url_for('audits.audit_gaps', audit_id=audit.id) }}" class="btn btn-secondary">View Gaps</a>
+    <a href="{{ url_for('audits.audit_pdf', audit_id=audit.id) }}" class="btn btn-secondary">Download PDF</a>
+    {% if audit.status in ('Review', 'Completed') %}
+    <a href="{{ url_for('audits.audit_signoff', audit_id=audit.id) }}" class="btn btn-review">Sign-off</a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  var complianceTrendData = {{ compliance_trend | tojson }};
+</script>
+{% endblock %}

@@ -1,0 +1,434 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}{{ "Edit" if template else "New" }} Template — {{ branding.company_name }}{% endblock %}
+{% block admin_content %}
+<style>
+  .page-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;
+  }
+  .page-header h1 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700; font-size: 1.75rem; color: #f97316;
+  }
+  a.back-link { color: #9ca3af; text-decoration: none; font-size: 0.875rem; }
+  a.back-link:hover { color: #f97316; }
+  .card {
+    background: #16213e; border-radius: 12px;
+    border: 1px solid #2a2a4a; padding: 1.5rem; margin-bottom: 1.25rem;
+  }
+  .card-title {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 600;
+    font-size: 1.1rem; color: #fb923c; margin-bottom: 1rem;
+  }
+  .form-group { margin-bottom: 1rem; }
+  .form-group label {
+    display: block; font-size: 0.85rem; font-weight: 500;
+    color: #d1d5db; margin-bottom: 0.35rem;
+  }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  input[type="text"], textarea, select {
+    width: 100%; padding: 0.6rem 0.8rem; background: #0f1629;
+    border: 1px solid #2a2a4a; border-radius: 8px; color: #e0e0e0;
+    font-family: 'Barlow', sans-serif; font-size: 0.9rem;
+  }
+  input[type="text"]:focus, textarea:focus {
+    outline: none; border-color: #f97316;
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
+  }
+  input::placeholder, textarea::placeholder { color: #6b7280; }
+  .btn {
+    display: inline-block; padding: 0.6rem 1.2rem; border: none;
+    border-radius: 8px; font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600; font-size: 0.9rem; cursor: pointer;
+    text-decoration: none; transition: background 0.2s, transform 0.1s;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: #f97316; color: #fff; }
+  .btn-primary:hover { background: #fb923c; }
+  .btn-secondary { background: #2a2a4a; color: #d1d5db; }
+  .btn-secondary:hover { background: #3a3a5a; }
+  .btn-danger { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+  .btn-danger:hover { background: rgba(239, 68, 68, 0.3); }
+  .btn-sm { padding: 0.35rem 0.75rem; font-size: 0.8rem; }
+  .btn-xs { padding: 0.25rem 0.5rem; font-size: 0.75rem; }
+
+  /* Tabs navigation */
+  .tabs-nav {
+    display: flex; gap: 0; border-bottom: 2px solid #2a2a4a;
+    margin-bottom: 1.25rem; overflow-x: auto; flex-wrap: nowrap;
+  }
+  .tab-btn {
+    padding: 0.6rem 1.2rem; background: none; border: none;
+    border-bottom: 3px solid transparent; margin-bottom: -2px;
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 600;
+    font-size: 0.95rem; color: #9ca3af; cursor: pointer;
+    white-space: nowrap; transition: color 0.15s, border-color 0.15s;
+  }
+  .tab-btn:hover { color: #e0e0e0; }
+  .tab-btn.active { color: #f97316; border-bottom-color: #f97316; }
+  .tab-btn .tab-close {
+    margin-left: 0.5rem; color: #6b7280; font-size: 0.8rem;
+  }
+  .tab-btn .tab-close:hover { color: #ef4444; }
+  .tab-add {
+    padding: 0.6rem 1rem; background: none; border: none;
+    color: #6b7280; cursor: pointer; font-size: 1.1rem;
+    margin-bottom: -2px; transition: color 0.15s;
+  }
+  .tab-add:hover { color: #f97316; }
+
+  /* Tab panels */
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* Section name input at top of each tab */
+  .section-name-row {
+    display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;
+  }
+  .section-name-row input { flex: 1; }
+  .section-name-row .btn-danger { flex-shrink: 0; }
+
+  /* Criterion cards */
+  .criterion-card {
+    background: #0f1629; border: 1px solid #2a2a4a;
+    border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem;
+  }
+  .criterion-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;
+  }
+  .criterion-label {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 600;
+    font-size: 0.9rem; color: #d1d5db;
+  }
+  .checkbox-group { display: flex; align-items: center; padding-top: 1.5rem; }
+  .checkbox-group label { display: flex; align-items: center; gap: 0.4rem; cursor: pointer; color: #d1d5db; }
+  .sub-section { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(42, 42, 74, 0.5); }
+  .sub-title {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 600;
+    font-size: 0.85rem; color: #9ca3af; text-transform: uppercase;
+    letter-spacing: 0.04em; margin-bottom: 0.5rem;
+  }
+  .evidence-row { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.4rem; }
+  .evidence-row input[type="text"] { flex: 1; }
+  .ev-required {
+    display: flex; align-items: center; gap: 0.25rem;
+    font-size: 0.75rem; color: #9ca3af; white-space: nowrap;
+  }
+  .form-actions {
+    display: flex; justify-content: flex-end; align-items: center;
+    margin-top: 1rem; padding-top: 1rem; gap: 0.75rem;
+  }
+  @media (max-width: 768px) { .form-row { grid-template-columns: 1fr; } }
+</style>
+
+<div class="page-header">
+  <h1>{{ "Edit" if template else "New" }} Audit Template</h1>
+  <a href="{{ url_for('templates.template_list') }}" class="back-link">← Back to Templates</a>
+</div>
+
+<form method="post" id="templateForm">
+  <!-- Template Details -->
+  <div class="card">
+    <div class="card-title">Template Details</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="name">Name</label>
+        <input type="text" id="name" name="name" value="{{ template.name if template else '' }}" required placeholder="e.g. Tōtika Category 2">
+      </div>
+      <div class="form-group">
+        <label for="version">Version</label>
+        <input type="text" id="version" name="version" value="{{ template.version if template else '1.0' }}" placeholder="1.0">
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="description">Description</label>
+      <textarea id="description" name="description" rows="2" placeholder="Brief description">{{ template.description if template and template.description else '' }}</textarea>
+    </div>
+  </div>
+
+  <!-- Sections as Tabs -->
+  <div class="card">
+    <div class="card-title">Sections &amp; Criteria</div>
+    <div class="tabs-nav" id="tabsNav">
+      <!-- Tab buttons injected by JS -->
+      <button type="button" class="tab-add" id="addSectionTab" title="Add Section">+</button>
+    </div>
+    <div id="tabPanels">
+      <!-- Tab panels injected by JS -->
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary">{{ "Save Changes" if template else "Create Template" }}</button>
+  </div>
+</form>
+
+<script>
+// ── Tabbed Section Manager ──
+(function() {
+  var sections = [];
+  var activeTab = 0;
+  var tabsNav = document.getElementById('tabsNav');
+  var tabPanels = document.getElementById('tabPanels');
+  var addBtn = document.getElementById('addSectionTab');
+
+  // Load existing sections from server data
+  {% if template %}
+  {% for section in template.sections.order_by(None).order_by('sort_order') %}
+  {% set s_idx = loop.index0 %}
+  sections.push({
+    name: {{ section.name | tojson }},
+    criteria: [
+      {% for criterion in section.criteria.order_by(None).order_by('sort_order') %}
+      {
+        code: {{ criterion.code | tojson }},
+        title: {{ criterion.title | tojson }},
+        guidance: {{ (criterion.guidance or '') | tojson }},
+        question: {{ (criterion.question or '') | tojson }},
+        na_allowed: {{ 'true' if criterion.na_allowed else 'false' }},
+        tip: {{ (criterion.tip or '') | tojson }},
+        scoring: [
+          {% for a in criterion.scoring_anchors.all() %}
+          {score: {{ a.score }}, description: {{ a.description | tojson }} },
+          {% endfor %}
+        ],
+        evidence: [
+          {% for ev in criterion.evidence_items.order_by(None).order_by('sort_order') %}
+          {text: {{ ev.text | tojson }}, is_required: {{ 'true' if ev.is_required else 'false' }} },
+          {% endfor %}
+        ]
+      },
+      {% endfor %}
+    ]
+  });
+  {% endfor %}
+  {% endif %}
+
+  function renderTabs() {
+    // Clear existing tab buttons (keep the + button)
+    var btns = tabsNav.querySelectorAll('.tab-btn');
+    btns.forEach(function(b) { b.remove(); });
+
+    sections.forEach(function(sec, idx) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'tab-btn' + (idx === activeTab ? ' active' : '');
+      btn.innerHTML = (sec.name || 'Section ' + (idx+1)) +
+        ' <span class="tab-close" data-idx="' + idx + '" title="Remove section">&times;</span>';
+      btn.setAttribute('data-idx', idx);
+      btn.addEventListener('click', function(e) {
+        if (e.target.classList.contains('tab-close')) {
+          removeSection(parseInt(e.target.getAttribute('data-idx')));
+          return;
+        }
+        switchTab(parseInt(this.getAttribute('data-idx')));
+      });
+      tabsNav.insertBefore(btn, addBtn);
+    });
+  }
+
+  function switchTab(idx) {
+    // Save current panel data before switching
+    savePanelData(activeTab);
+    activeTab = idx;
+    renderTabs();
+    renderPanel();
+  }
+
+  function savePanelData(idx) {
+    if (idx < 0 || idx >= sections.length) return;
+    var panel = tabPanels.querySelector('.tab-panel');
+    if (!panel) return;
+
+    var nameInput = panel.querySelector('.section-name-input');
+    if (nameInput) sections[idx].name = nameInput.value;
+
+    var criteria = [];
+    panel.querySelectorAll('.criterion-card').forEach(function(card) {
+      var crit = {
+        code: card.querySelector('.crit-code').value,
+        title: card.querySelector('.crit-title').value,
+        guidance: card.querySelector('.crit-guidance').value,
+        question: card.querySelector('.crit-question').value,
+        na_allowed: card.querySelector('.crit-na').checked,
+        tip: card.querySelector('.crit-tip').value,
+        scoring: [],
+        evidence: []
+      };
+      card.querySelectorAll('.score-input').forEach(function(si) {
+        if (si.value.trim()) {
+          crit.scoring.push({score: parseInt(si.getAttribute('data-score')), description: si.value});
+        }
+      });
+      card.querySelectorAll('.evidence-row').forEach(function(row) {
+        var txt = row.querySelector('.ev-text-input');
+        var req = row.querySelector('.ev-req-input');
+        if (txt && txt.value.trim()) {
+          crit.evidence.push({text: txt.value, is_required: req ? req.checked : false});
+        }
+      });
+      criteria.push(crit);
+    });
+    sections[idx].criteria = criteria;
+  }
+
+  function renderPanel() {
+    tabPanels.innerHTML = '';
+    if (sections.length === 0) {
+      tabPanels.innerHTML = '<p style="color:#6b7280; padding:1rem;">No sections yet. Click + to add one.</p>';
+      return;
+    }
+    var sec = sections[activeTab];
+    var panel = document.createElement('div');
+    panel.className = 'tab-panel active';
+
+    // Section name
+    var nameHtml = '<div class="section-name-row">' +
+      '<input type="text" class="section-name-input" value="' + escHtml(sec.name) + '" placeholder="Section name" required>' +
+      '<button type="button" class="btn btn-sm btn-danger" onclick="window._tplRemoveSection(' + activeTab + ')">Remove Section</button></div>';
+
+    var criteriaHtml = '';
+    sec.criteria.forEach(function(crit, cIdx) {
+      criteriaHtml += buildCriterionHtml(crit, cIdx);
+    });
+
+    criteriaHtml += '<button type="button" class="btn btn-sm btn-secondary" onclick="window._tplAddCriterion()">+ Add Criterion</button>';
+
+    panel.innerHTML = nameHtml + criteriaHtml;
+    tabPanels.appendChild(panel);
+
+    // Update section name in tab on input
+    panel.querySelector('.section-name-input').addEventListener('input', function() {
+      sections[activeTab].name = this.value;
+      renderTabs();
+    });
+  }
+
+  function buildCriterionHtml(crit, cIdx) {
+    var scoringMap = {};
+    (crit.scoring || []).forEach(function(s) { scoringMap[s.score] = s.description; });
+
+    var scoringHtml = '';
+    for (var s = 0; s < 5; s++) {
+      scoringHtml += '<div class="form-group"><label>Score ' + s + '</label>' +
+        '<input type="text" class="score-input" data-score="' + s + '" value="' + escHtml(scoringMap[s] || '') + '" placeholder="Description for score ' + s + '"></div>';
+    }
+
+    var evidenceHtml = '';
+    (crit.evidence || []).forEach(function(ev, eIdx) {
+      evidenceHtml += '<div class="evidence-row">' +
+        '<input type="text" class="ev-text-input" value="' + escHtml(ev.text) + '" placeholder="Evidence item text">' +
+        '<label class="ev-required"><input type="checkbox" class="ev-req-input"' + (ev.is_required ? ' checked' : '') + '> Req</label>' +
+        '<button type="button" class="btn btn-xs btn-danger" onclick="this.closest(\'.evidence-row\').remove()">×</button></div>';
+    });
+
+    return '<div class="criterion-card">' +
+      '<div class="criterion-header"><span class="criterion-label">Criterion ' + (cIdx+1) + '</span>' +
+      '<button type="button" class="btn btn-xs btn-danger" onclick="window._tplRemoveCriterion(' + cIdx + ')">×</button></div>' +
+      '<div class="form-row"><div class="form-group"><label>Code</label>' +
+      '<input type="text" class="crit-code" value="' + escHtml(crit.code) + '" required placeholder="e.g. MB1"></div>' +
+      '<div class="form-group"><label>Title</label>' +
+      '<input type="text" class="crit-title" value="' + escHtml(crit.title) + '" required placeholder="Criterion title"></div></div>' +
+      '<div class="form-group"><label>Guidance</label>' +
+      '<textarea class="crit-guidance" rows="2" placeholder="Guidance text">' + escHtml(crit.guidance || '') + '</textarea></div>' +
+      '<div class="form-group"><label>Question</label>' +
+      '<textarea class="crit-question" rows="2" placeholder="Assessment question">' + escHtml(crit.question || '') + '</textarea></div>' +
+      '<div class="form-row"><div class="form-group"><label>Tip</label>' +
+      '<input type="text" class="crit-tip" value="' + escHtml(crit.tip || '') + '" placeholder="Optional tip"></div>' +
+      '<div class="form-group checkbox-group"><label><input type="checkbox" class="crit-na"' + (crit.na_allowed ? ' checked' : '') + '> N/A Allowed</label></div></div>' +
+      '<div class="sub-section"><div class="sub-title">Scoring Anchors (0–4)</div>' + scoringHtml + '</div>' +
+      '<div class="sub-section"><div class="sub-title">Evidence Items</div>' +
+      '<div class="evidence-container">' + evidenceHtml + '</div>' +
+      '<button type="button" class="btn btn-xs btn-secondary" onclick="window._tplAddEvidence(this)">+ Evidence</button></div></div>';
+  }
+
+  function escHtml(str) {
+    var div = document.createElement('div');
+    div.appendChild(document.createTextNode(str || ''));
+    return div.innerHTML;
+  }
+
+  // Global functions for onclick handlers
+  window._tplRemoveSection = function(idx) {
+    if (!confirm('Remove this section and all its criteria?')) return;
+    sections.splice(idx, 1);
+    if (activeTab >= sections.length) activeTab = Math.max(0, sections.length - 1);
+    renderTabs();
+    renderPanel();
+  };
+
+  window._tplAddCriterion = function() {
+    savePanelData(activeTab);
+    sections[activeTab].criteria.push({
+      code: '', title: '', guidance: '', question: '',
+      na_allowed: false, tip: '', scoring: [], evidence: []
+    });
+    renderPanel();
+  };
+
+  window._tplRemoveCriterion = function(cIdx) {
+    savePanelData(activeTab);
+    sections[activeTab].criteria.splice(cIdx, 1);
+    renderPanel();
+  };
+
+  window._tplAddEvidence = function(btn) {
+    var container = btn.previousElementSibling;
+    var html = '<div class="evidence-row">' +
+      '<input type="text" class="ev-text-input" placeholder="Evidence item text">' +
+      '<label class="ev-required"><input type="checkbox" class="ev-req-input"> Req</label>' +
+      '<button type="button" class="btn btn-xs btn-danger" onclick="this.closest(\'.evidence-row\').remove()">×</button></div>';
+    container.insertAdjacentHTML('beforeend', html);
+  };
+
+  addBtn.addEventListener('click', function() {
+    if (sections.length > 0) savePanelData(activeTab);
+    sections.push({name: '', criteria: []});
+    activeTab = sections.length - 1;
+    renderTabs();
+    renderPanel();
+  });
+
+  // On form submit, serialize sections into hidden form fields
+  document.getElementById('templateForm').addEventListener('submit', function(e) {
+    savePanelData(activeTab);
+
+    // Remove any previously injected hidden fields
+    this.querySelectorAll('.section-hidden').forEach(function(el) { el.remove(); });
+
+    sections.forEach(function(sec, sIdx) {
+      addHidden('section_' + sIdx + '_name', sec.name);
+      sec.criteria.forEach(function(crit, cIdx) {
+        var prefix = 'section_' + sIdx + '_criterion_' + cIdx + '_';
+        addHidden(prefix + 'code', crit.code);
+        addHidden(prefix + 'title', crit.title);
+        addHidden(prefix + 'guidance', crit.guidance || '');
+        addHidden(prefix + 'question', crit.question || '');
+        if (crit.na_allowed) addHidden(prefix + 'na_allowed', 'on');
+        addHidden(prefix + 'tip', crit.tip || '');
+        (crit.scoring || []).forEach(function(s) {
+          addHidden(prefix + 'score_' + s.score, s.description);
+        });
+        (crit.evidence || []).forEach(function(ev, eIdx) {
+          addHidden(prefix + 'evidence_' + eIdx + '_text', ev.text);
+          if (ev.is_required) addHidden(prefix + 'evidence_' + eIdx + '_required', 'on');
+        });
+      });
+    });
+
+    function addHidden(name, value) {
+      var inp = document.createElement('input');
+      inp.type = 'hidden';
+      inp.name = name;
+      inp.value = value;
+      inp.className = 'section-hidden';
+      document.getElementById('templateForm').appendChild(inp);
+    }
+  });
+
+  // Initial render
+  renderTabs();
+  renderPanel();
+})();
+</script>
+{% endblock %}

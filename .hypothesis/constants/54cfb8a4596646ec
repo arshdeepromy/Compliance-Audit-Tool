@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\sqlalchemy\engine\cursor.py
+# hypothesis_version: 6.151.6
+
+[1000, 'Col %r', 'CursorResult[Any]', 'List[int]', 'Row %r', '_KeyType', '_T', '_bufsize', '_echo', '_growth_factor', '_key_to_index', '_keymap', '_keys', '_max_row_buffer', '_processors', '_row_getter', '_rowbuffer', '_safe_for_cache', '_translated_indexes', '_tuplefilter', '_unpickled', 'connection', 'context', 'cursor', 'cursor_strategy', 'dialect', 'max_row_buffer']

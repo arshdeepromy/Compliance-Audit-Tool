@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Audit Report — {{ branding.company_name }}</title>
+    <style>
+        /* Print-friendly CSS: white background, dark text */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Barlow', Arial, Helvetica, sans-serif;
+            font-size: 11pt;
+            color: #1a1a1a;
+            background: #ffffff;
+            line-height: 1.5;
+            padding: 20px 30px;
+        }
+
+        /* Header / Branding */
+        .report-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 3px solid {{ branding.primary_colour }};
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+        }
+        .report-header .company-name {
+            font-size: 20pt;
+            font-weight: 700;
+            color: {{ branding.primary_colour }};
+        }
+        .report-header .report-title {
+            font-size: 12pt;
+            color: #555;
+        }
+        .report-header .logo img {
+            max-height: 60px;
+            max-width: 180px;
+        }
+
+        /* Metadata table */
+        .metadata-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .metadata-table td {
+            padding: 4px 10px;
+            border: 1px solid #ddd;
+            font-size: 10pt;
+        }
+        .metadata-table .label {
+            font-weight: 600;
+            background: #f5f5f5;
+            width: 25%;
+        }
+
+        /* Section headings */
+        h2 {
+            font-size: 14pt;
+            color: {{ branding.primary_colour }};
+            border-bottom: 1px solid {{ branding.accent_colour }};
+            padding-bottom: 4px;
+            margin: 18px 0 10px 0;
+        }
+        h3 {
+            font-size: 12pt;
+            color: #333;
+            margin: 12px 0 6px 0;
+        }
+
+        /* Criteria table */
+        .criteria-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 14px;
+            font-size: 10pt;
+        }
+        .criteria-table th {
+            background: {{ branding.primary_colour }};
+            color: #fff;
+            padding: 6px 8px;
+            text-align: left;
+            font-weight: 600;
+        }
+        .criteria-table td {
+            padding: 5px 8px;
+            border: 1px solid #ddd;
+            vertical-align: top;
+        }
+        .criteria-table tr:nth-child(even) { background: #fafafa; }
+
+        .score-badge {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            line-height: 24px;
+            text-align: center;
+            border-radius: 50%;
+            font-weight: 700;
+            font-size: 10pt;
+            color: #fff;
+        }
+        .score-0 { background: #dc2626; }
+        .score-1 { background: #ea580c; }
+        .score-2 { background: #f59e0b; }
+        .score-3 { background: #65a30d; }
+        .score-4 { background: #16a34a; }
+        .score-na { background: #9ca3af; }
+
+        /* Distribution bar */
+        .distribution-bar {
+            display: flex;
+            height: 22px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 6px;
+        }
+        .distribution-bar .segment {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8pt;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        /* Gap summary */
+        .gap-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 14px;
+            font-size: 10pt;
+        }
+        .gap-table th {
+            background: #dc2626;
+            color: #fff;
+            padding: 6px 8px;
+            text-align: left;
+        }
+        .gap-table td {
+            padding: 5px 8px;
+            border: 1px solid #ddd;
+        }
+        .gap-table tr:nth-child(even) { background: #fef2f2; }
+
+        .priority-critical { color: #dc2626; font-weight: 700; }
+        .priority-high { color: #ea580c; font-weight: 600; }
+        .priority-medium { color: #f59e0b; font-weight: 600; }
+
+        /* Sign-off */
+        .signoff-box {
+            border: 1px solid #ddd;
+            padding: 10px 14px;
+            margin-top: 14px;
+            border-radius: 4px;
+        }
+        .signoff-box .label { font-weight: 600; }
+
+        /* Section summary table */
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 14px;
+            font-size: 10pt;
+        }
+        .summary-table th {
+            background: {{ branding.accent_colour }};
+            color: #fff;
+            padding: 6px 8px;
+            text-align: left;
+        }
+        .summary-table td {
+            padding: 5px 8px;
+            border: 1px solid #ddd;
+        }
+
+        .page-break { page-break-before: always; }
+
+        @media print {
+            body { padding: 0; }
+            .page-break { page-break-before: always; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============================================================ -->
+    <!-- HEADER / BRANDING                                            -->
+    <!-- ============================================================ -->
+    <div class="report-header">
+        <div>
+            <div class="company-name">{{ branding.company_name }}</div>
+            <div class="report-title">Audit Report</div>
+        </div>
+        {% if branding.logo_filename %}
+        <div class="logo">
+            <img src="{{ url_for('uploaded_file', filename=branding.logo_filename) }}" alt="Company Logo">
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- AUDIT METADATA                                               -->
+    <!-- ============================================================ -->
+    <h2>Audit Details</h2>
+    <table class="metadata-table">
+        <tr>
+            <td class="label">Template</td>
+            <td>{{ template.name }} (v{{ template.version }})</td>
+            <td class="label">Status</td>
+            <td>{{ audit.status }}</td>
+        </tr>
+        <tr>
+            <td class="label">Auditor</td>
+            <td>{{ auditor.display_name if auditor else 'N/A' }}</td>
+            <td class="label">Auditee</td>
+            <td>{{ auditee.display_name if auditee else 'N/A' }}</td>
+        </tr>
+        <tr>
+            <td class="label">Audit Date</td>
+            <td>{{ audit.audit_date if audit.audit_date else 'N/A' }}</td>
+            <td class="label">Assessment Period</td>
+            <td>{{ audit.assessment_period if audit.assessment_period else 'N/A' }}</td>
+        </tr>
+        <tr>
+            <td class="label">Overall Score</td>
+            <td>{{ '%.2f'|format(audit.overall_score) if audit.overall_score is not none else 'N/A' }}</td>
+            <td class="label">Next Review Due</td>
+            <td>{{ audit.next_review_due if audit.next_review_due else 'N/A' }}</td>
+        </tr>
+    </table>
+
+    <!-- ============================================================ -->
+    <!-- SCORE DISTRIBUTION                                           -->
+    <!-- ============================================================ -->
+    <h2>Score Distribution</h2>
+    {% if total_scored > 0 %}
+    <div class="distribution-bar">
+        {% for score_val in range(5) %}
+        {% set count = distribution.get(score_val, 0) %}
+        {% if count > 0 %}
+        <div class="segment score-{{ score_val }}" style="width: {{ (count / total_scored * 100)|round(1) }}%;">
+            {{ count }}
+        </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+    <p style="font-size: 9pt; color: #666; margin-bottom: 14px;">
+        Total scored: {{ total_scored }} | N/A: {{ na_count }} | Total criteria: {{ total_criteria }}
+        {% for score_val in range(5) %}
+        | Score {{ score_val }}: {{ distribution.get(score_val, 0) }}
+        {% endfor %}
+    </p>
+    {% else %}
+    <p>No criteria have been scored yet.</p>
+    {% endif %}
+
+    <!-- ============================================================ -->
+    <!-- SECTION SUMMARIES                                            -->
+    <!-- ============================================================ -->
+    <h2>Section Summary</h2>
+    <table class="summary-table">
+        <thead>
+            <tr>
+                <th>Section</th>
+                <th>Criteria</th>
+                <th>Average Score</th>
+                <th>Gaps</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for section in sections %}
+            <tr>
+                <td>{{ section.name }}</td>
+                <td>{{ section.criteria_count }}</td>
+                <td>{{ '%.2f'|format(section.average) if section.average is not none else 'N/A' }}</td>
+                <td>{{ section.gap_count }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- ============================================================ -->
+    <!-- CRITERIA DETAIL BY SECTION                                   -->
+    <!-- ============================================================ -->
+    {% for section in sections %}
+    <h2>{{ section.name }}</h2>
+    <table class="criteria-table">
+        <thead>
+            <tr>
+                <th style="width: 8%;">Code</th>
+                <th style="width: 30%;">Criterion</th>
+                <th style="width: 8%;">Score</th>
+                <th>Notes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in section.criteria %}
+            <tr>
+                <td>{{ c.code }}</td>
+                <td>{{ c.title }}</td>
+                <td>
+                    {% if c.is_na %}
+                    <span class="score-badge score-na">N/A</span>
+                    {% elif c.score is not none %}
+                    <span class="score-badge score-{{ c.score }}">{{ c.score }}</span>
+                    {% else %}
+                    —
+                    {% endif %}
+                </td>
+                <td>{{ c.notes if c.notes else '' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endfor %}
+
+    <!-- ============================================================ -->
+    <!-- GAP SUMMARY                                                  -->
+    <!-- ============================================================ -->
+    <div class="page-break"></div>
+    <h2>Gap Summary</h2>
+    {% if gap_items %}
+    <p style="font-size: 10pt; margin-bottom: 8px;">
+        Criteria scored below 3 requiring attention:
+    </p>
+    <table class="gap-table">
+        <thead>
+            <tr>
+                <th>Code</th>
+                <th>Criterion</th>
+                <th>Score</th>
+                <th>Priority</th>
+                <th>Corrective Action Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for gap in gap_items %}
+            <tr>
+                <td>{{ gap.code }}</td>
+                <td>{{ gap.title }}</td>
+                <td><span class="score-badge score-{{ gap.score }}">{{ gap.score }}</span></td>
+                <td><span class="priority-{{ gap.priority }}">{{ gap.priority|capitalize }}</span></td>
+                <td>{{ gap.action_status }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No gaps identified — all criteria scored 3 or above.</p>
+    {% endif %}
+
+    <!-- ============================================================ -->
+    <!-- SIGN-OFF                                                     -->
+    <!-- ============================================================ -->
+    {% if sign_off %}
+    <h2>Sign-Off</h2>
+    <div class="signoff-box">
+        <p>
+            <span class="label">Auditor Finalised:</span>
+            {{ sign_off.auditor_finalised_at.strftime('%Y-%m-%d %H:%M') if sign_off.auditor_finalised_at else 'Pending' }}
+        </p>
+        <p>
+            <span class="label">Auditee Acknowledged:</span>
+            {{ sign_off.auditee_acknowledged_at.strftime('%Y-%m-%d %H:%M') if sign_off.auditee_acknowledged_at else 'Pending' }}
+        </p>
+        {% if sign_off.auditee_typed_name %}
+        <p><span class="label">Signed by:</span> {{ sign_off.auditee_typed_name }}</p>
+        {% endif %}
+        {% if sign_off.auditee_comments %}
+        <p><span class="label">Comments:</span> {{ sign_off.auditee_comments }}</p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div style="margin-top: 30px; text-align: center; font-size: 9pt; color: #999;">
+        Generated by {{ branding.company_name }} — Tōtika Audit Tool
+    </div>
+
+</body>
+</html>

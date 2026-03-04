@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\alembic\runtime\migration.py
+# hypothesis_version: 6.151.6
+
+['%s %s -> %s', '%s %s -> %s, %s', '%s://', '%s_pkc', "'%s'", '-- Running %s', 'AUTOCOMMIT', 'Connection', 'Context impl %s.', 'Running %s', 'Script', 'Will assume %s DDL.', 'alembic_version', 'as_sql', 'base', 'branch delete %s', 'compare_type', 'dont_mutate', 'fn', 'new branch insert %s', 'non-transactional', 'on_version_apply', 'output_buffer', 'output_encoding', 'purge', 'script', 'starting_rev', 'transactional', 'transactional_ddl', 'update %s to %s', 'version_num', 'version_table', 'version_table_pk', 'version_table_schema']

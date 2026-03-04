@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\flask\sansio\scaffold.py
+# hypothesis_version: 6.151.6
+
+['.', '/', 'DELETE', 'F', 'GET', 'PATCH', 'POST', 'PUT', 'T_after_request', 'T_before_request', 'T_error_handler', 'T_route', 'T_teardown', 'T_url_defaults', '\\/', 'endpoint', 'lib', 'methods', 'namespace', 'not found', 'site-packages']

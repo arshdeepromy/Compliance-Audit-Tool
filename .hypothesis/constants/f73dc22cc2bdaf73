@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\alembic\runtime\environment.py
+# hypothesis_version: 6.151.6
+
+['=', 'AutogenContext', 'Column[Any]', 'MigrationInfo', 'MigrationScript', 'SchemaItem', 'TypeEngine[Any]', 'as_sql', 'column', 'compare_type', 'destination_rev', 'downgrade_token', 'downgrades', 'head', 'heads', 'include_name', 'include_object', 'include_schemas', 'index', 'literal_binds', 'on_version_apply', 'op.', 'output_buffer', 'render_as_batch', 'render_item', 'sa.', 'schema', 'schema_name', 'script', 'starting_rev', 'table', 'table_name', 'tag', 'target_metadata', 'template_args', 'transactional_ddl', 'unique_constraint', 'upgrade_token', 'upgrades', 'user_module_prefix']

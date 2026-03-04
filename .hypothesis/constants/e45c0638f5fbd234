@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\mako\lexer.py
+# hypothesis_version: 6.151.6
+
+['!', '#.*\\n', '%', '%>', '(', '(%s)', '(.*?)(?=\\"|\\\'|#|%s)', '(.*?)(?=\\</%text>)', '(?<=^)(\\s*)%%(%*)', '(end)?(\\w+)\\s*(.*)', ')', ',', '<%(!)?', '<%doc>(.*?)</%doc>', 'Expected: %s', 'Unclosed tag: <%%%s>', '[', '\\${', '\\Z', '\\|', ']', '__iter__', 'assertion failed', 'filename', 'ignore', 'lineno', 'pos', 'source', 'text', 'utf-8', '{', '|', '}']

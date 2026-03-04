@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\Desktop\health and safety audit tool\totika-audit-app\app\blueprints\admin.py
+# hypothesis_version: 6.151.6
+
+[400, 65535, '!@#$%&*', '#f97316', '#fb923c', ',', '.', '/admin/branding', '/admin/smtp', '/admin/smtp/test', '/admin/users', '/admin/users/new', '587', 'Email is required.', 'From', 'GET', 'POST', 'SMTP settings saved.', 'Subject', 'To', 'Tōtika Audit Tool', 'UPLOAD_FOLDER', 'User not found.', 'accent_colour', 'action', 'activate', 'admin', 'admin.branding', 'admin.smtp', 'admin.user_edit', 'admin.users_list', 'admin/branding.html', 'admin/smtp.html', 'admin/user_form.html', 'auditee', 'auditor', 'company_name', 'create', 'deactivate', 'display_name', 'edit', 'email', 'error', 'host', 'jpeg', 'jpg', 'logo', 'mfa_type', 'on', 'password', 'png', 'port', 'primary_colour', 'reset_password', 'roles', 'save', 'sender_address', 'success', 'totp', 'use_tls', 'username', 'viewer']

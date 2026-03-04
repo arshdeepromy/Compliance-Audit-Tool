@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\Desktop\health and safety audit tool\totika-audit-app\app\models\attachment.py
+# hypothesis_version: 6.151.6
+
+[100, 255, 'User', 'audit_score.id', 'evidence_attachment', 'uploaded_attachments', 'user.id']

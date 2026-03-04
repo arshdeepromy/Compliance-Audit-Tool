@@ -1,0 +1,10 @@
+__pycache__
+*.pyc
+.pytest_cache
+.hypothesis
+instance/
+uploads/
+test_uploads/
+tests/
+*.db
+.git

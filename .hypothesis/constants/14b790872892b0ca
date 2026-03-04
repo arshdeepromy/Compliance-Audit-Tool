@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\alembic\script\write_hooks.py
+# hypothesis_version: 6.151.6
+
+['-c', '.', '_hook_name', 'console_scripts', 'cwd', 'entrypoint', 'exec', 'executable', 'hooks', 'options', 'stderr', 'stdout', 'type']

@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Audits — {{ branding.company_name if branding else 'Tōtika Audit Tool' }}{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <h1>Audits</h1>
+    <div class="header-actions">
+      <label class="btn btn-secondary btn-import" for="import-file">
+        &#8593; Import JSON
+        <input type="file" id="import-file" accept=".json" style="display:none;"
+               onchange="document.getElementById('import-form').submit();">
+      </label>
+      <form id="import-form" method="post" action="{{ url_for('audits.audit_import') }}"
+            enctype="multipart/form-data" style="display:none;">
+        <input type="file" name="file" id="import-file-hidden">
+      </form>
+      <a href="{{ url_for('audits.audit_new') }}" class="btn btn-primary">+ New Audit</a>
+    </div>
+  </div>
+
+  {% if audits %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Template</th>
+          <th>Status</th>
+          <th>Date</th>
+          <th>Assessor</th>
+          <th>Auditee</th>
+          <th>Score</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for audit in audits %}
+        <tr>
+          <td>
+            <a href="{{ url_for('audits.audit_detail', audit_id=audit.id) }}" class="link">
+              {{ audit.template.name if audit.template else 'N/A' }}
+            </a>
+          </td>
+          <td>
+            {% set status_class = {
+              'Draft': 'badge-draft',
+              'In_Progress': 'badge-progress',
+              'Review': 'badge-review',
+              'Completed': 'badge-completed',
+              'Archived': 'badge-archived'
+            } %}
+            <span class="badge {{ status_class.get(audit.status, 'badge-draft') }}">
+              {{ audit.status | replace('_', ' ') }}
+            </span>
+          </td>
+          <td class="text-muted">{{ audit.audit_date.strftime('%Y-%m-%d') if audit.audit_date else '—' }}</td>
+          <td>{{ audit.auditor.display_name if audit.auditor else '—' }}</td>
+          <td>{{ audit.auditee.display_name if audit.auditee else '—' }}</td>
+          <td>
+            {% if audit.overall_score is not none %}
+            <span class="score-value">{{ '%.1f' | format(audit.overall_score) }}</span>
+            {% else %}
+            <span class="text-muted">—</span>
+            {% endif %}
+          </td>
+          <td class="actions-cell">
+            <a href="{{ url_for('audits.audit_detail', audit_id=audit.id) }}" class="btn btn-sm btn-secondary">View</a>
+            <form method="post" action="{{ url_for('audits.audit_delete', audit_id=audit.id) }}"
+                  class="inline-form"
+                  onsubmit="return confirm('Delete this audit? This cannot be undone.');">
+              <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <p>No audits found. Create one to get started, or import a previous audit JSON.</p>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+  // Wire up the visible import button to the hidden form file input
+  document.getElementById('import-file').addEventListener('change', function() {
+    var hiddenInput = document.getElementById('import-file-hidden');
+    hiddenInput.files = this.files;
+    document.getElementById('import-form').submit();
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,75 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Branding Settings — {{ branding.company_name }}{% endblock %}
+{% block admin_content %}
+<style>
+  .page-header { margin-bottom: 1.5rem; }
+  .page-header h1 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700; font-size: 1.75rem; color: #f97316;
+  }
+  .form-card {
+    background: #16213e; border-radius: 12px;
+    border: 1px solid #2a2a4a; padding: 1.5rem;
+  }
+  .form-group { margin-bottom: 1.25rem; }
+  .form-group label {
+    display: block; font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600; font-size: 0.85rem; text-transform: uppercase;
+    letter-spacing: 0.05em; color: #9ca3af; margin-bottom: 0.4rem;
+  }
+  .form-group input[type="text"] {
+    width: 100%; padding: 0.6rem 0.8rem; background: #1a1a2e;
+    border: 1px solid #2a2a4a; border-radius: 8px; color: #e0e0e0;
+    font-family: 'Barlow', sans-serif; font-size: 0.9rem;
+  }
+  .form-group input[type="text"]:focus { outline: none; border-color: #f97316; }
+  .form-group input[type="file"] { color: #9ca3af; font-size: 0.85rem; }
+  .form-group input[type="color"] {
+    width: 60px; height: 36px; border: 1px solid #2a2a4a;
+    border-radius: 8px; background: #1a1a2e; cursor: pointer;
+  }
+  .form-row { display: flex; gap: 1.5rem; }
+  .current-logo { margin-bottom: 0.4rem; }
+  .text-muted { color: #6b7280; font-size: 0.85rem; }
+  .form-actions { margin-top: 1.5rem; }
+  .btn {
+    display: inline-block; padding: 0.6rem 1.2rem; border: none;
+    border-radius: 8px; font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600; font-size: 0.9rem; cursor: pointer;
+    text-decoration: none; transition: background 0.2s, transform 0.1s;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: #f97316; color: #fff; }
+  .btn-primary:hover { background: #fb923c; }
+</style>
+
+<div class="page-header"><h1>Branding Settings</h1></div>
+
+<form method="post" enctype="multipart/form-data" class="form-card">
+  <div class="form-group">
+    <label for="company_name">Company Name</label>
+    <input type="text" id="company_name" name="company_name"
+           value="{{ branding.company_name }}" placeholder="Tōtika Audit Tool">
+  </div>
+  <div class="form-group">
+    <label for="logo">Company Logo (PNG, JPG, JPEG)</label>
+    {% if branding.logo_filename %}
+    <div class="current-logo"><span class="text-muted">Current: {{ branding.logo_filename }}</span></div>
+    {% endif %}
+    <input type="file" id="logo" name="logo" accept=".png,.jpg,.jpeg">
+  </div>
+  <div class="form-row">
+    <div class="form-group">
+      <label for="primary_colour">Primary Colour</label>
+      <input type="color" id="primary_colour" name="primary_colour" value="{{ branding.primary_colour }}">
+    </div>
+    <div class="form-group">
+      <label for="accent_colour">Accent Colour</label>
+      <input type="color" id="accent_colour" name="accent_colour" value="{{ branding.accent_colour }}">
+    </div>
+  </div>
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary">Save Branding</button>
+  </div>
+</form>
+{% endblock %}

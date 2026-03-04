@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\trio\_core\_generated_run.py
+# hypothesis_version: 6.151.6
+
+[0.0, 'current_clock', 'current_root_task', 'current_statistics', 'current_time', 'current_trio_token', 'reschedule', 'spawn_system_task']

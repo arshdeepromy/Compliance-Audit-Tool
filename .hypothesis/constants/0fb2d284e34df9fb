@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\sqlalchemy\dialects\sqlite\pysqlite.py
+# hypothesis_version: 6.151.6
+
+['$1', '%s=%s', '&', ':1', ':memory:', '?', 'AUTOCOMMIT', 'DBAPIModule', '[^\\d]:\\d+', 'cached_statements', 'check_same_thread', 'detect_types', 'deterministic', 'factory', 'floor', 'isolation_level', 'memory', 'mode', 'numeric', 'numeric_dollar', 'paramstyle', 'pysqlite', 'pysqlite_dollar', 'pysqlite_numeric', 'qmark', 'regexp', 'timeout', 'uri']

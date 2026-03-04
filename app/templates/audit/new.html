@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Audit — {{ branding.company_name if branding else 'Tōtika Audit Tool' }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Barlow', sans-serif;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .container { max-width: 720px; margin: 0 auto; }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .page-header h1 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 1.75rem;
+      color: #f97316;
+    }
+
+    a.back-link {
+      color: #9ca3af;
+      text-decoration: none;
+      font-size: 0.875rem;
+    }
+    a.back-link:hover { color: #f97316; }
+
+    .flash-messages { margin-bottom: 1.25rem; }
+    .flash {
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      margin-bottom: 0.5rem;
+    }
+    .flash.error {
+      background: rgba(239, 68, 68, 0.15);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    .flash.success {
+      background: rgba(34, 197, 94, 0.15);
+      color: #86efac;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .card {
+      background: #16213e;
+      border-radius: 12px;
+      border: 1px solid #2a2a4a;
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .card-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: #fb923c;
+      margin-bottom: 1rem;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #d1d5db;
+      margin-bottom: 0.35rem;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="page-header">
+      <h1>New Audit</h1>
+      <a href="{{ url_for('audits.audit_list') }}" class="back-link">← Back to Audits</a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-messages">
+      {% for category, message in messages %}
+      <div class="flash {{ category }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <form method="post">
+      <div class="card">
+        <div class="card-title">Audit Setup</div>
+
+        <div class="form-group">
+          <label for="template_id">Audit Template</label>
+          <select id="template_id" name="template_id" required>
+            <option value="">Select a template…</option>
+            {% for t in templates %}
+            <option value="{{ t.id }}">{{ t.name }} (v{{ t.version }})</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="auditee_id">Auditee</label>
+          <select id="auditee_id" name="auditee_id">
+            <option value="">None</option>
+            {% for u in users %}
+            <option value="{{ u.id }}">{{ u.display_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Dates &amp; Period</div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="audit_date">Audit Date</label>
+            <input type="date" id="audit_date" name="audit_date">
+          </div>
+          <div class="form-group">
+            <label for="next_review_due">Next Review Due</label>
+            <input type="date" id="next_review_due" name="next_review_due">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="assessment_period">Assessment Period</label>
+          <input type="text" id="assessment_period" name="assessment_period"
+                 placeholder="e.g. January 2026 – June 2026">
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <a href="{{ url_for('audits.audit_list') }}" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary">Create Audit</button>
+      </div>
+    </form>
+  </div>
+
+  <style>
+    input[type="text"],
+    input[type="date"],
+    select {
+      width: 100%;
+      padding: 0.6rem 0.8rem;
+      background: #0f1629;
+      border: 1px solid #2a2a4a;
+      border-radius: 8px;
+      color: #e0e0e0;
+      font-family: 'Barlow', sans-serif;
+      font-size: 0.9rem;
+      transition: border-color 0.2s;
+    }
+    input[type="text"]:focus,
+    input[type="date"]:focus,
+    select:focus {
+      outline: none;
+      border-color: #f97316;
+      box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
+    }
+    input::placeholder { color: #6b7280; }
+
+    /* Date input colour fix for dark theme */
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: invert(0.7);
+    }
+
+    select option {
+      background: #0f1629;
+      color: #e0e0e0;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.2s, transform 0.1s;
+      letter-spacing: 0.025em;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary { background: #f97316; color: #fff; }
+    .btn-primary:hover { background: #fb923c; }
+    .btn-secondary { background: #2a2a4a; color: #d1d5db; }
+    .btn-secondary:hover { background: #3a3a5a; }
+
+    .form-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 0.5rem;
+    }
+
+    @media (max-width: 768px) {
+      .form-row { grid-template-columns: 1fr; }
+      body { padding: 1rem; }
+    }
+  </style>
+</body>
+</html>

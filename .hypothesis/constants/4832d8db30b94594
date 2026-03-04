@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\sqlalchemy\dialects\sqlite\pysqlcipher.py
+# hypothesis_version: 6.151.6
+
+['cipher', 'cipher_page_size', 'cipher_use_hmac', 'kdf_iter', 'pragma %s="%s"', 'pragma key="%s"', 'pysqlcipher']

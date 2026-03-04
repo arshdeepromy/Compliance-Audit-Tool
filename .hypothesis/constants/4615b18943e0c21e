@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\sqlalchemy\dialects\postgresql\hstore.py
+# hypothesis_version: 6.151.6
+
+['\n[ ]* , [ ]*\n', '"', '"%s"', '%s=>%s', ', ', 'HSTORE', 'NULL', '[...]', '\\', '\\"', '\\\\', 'akeys', 'avals', 'defined', 'delete', 'hstore', 'hstore_to_array', 'hstore_to_matrix', 'key', 'slice', 'value', 'value_null']

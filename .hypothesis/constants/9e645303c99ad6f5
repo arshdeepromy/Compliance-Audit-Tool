@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\alembic\operations\batch.py
+# hypothesis_version: 6.151.6
+
+['.', "No such index: '%s'", 'TODO', '_alembic_tmp_%s', 'add_column', 'add_constraint', 'alter_column', 'always', 'auto', 'column_reflect', 'create_index', 'create_table_comment', 'drop_column', 'drop_constraint', 'drop_index', 'drop_table_comment', 'existing_type', 'expr', 'insert_after', 'insert_before', 'listeners', 'name', 'never', 'rename_table']

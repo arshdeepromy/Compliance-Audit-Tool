@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\alembic\operations\base.py
+# hypothesis_version: 6.151.6
+
+['=', 'BatchOperations', 'Operations', '_T', '_legacy_translations', 'always', 'apply_kw', 'args', 'auto', 'cls', 'doc', 'name', 'never', 'op_cls', 'operations', 'self', 'source_name']

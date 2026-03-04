@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\mako\ext\pygmentplugin.py
+# hypothesis_version: 6.151.6
+
+['".*?"', '#pop', "'.*?'", '(<%)([\\w\\.\\:]+)', '(</%)([\\w\\.\\:]+)(>)', '(?s)<%doc>.*?</%doc>', '(\\$\\{)(.*?)(\\})', '*.mao', '/?\\s*>', '<%', '<%(?=([\\w\\.\\:]+))', 'CSS+Mako', 'HTML+Mako', 'JavaScript+Mako', 'Mako', 'XML+Mako', '[^\\s>]+', '\\s+', 'attr', 'css+mako', 'html+mako', 'javascript+mako', 'js+mako', 'mako', 'memory:', 'ondeftags', 'root', 'syntax-highlighted', 'tag', 'xml+mako']

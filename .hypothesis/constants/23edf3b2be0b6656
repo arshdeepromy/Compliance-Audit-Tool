@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\alembic\ddl\base.py
+# hypothesis_version: 6.151.6
+
+['%s %s', '%s %s %s', '%s RENAME %s TO %s', '%s RENAME TO %s', '.', 'ADD COLUMN %s', 'ALTER COLUMN %s', 'ALTER TABLE %s', 'DROP COLUMN %s', 'DROP DEFAULT', 'DROP NOT NULL', 'FetchedValue', 'Function[Any]', 'SET DEFAULT %s', 'SET NOT NULL', 'TYPE %s', 'TextClause', 'x']

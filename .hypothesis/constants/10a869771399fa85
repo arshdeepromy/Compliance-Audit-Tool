@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\coverage\patch.py
+# hypothesis_version: 6.151.6
+
+['COVERAGE_CORE', 'PATH', 'PYTHONPYCACHEPREFIX', '_exit', 'e', 'execv', 'execve', 'subprocess']

@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\Desktop\health and safety audit tool\totika-audit-app\app\models\audit.py
+# hypothesis_version: 6.151.6
+
+[100, 200, 255, 'Archived', 'AuditScore', 'AuditSignOff', 'Completed', 'CorrectiveAction', 'Draft', 'EvidenceAttachment', 'EvidenceCheckState', 'In_Progress', 'Review', 'SeedFileTracker', 'all, delete-orphan', 'audit', 'audit.id', 'audit_score', 'audit_score.id', 'audit_sign_off', 'audit_template.id', 'dynamic', 'evidence_check_state', 'user.id']

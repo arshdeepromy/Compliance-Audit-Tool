@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\trio\testing\_memory_streams.py
+# hypothesis_version: 6.151.6
+
+['._memory_streams', 'ReceiveStreamT', 'SendStreamT']

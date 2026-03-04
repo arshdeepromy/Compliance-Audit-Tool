@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+
+{% block title %}Score {{ criterion.code }} — {{ branding.company_name }}{% endblock %}
+
+{% block content %}
+<style>
+  /* Dark theme scoring page styles */
+  .score-page { max-width: 900px; margin: 0 auto; padding: 1rem; font-family: 'Barlow', sans-serif; color: #fff; }
+  .score-page h2 { font-family: 'Barlow Condensed', sans-serif; color: #f97316; margin-bottom: 0.5rem; font-size: 1.6rem; }
+  .score-page h3 { font-family: 'Barlow Condensed', sans-serif; color: #fb923c; margin: 1rem 0 0.5rem; font-size: 1.2rem; }
+
+  .save-status { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.85rem; margin-left: 1rem; vertical-align: middle; }
+  .save-status.saving { color: #fbbf24; }
+  .save-status.saved { color: #4ade80; }
+  .save-status.error { color: #f87171; }
+  .save-status.pending { color: #94a3b8; }
+
+  .guidance-box { background: #16213e; border-left: 3px solid #f97316; padding: 0.75rem 1rem; margin-bottom: 1rem; border-radius: 4px; }
+  .guidance-box p { margin: 0; line-height: 1.5; color: #cbd5e1; }
+
+  .question-box { background: #1e293b; padding: 0.75rem 1rem; margin-bottom: 1rem; border-radius: 4px; font-style: italic; color: #e2e8f0; }
+
+  .tip-box { background: #1a1a2e; border: 1px solid #334155; padding: 0.75rem 1rem; margin-bottom: 1rem; border-radius: 4px; color: #94a3b8; font-size: 0.9rem; }
+  .tip-box strong { color: #f97316; }
+
+  /* Scoring anchors */
+  .anchors-list { list-style: none; padding: 0; margin: 0 0 1rem; }
+  .anchors-list li { display: flex; gap: 0.75rem; padding: 0.5rem 0.75rem; margin-bottom: 0.25rem; background: #16213e; border-radius: 4px; align-items: flex-start; }
+  .anchor-score { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 1.1rem; min-width: 1.5rem; text-align: center; color: #f97316; flex-shrink: 0; }
+  .anchor-desc { color: #cbd5e1; line-height: 1.4; }
+
+  /* Form sections */
+  .score-form fieldset { border: 1px solid #334155; border-radius: 6px; padding: 1rem; margin-bottom: 1rem; background: #0f172a; }
+  .score-form legend { font-family: 'Barlow Condensed', sans-serif; color: #fb923c; font-size: 1.05rem; padding: 0 0.5rem; }
+
+  /* Score radio buttons */
+  .score-options { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .score-option { position: relative; }
+  .score-option input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
+  .score-option label { display: inline-block; padding: 0.5rem 1rem; border: 2px solid #334155; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 1rem; text-align: center; min-width: 3rem; transition: all 0.15s ease; color: #e2e8f0; background: #1e293b; }
+  .score-option input[type="radio"]:checked + label { border-color: #f97316; background: #f97316; color: #fff; }
+  .score-option input[type="radio"]:focus + label { box-shadow: 0 0 0 2px rgba(249,115,22,0.4); }
+  .score-option label:hover { border-color: #fb923c; }
+  .score-option.na-option label { font-size: 0.9rem; }
+
+  /* N/A reason */
+  .na-reason-wrap { margin-top: 0.75rem; }
+  .na-reason-wrap textarea { width: 100%; min-height: 60px; background: #1e293b; border: 1px solid #334155; border-radius: 4px; color: #e2e8f0; padding: 0.5rem; font-family: 'Barlow', sans-serif; resize: vertical; }
+  .na-reason-wrap textarea:focus { outline: none; border-color: #f97316; }
+
+  /* Evidence checklist */
+  .evidence-list { list-style: none; padding: 0; margin: 0; }
+  .evidence-item { display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.4rem 0; }
+  .evidence-item input[type="checkbox"] { accent-color: #f97316; margin-top: 0.25rem; flex-shrink: 0; width: 1.1rem; height: 1.1rem; }
+  .evidence-item .ev-text { color: #e2e8f0; line-height: 1.4; }
+  .evidence-item .ev-age { font-size: 0.8rem; color: #94a3b8; margin-left: 0.25rem; }
+
+  /* Notes textarea */
+  .notes-wrap textarea { width: 100%; min-height: 100px; background: #1e293b; border: 1px solid #334155; border-radius: 4px; color: #e2e8f0; padding: 0.5rem; font-family: 'Barlow', sans-serif; resize: vertical; }
+  .notes-wrap textarea:focus { outline: none; border-color: #f97316; }
+
+  /* Navigation */
+  .criterion-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #334155; }
+  .criterion-nav a { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 1rem; background: #1e293b; border: 1px solid #334155; border-radius: 6px; color: #f97316; text-decoration: none; font-weight: 600; transition: all 0.15s ease; }
+  .criterion-nav a:hover { background: #f97316; color: #fff; border-color: #f97316; }
+  .criterion-nav .spacer { flex: 1; }
+</style>
+
+<div class="score-page">
+  <div style="display:flex; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:1rem;">
+    <h2 style="margin:0;">{{ criterion.code }}: {{ criterion.title }}</h2>
+    <span id="save-status" class="save-status"></span>
+    <button type="button" id="save-btn" style="margin-left:auto; background:#f97316; color:#fff; border:none; border-radius:6px; padding:0.4rem 1rem; cursor:pointer; font-family:'Barlow Condensed',sans-serif; font-weight:600; font-size:0.9rem;">Save</button>
+  </div>
+
+  {% if criterion.question %}
+  <div class="question-box">{{ criterion.question }}</div>
+  {% endif %}
+
+  {% if criterion.guidance %}
+  <div class="guidance-box">
+    <p>{{ criterion.guidance }}</p>
+  </div>
+  {% endif %}
+
+  {% if criterion.tip %}
+  <div class="tip-box">
+    <strong>Tip:</strong> {{ criterion.tip }}
+  </div>
+  {% endif %}
+
+  {% if scoring_anchors %}
+  <h3>Scoring Guide</h3>
+  <ul class="anchors-list">
+    {% for anchor in scoring_anchors %}
+    <li>
+      <span class="anchor-score">{{ anchor.score }}</span>
+      <span class="anchor-desc">{{ anchor.description }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  <form id="score-form" data-audit-id="{{ audit.id }}" data-criterion-code="{{ criterion.code }}" class="score-form">
+
+    <fieldset>
+      <legend>Score</legend>
+      <div class="score-options">
+        {% for i in range(5) %}
+        <div class="score-option">
+          <input type="radio" name="score" id="score-{{ i }}" value="{{ i }}"
+            {% if audit_score.score == i and not audit_score.is_na %}checked{% endif %}>
+          <label for="score-{{ i }}">{{ i }}</label>
+        </div>
+        {% endfor %}
+        {% if criterion.na_allowed %}
+        <div class="score-option na-option">
+          <input type="radio" name="score" id="score-na" value="na"
+            {% if audit_score.is_na %}checked{% endif %}>
+          <label for="score-na">N/A</label>
+        </div>
+        {% endif %}
+      </div>
+
+      {% if criterion.na_allowed %}
+      <div id="na-reason-field" class="na-reason-wrap" {% if not audit_score.is_na %}style="display:none"{% endif %}>
+        <label for="na-reason" style="display:block; margin-bottom:0.25rem; color:#94a3b8; font-size:0.9rem;">Reason for N/A</label>
+        <textarea id="na-reason" name="na_reason">{{ audit_score.na_reason or '' }}</textarea>
+      </div>
+      {% endif %}
+    </fieldset>
+
+    {% if evidence_items %}
+    <fieldset>
+      <legend>Evidence Checklist</legend>
+      <ul class="evidence-list">
+        {% for item in evidence_items %}
+        <li class="evidence-item">
+          <input type="checkbox" id="ev-{{ item.id }}" name="evidence_{{ item.id }}"
+            {% if evidence_states.get(item.id) %}checked{% endif %}>
+          <label for="ev-{{ item.id }}">
+            <span class="ev-text">{{ item.text }}</span>
+            {% if item.age_label %}
+            <span class="ev-age">({{ item.age_label }})</span>
+            {% endif %}
+          </label>
+        </li>
+        {% endfor %}
+      </ul>
+    </fieldset>
+    {% endif %}
+
+    <fieldset>
+      <legend>Notes &amp; Observations</legend>
+      <div class="notes-wrap">
+        <textarea name="notes" placeholder="Enter observations, findings, or comments for this criterion…">{{ audit_score.notes or '' }}</textarea>
+      </div>
+    </fieldset>
+  </form>
+
+  {# --- Attachments section (Req 8.3) --- #}
+  <div class="attachments-section" style="margin-top:1rem;">
+    <h3>Evidence Attachments</h3>
+
+    {% if attachments %}
+    <ul class="attachments-list" style="list-style:none; padding:0; margin:0 0 1rem;">
+      {% for att in attachments %}
+      <li style="display:flex; align-items:center; gap:0.75rem; padding:0.5rem 0.75rem; margin-bottom:0.25rem; background:#16213e; border-radius:4px;">
+        <a href="{{ url_for('audits.download_attachment', audit_id=audit.id, code=criterion.code, attachment_id=att.id) }}"
+           style="color:#f97316; text-decoration:none; flex:1;">
+          {{ att.original_filename }}
+        </a>
+        <span style="color:#94a3b8; font-size:0.85rem;">
+          {{ (att.file_size / 1024)|round(1) }} KB
+        </span>
+        {% if audit.status not in ('Completed', 'Archived') %}
+        <button type="button" class="delete-attachment-btn"
+                data-attachment-id="{{ att.id }}"
+                style="background:#dc2626; color:#fff; border:none; border-radius:4px; padding:0.25rem 0.5rem; cursor:pointer; font-size:0.85rem;">
+          Delete
+        </button>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p style="color:#94a3b8; font-size:0.9rem;">No attachments uploaded yet.</p>
+    {% endif %}
+
+    {% if audit.status not in ('Completed', 'Archived') %}
+    <form method="POST"
+          action="{{ url_for('audits.upload_attachment', audit_id=audit.id, code=criterion.code) }}"
+          enctype="multipart/form-data"
+          style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+      <input type="file" name="file" accept=".pdf,.png,.jpg,.jpeg,.docx"
+             style="color:#e2e8f0; font-size:0.9rem;">
+      <button type="submit"
+              style="background:#f97316; color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; cursor:pointer; font-weight:600;">
+        Upload
+      </button>
+    </form>
+    <p style="color:#64748b; font-size:0.8rem; margin-top:0.25rem;">
+      Accepted: PDF, PNG, JPG, JPEG, DOCX — Max 20 MB
+    </p>
+    {% endif %}
+  </div>
+
+  <nav class="criterion-nav">
+    {% if prev_code %}
+    <a href="{{ url_for('audits.audit_score', audit_id=audit.id, code=prev_code) }}">&#8592; Previous</a>
+    {% else %}
+    <span></span>
+    {% endif %}
+    <span class="spacer"></span>
+    {% if next_code %}
+    <a href="{{ url_for('audits.audit_score', audit_id=audit.id, code=next_code) }}">Next &#8594;</a>
+    {% else %}
+    <span></span>
+    {% endif %}
+  </nav>
+</div>
+
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+<script>
+  // Attachment deletion via DELETE /api/attachments/<id>
+  document.querySelectorAll('.delete-attachment-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var attachmentId = this.getAttribute('data-attachment-id');
+      if (!confirm('Delete this attachment?')) return;
+      fetch('/api/attachments/' + attachmentId, { method: 'DELETE' })
+        .then(function(resp) { return resp.json().then(function(data) { return { status: resp.status, data: data }; }); })
+        .then(function(result) {
+          if (result.status === 200 && result.data.ok) {
+            location.reload();
+          } else {
+            alert(result.data.error || 'Failed to delete attachment.');
+          }
+        })
+        .catch(function() { alert('Failed to delete attachment.'); });
+    });
+  });
+</script>
+{% endblock %}

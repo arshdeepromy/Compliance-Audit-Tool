@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\Desktop\health and safety audit tool\totika-audit-app\app\blueprints\api.py
+# hypothesis_version: 6.151.6
+
+[201, 400, 404, 'Archived', 'Audit not found', 'Completed', 'Draft', 'In_Progress', 'Invalid JSON body', 'Open', 'Overdue', 'POST', 'PUT', 'action', 'api', 'assigned_to_id', 'audit_id', 'audit_status', 'auditor', 'completed_at', 'completed_by_id', 'created_at', 'criterion_code', 'critical', 'description', 'due_date', 'error', 'evidence_checks', 'high', 'id', 'is_na', 'medium', 'na_reason', 'notes', 'ok', 'overall_score', 'priority', 'score', 'status']

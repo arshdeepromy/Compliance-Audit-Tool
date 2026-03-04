@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\mako\ast.py
+# hypothesis_version: 6.151.6
+
+['%s=%s', '*', '**', ',', ',\\s*$', '\\S', 'def ANON(%s):pass', 'elif', 'else', 'except', 'exec', 'for', 'funcname', 'if', 'if False:pass\n', 'pass', 'pass\nexcept:pass', 'try', 'try:pass\n', 'while', 'with']

@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\sqlalchemy\connectors\asyncio.py
+# hypothesis_version: 6.151.6
+
+['_adapt_connection', '_connection', '_cursor', '_execute_mutex', '_rows', 'await_', 'dbapi']

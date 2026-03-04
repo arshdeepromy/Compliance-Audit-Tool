@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\sqlalchemy\dialects\postgresql\named_types.py
+# hypothesis_version: 6.151.6
+
+['DOMAIN', '_adapted_from', '_create_events', '_ddl_runner', 'create_domain_type', 'create_enum_type', 'create_type', 'drop_domain_type', 'drop_enum_type', 'inherit_schema', 'metadata', 'name', 'native_enum', 'omit_aliases', 'schema', 'validate_strings', 'values_callable']

@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — {{ branding.company_name }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Barlow', sans-serif;
+      background: #000000;
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .auth-container {
+      width: 100%;
+      max-width: 420px;
+      padding: 2rem;
+    }
+
+    .auth-card {
+      background: #0a0a1a;
+      border-radius: 12px;
+      padding: 2.5rem 2rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      border: 1px solid #1a1a2e;
+    }
+
+    .auth-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .auth-logo {
+      max-height: 56px;
+      margin-bottom: 1rem;
+    }
+
+    .auth-header h1 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 1.5rem;
+      color: {{ branding.primary_colour }};
+      margin-bottom: 0.25rem;
+    }
+
+    .auth-header p {
+      font-size: 0.9rem;
+      color: #9ca3af;
+    }
+
+    .flash-messages {
+      margin-bottom: 1.25rem;
+    }
+
+    .flash {
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .flash.error {
+      background: rgba(239, 68, 68, 0.15);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .flash.info {
+      background: rgba(59, 130, 246, 0.15);
+      color: #93c5fd;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .flash.success {
+      background: rgba(34, 197, 94, 0.15);
+      color: #86efac;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+</style>
+  <style>
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #d1d5db;
+      margin-bottom: 0.4rem;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 0.7rem 0.9rem;
+      background: #0f1629;
+      border: 1px solid #2a2a4a;
+      border-radius: 8px;
+      color: #e0e0e0;
+      font-family: 'Barlow', sans-serif;
+      font-size: 0.95rem;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: {{ branding.primary_colour }};
+      box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
+    }
+
+    .form-group input::placeholder {
+      color: #6b7280;
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 0.75rem;
+      background: {{ branding.primary_colour }};
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600;
+      font-size: 1rem;
+      letter-spacing: 0.025em;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .btn-primary:hover {
+      background: {{ branding.accent_colour }};
+    }
+
+    .btn-primary:active {
+      transform: scale(0.98);
+    }
+
+    .auth-footer {
+      text-align: center;
+      margin-top: 1.25rem;
+    }
+
+    .auth-footer a {
+      color: {{ branding.primary_colour }};
+      text-decoration: none;
+      font-size: 0.875rem;
+    }
+
+    .auth-footer a:hover {
+      text-decoration: underline;
+    }
+
+    .auth-divider {
+      display: flex;
+      align-items: center;
+      margin: 1.25rem 0;
+      gap: 0.75rem;
+    }
+    .auth-divider::before, .auth-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #2a2a4a;
+    }
+    .auth-divider span {
+      color: #6b7280;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .btn-passkey {
+      width: 100%;
+      padding: 0.75rem;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      border: 1px solid #2a2a4a;
+      border-radius: 8px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .btn-passkey:hover {
+      background: #16213e;
+      border-color: {{ branding.primary_colour }};
+    }
+    .btn-passkey:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-container">
+    <div class="auth-card">
+      <div class="auth-header">
+        {% if branding.logo_filename %}
+        <img src="{{ url_for('uploaded_file', filename=branding.logo_filename) }}" alt="{{ branding.company_name }}" class="auth-logo">
+        {% endif %}
+        <h1>{{ branding.company_name }}</h1>
+        <p>Sign in to your account</p>
+      </div>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      <div class="flash-messages">
+        {% for category, message in messages %}
+        <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% endwith %}
+
+      <form method="post" novalidate>
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input id="username" name="username" type="text" placeholder="Enter your username" autocomplete="username" required>
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" placeholder="Enter your password" autocomplete="current-password" required>
+        </div>
+        <button type="submit" class="btn-primary">Sign In</button>
+      </form>
+
+      <div class="auth-divider">
+        <span>or</span>
+      </div>
+
+      <button type="button" id="passkey-login-btn" class="btn-passkey" onclick="startPasskeyLogin()">
+        🔑 Sign in with Passkey
+      </button>
+
+      <div class="auth-footer">
+        <a href="{{ url_for('auth.password_reset_request') }}">Forgot your password?</a>
+      </div>
+    </div>
+  </div>
+  <script>
+    // Hide passkey button if WebAuthn not supported
+    if (!window.PublicKeyCredential) {
+      var pkBtn = document.getElementById('passkey-login-btn');
+      if (pkBtn) pkBtn.style.display = 'none';
+    }
+
+    function bufferToBase64url(buffer) {
+      var bytes = new Uint8Array(buffer);
+      var str = '';
+      for (var i = 0; i < bytes.length; i++) str += String.fromCharCode(bytes[i]);
+      return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+
+    function base64urlToBuffer(base64url) {
+      var base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
+      while (base64.length % 4) base64 += '=';
+      var binary = atob(base64);
+      var bytes = new Uint8Array(binary.length);
+      for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      return bytes.buffer;
+    }
+
+    async function startPasskeyLogin() {
+      var btn = document.getElementById('passkey-login-btn');
+      btn.disabled = true;
+      btn.textContent = 'Waiting for passkey…';
+      try {
+        var resp = await fetch('/api/passkey/login/begin', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+        var opts = await resp.json();
+        if (!resp.ok) { alert(opts.error || 'Failed to start passkey login'); return; }
+
+        // webauthn v2.5.1 options_to_json() returns flat JSON (no publicKey wrapper)
+        opts.challenge = base64urlToBuffer(opts.challenge);
+        if (opts.allowCredentials) {
+          opts.allowCredentials = opts.allowCredentials.map(function(c) {
+            c.id = base64urlToBuffer(c.id);
+            return c;
+          });
+        }
+
+        var assertion = await navigator.credentials.get({ publicKey: opts });
+        var body = {
+          id: assertion.id,
+          rawId: bufferToBase64url(assertion.rawId),
+          response: {
+            authenticatorData: bufferToBase64url(assertion.response.authenticatorData),
+            clientDataJSON: bufferToBase64url(assertion.response.clientDataJSON),
+            signature: bufferToBase64url(assertion.response.signature),
+            userHandle: assertion.response.userHandle ? bufferToBase64url(assertion.response.userHandle) : null
+          },
+          type: assertion.type
+        };
+
+        var verifyResp = await fetch('/api/passkey/login/complete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        var result = await verifyResp.json();
+        if (verifyResp.ok && result.ok) {
+          window.location.href = result.redirect || '/';
+        } else {
+          alert(result.error || 'Passkey verification failed');
+        }
+      } catch (e) {
+        if (e.name !== 'NotAllowedError') alert('Passkey error: ' + e.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🔑 Sign in with Passkey';
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\alembic\ddl\impl.py
+# hypothesis_version: 6.151.6
+
+[';', '=', 'BEGIN', 'COMMIT', 'DECIMAL', 'List expected', 'NUMERIC', '[\\w\\-_]+|\\(.+?\\)', '[^(),]+', '^\\(.*\\)$', '__dialect__', 'always', 'default', 'dialect_kwargs', 'dialect_options', 'expr', 'impl', 'include_table', 'literal_binds', 'on_null', 'order']

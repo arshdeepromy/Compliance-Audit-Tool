@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\flask_sqlalchemy\extension.py
+# hypothesis_version: 6.151.6
+
+[404, 7200, ':memory:', 'FlaskSQLAlchemyBase', 'Model', 'SQLALCHEMY_BINDS', 'SQLALCHEMY_ECHO', '_', '_FSA_MCT', '_O', '__all__', '__fsa__', 'backref', 'bind', 'bind_key', 'charset', 'check_same_thread', 'class_', 'connect_args', 'create_all', 'drop_all', 'echo', 'echo_pool', 'event', 'metaclass', 'mysql', 'pool_class', 'pool_recycle', 'poolclass', 'query_class', 'query_cls', 'reflect', 'relation', 'scopefunc', 'sqlalchemy', 'sqlite', 'sqlite+pysqlite', 'uri', 'url', 'utf8mb4']

@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\sqlalchemy\dialects\postgresql\types.py
+# hypothesis_version: 6.151.6
+
+[700, 701, 1005, 1007, 1016, 1021, 1022, 1231, 1700, 'BIT', 'BYTEA', 'CIDR', 'CITEXT', 'INET', 'INTERVAL', 'MACADDR', 'MACADDR8', 'MONEY', 'OID', 'REGCLASS', 'REGCONFIG', 'TIME', 'TIMESTAMP', 'TSQUERY', 'TSVECTOR']

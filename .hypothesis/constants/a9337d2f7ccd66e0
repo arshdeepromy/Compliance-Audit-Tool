@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\alembic\ddl\mssql.py
+# hypothesis_version: 6.151.6
+
+['%s %s', '%s %s %s', '%s %s %s %s', '.', 'ADD %s', 'BEGIN TRANSACTION', 'GO', 'NOT NULL', 'NULL', 'NVARCHAR', 'VARCHAR', '[\\(\\) \\"\\\']', 'cache', 'colname', 'cycle', 'dialect_options', 'maxvalue', 'minvalue', 'mssql', 'mssql_clustered', 'mssql_drop_check', 'mssql_drop_default', 'mssql_include', 'nomaxvalue', 'nominvalue', 'schema_dot', 'server_default', 'tname', 'tname_quoted', 'type']

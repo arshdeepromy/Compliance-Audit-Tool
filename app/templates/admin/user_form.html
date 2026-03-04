@@ -1,0 +1,385 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}{{ 'Create User' if mode == 'create' else 'Edit User' }} — Admin{% endblock %}
+{% block admin_content %}
+<style>
+  .admin-container { max-width: 700px; margin: 0 auto; padding: 2rem; }
+  .page-header { margin-bottom: 1.5rem; }
+  .page-header h1 { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 1.75rem; color: #f97316; }
+  .page-header .back-link { display: inline-block; margin-bottom: 0.5rem; color: #9ca3af; text-decoration: none; font-size: 0.85rem; }
+  .page-header .back-link:hover { color: #f97316; }
+  .flash-messages { margin-bottom: 1.25rem; }
+  .flash { padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.875rem; margin-bottom: 0.5rem; }
+  .flash.error { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); }
+  .flash.success { background: rgba(34, 197, 94, 0.15); color: #86efac; border: 1px solid rgba(34, 197, 94, 0.3); }
+  .flash.info { background: rgba(59, 130, 246, 0.15); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.3); }
+  .form-card { background: #16213e; border-radius: 12px; border: 1px solid #2a2a4a; padding: 1.5rem; margin-bottom: 1.25rem; }
+  .form-group { margin-bottom: 1.25rem; }
+  .form-group label { display: block; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: #9ca3af; margin-bottom: 0.4rem; }
+</style>
+<style>
+  .form-group input[type="text"], .form-group input[type="email"], .form-group input[type="password"] {
+    width: 100%; padding: 0.6rem 0.8rem; background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 8px; color: #e0e0e0; font-family: 'Barlow', sans-serif; font-size: 0.9rem; transition: border-color 0.2s;
+  }
+  .form-group input:focus { outline: none; border-color: #f97316; box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15); }
+  .form-group input::placeholder { color: #6b7280; }
+  .roles-fieldset { border: 1px solid #2a2a4a; border-radius: 8px; padding: 1rem; margin-bottom: 1.25rem; }
+  .roles-fieldset legend { font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: #9ca3af; padding: 0 0.4rem; }
+  .roles-grid { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 0.5rem; }
+  .role-checkbox { display: flex; align-items: center; gap: 0.4rem; }
+  .role-checkbox input[type="checkbox"] { width: 18px; height: 18px; accent-color: #f97316; cursor: pointer; }
+  .role-checkbox label { font-size: 0.9rem; color: #d1d5db; cursor: pointer; text-transform: capitalize; margin-bottom: 0; font-family: 'Barlow', sans-serif; font-weight: 400; letter-spacing: 0; }
+  .form-actions { margin-top: 1.5rem; display: flex; gap: 0.75rem; flex-wrap: wrap; }
+</style>
+<style>
+  .btn { display: inline-block; padding: 0.6rem 1.2rem; border: none; border-radius: 8px; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 0.9rem; cursor: pointer; text-decoration: none; transition: background 0.2s, transform 0.1s; letter-spacing: 0.025em; }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: #f97316; color: #fff; }
+  .btn-primary:hover { background: #fb923c; }
+  .btn-danger { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); }
+  .btn-danger:hover { background: rgba(239, 68, 68, 0.3); }
+  .btn-secondary { background: #2a2a4a; color: #d1d5db; border: 1px solid #3a3a5a; }
+  .btn-secondary:hover { background: #3a3a5a; }
+  .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+  .section-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 0.95rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; }
+  .status-badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.8rem; font-weight: 600; font-family: 'Barlow Condensed', sans-serif; }
+  .status-active { background: rgba(34, 197, 94, 0.15); color: #86efac; border: 1px solid rgba(34, 197, 94, 0.3); }
+  .status-inactive { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); }
+  .mfa-card { background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+  .mfa-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+  .mfa-card-title { color: #fb923c; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 0.95rem; }
+  .mfa-status { font-size: 0.8rem; padding: 0.15rem 0.5rem; border-radius: 4px; }
+  .mfa-enabled { background: rgba(34, 197, 94, 0.15); color: #86efac; border: 1px solid rgba(34, 197, 94, 0.3); }
+  .mfa-disabled { background: rgba(107, 114, 128, 0.15); color: #9ca3af; border: 1px solid rgba(107, 114, 128, 0.3); }
+  .mfa-card p { color: #9ca3af; font-size: 0.85rem; margin-bottom: 0.5rem; }
+  .verify-inline { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.5rem; }
+  .verify-inline input { width: 120px; padding: 0.4rem 0.6rem; background: #0f1629; border: 1px solid #2a2a4a; border-radius: 6px; color: #e0e0e0; font-size: 0.9rem; text-align: center; letter-spacing: 0.2em; }
+  .passkey-list { margin-top: 0.5rem; }
+  .passkey-item { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #2a2a4a; }
+  .passkey-item:last-child { border-bottom: none; }
+  .passkey-name { color: #e0e0e0; font-size: 0.9rem; }
+  .passkey-date { color: #6b7280; font-size: 0.8rem; }
+</style>
+
+<div class="admin-container">
+  <div class="page-header">
+    <a href="{{ url_for('admin.users_list') }}" class="back-link">← Back to Users</a>
+    <h1>
+      {% if mode == 'create' %}Create User
+      {% else %}Edit User: {{ user.username }}
+        {% if user.is_active %}<span class="status-badge status-active">Active</span>
+        {% else %}<span class="status-badge status-inactive">Inactive</span>{% endif %}
+      {% endif %}
+    </h1>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <div class="flash-messages">
+    {% for category, message in messages %}<div class="flash {{ category }}">{{ message }}</div>{% endfor %}
+  </div>
+  {% endif %}
+  {% endwith %}
+
+  <form method="post" class="form-card">
+    <input type="hidden" name="action" value="save">
+    {% if mode == 'create' %}
+    <div class="form-group">
+      <label for="username">Username</label>
+      <input type="text" id="username" name="username" value="{{ request.form.get('username', '') }}" placeholder="Enter username" required>
+    </div>
+    {% endif %}
+    <div class="form-group">
+      <label for="display_name">Display Name</label>
+      <input type="text" id="display_name" name="display_name" value="{{ user.display_name if user else request.form.get('display_name', '') }}" placeholder="Enter display name" required>
+    </div>
+    <div class="form-group">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" value="{{ user.email if user else request.form.get('email', '') }}" placeholder="user@example.com" required>
+    </div>
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" placeholder="{{ 'Required' if mode == 'create' else 'Leave blank to keep current' }}" {{ 'required' if mode == 'create' else '' }}>
+    </div>
+    <fieldset class="roles-fieldset">
+      <legend>Roles</legend>
+      <div class="roles-grid">
+        {% for role in valid_roles %}
+        <div class="role-checkbox">
+          <input type="checkbox" id="role_{{ role }}" name="roles" value="{{ role }}" {% if user and role in user.roles %}checked{% endif %}>
+          <label for="role_{{ role }}">{{ role|title }}</label>
+        </div>
+        {% endfor %}
+      </div>
+    </fieldset>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">{{ 'Create User' if mode == 'create' else 'Save Changes' }}</button>
+    </div>
+  </form>
+
+  {% if mode == 'edit' and user %}
+  <!-- MFA Configuration -->
+  <div class="form-card">
+    <div class="section-title">Multi-Factor Authentication</div>
+
+    <!-- Step 1: Email Verification -->
+    <div class="mfa-card">
+      <div class="mfa-card-header">
+        <span class="mfa-card-title">📧 Step 1: Email Verification</span>
+        {% if user.email_verified %}
+        <span class="mfa-status mfa-enabled">Verified</span>
+        {% else %}
+        <span class="mfa-status mfa-disabled">Not Verified</span>
+        {% endif %}
+      </div>
+      {% if user.email_verified %}
+      <p>Email <strong style="color:#e0e0e0;">{{ user.email }}</strong> is verified.</p>
+      {% else %}
+      <p>Verify the user's email before enabling email-based MFA. A 6-digit code will be sent to <strong style="color:#e0e0e0;">{{ user.email }}</strong>.</p>
+      <form method="post" action="{{ url_for('admin.send_email_verification', id=user.id) }}" style="display:inline;">
+        <button type="submit" class="btn btn-secondary btn-sm">Send Verification Code</button>
+      </form>
+      <form method="post" action="{{ url_for('admin.verify_email', id=user.id) }}" style="margin-top:0.75rem;">
+        <div class="verify-inline">
+          <input type="text" name="verification_code" placeholder="000000" maxlength="6" inputmode="numeric" pattern="[0-9]*">
+          <button type="submit" class="btn btn-primary btn-sm">Verify</button>
+        </div>
+      </form>
+      {% endif %}
+    </div>
+
+    <!-- Step 2: TOTP (Authenticator App) -->
+    <div class="mfa-card">
+      <div class="mfa-card-header">
+        <span class="mfa-card-title">🔐 TOTP (Authenticator App)</span>
+        {% if user.mfa_totp_enabled %}
+        <span class="mfa-status mfa-enabled">Enabled</span>
+        {% else %}
+        <span class="mfa-status mfa-disabled">Disabled</span>
+        {% endif %}
+      </div>
+      {% if user.mfa_totp_enabled and user.totp_secret %}
+      <p>TOTP is active. The user can use their authenticator app to log in.</p>
+      {% set totp_uri = 'otpauth://totp/' + branding.company_name|urlencode + ':' + user.username|urlencode + '?secret=' + user.totp_secret + '&issuer=' + branding.company_name|urlencode %}
+      <div style="text-align:center; margin:0.75rem 0;">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={{ totp_uri|urlencode }}" alt="TOTP QR Code" style="border-radius:8px; background:#fff; padding:8px;">
+      </div>
+      <p style="text-align:center; color:#6b7280; font-size:0.8rem;">
+        Manual key: <code style="color:#f97316; background:#0f1629; padding:0.2rem 0.5rem; border-radius:4px;">{{ user.totp_secret }}</code>
+      </p>
+      <form method="post" style="margin-top:0.5rem;">
+        <input type="hidden" name="action" value="save">
+        <input type="hidden" name="display_name" value="{{ user.display_name }}">
+        <input type="hidden" name="email" value="{{ user.email }}">
+        {% for role in user.roles.split(',') %}<input type="hidden" name="roles" value="{{ role.strip() }}">{% endfor %}
+        <input type="hidden" name="mfa_action" value="disable_totp">
+        <button type="submit" class="btn btn-danger btn-sm">Disable TOTP</button>
+      </form>
+      {% else %}
+      <p>Enable TOTP to let the user authenticate with an app like Google Authenticator or Authy.</p>
+      <form method="post">
+        <input type="hidden" name="action" value="save">
+        <input type="hidden" name="display_name" value="{{ user.display_name }}">
+        <input type="hidden" name="email" value="{{ user.email }}">
+        {% for role in user.roles.split(',') %}<input type="hidden" name="roles" value="{{ role.strip() }}">{% endfor %}
+        <input type="hidden" name="mfa_action" value="enable_totp">
+        <button type="submit" class="btn btn-primary btn-sm">Enable TOTP</button>
+      </form>
+      {% endif %}
+    </div>
+
+    <!-- Step 3: Email MFA -->
+    <div class="mfa-card">
+      <div class="mfa-card-header">
+        <span class="mfa-card-title">📨 Email MFA</span>
+        {% if user.mfa_email_enabled %}
+        <span class="mfa-status mfa-enabled">Enabled</span>
+        {% else %}
+        <span class="mfa-status mfa-disabled">Disabled</span>
+        {% endif %}
+      </div>
+      {% if user.mfa_email_enabled %}
+      <p>A 6-digit code will be sent to <strong style="color:#e0e0e0;">{{ user.email }}</strong> on each login.</p>
+      <p style="font-size:0.8rem;">Requires <a href="{{ url_for('admin.smtp') }}" style="color:#f97316;">SMTP</a> to be configured.</p>
+      <form method="post" style="margin-top:0.5rem;">
+        <input type="hidden" name="action" value="save">
+        <input type="hidden" name="display_name" value="{{ user.display_name }}">
+        <input type="hidden" name="email" value="{{ user.email }}">
+        {% for role in user.roles.split(',') %}<input type="hidden" name="roles" value="{{ role.strip() }}">{% endfor %}
+        <input type="hidden" name="mfa_action" value="disable_email">
+        <button type="submit" class="btn btn-danger btn-sm">Disable Email MFA</button>
+      </form>
+      {% elif user.email_verified %}
+      <p>Send a 6-digit code to the user's verified email on each login.</p>
+      <form method="post">
+        <input type="hidden" name="action" value="save">
+        <input type="hidden" name="display_name" value="{{ user.display_name }}">
+        <input type="hidden" name="email" value="{{ user.email }}">
+        {% for role in user.roles.split(',') %}<input type="hidden" name="roles" value="{{ role.strip() }}">{% endfor %}
+        <input type="hidden" name="mfa_action" value="enable_email">
+        <button type="submit" class="btn btn-primary btn-sm">Enable Email MFA</button>
+      </form>
+      {% else %}
+      <p style="color:#6b7280;">Complete Step 1 (email verification) first to enable email MFA.</p>
+      {% endif %}
+    </div>
+
+    {% if user.mfa_totp_enabled and user.mfa_email_enabled %}
+    <div style="background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.3); border-radius:8px; padding:0.75rem; margin-top:0.5rem;">
+      <p style="color:#86efac; font-size:0.85rem; margin:0;">
+        ✅ Dual MFA is active. The user can switch between TOTP and email on the login screen.
+      </p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Passkeys -->
+  <div class="form-card">
+    <div class="section-title">🔑 Passkeys (WebAuthn)</div>
+    <p style="color:#9ca3af; font-size:0.85rem; margin-bottom:1rem;">
+      Passkeys allow passwordless login using biometrics or security keys. Passkey login bypasses MFA.
+    </p>
+    <div id="passkey-list" class="passkey-list">
+      <p style="color:#6b7280; font-size:0.85rem;">Loading passkeys…</p>
+    </div>
+    <div style="margin-top:0.75rem;">
+      <button type="button" id="register-passkey-btn" class="btn btn-primary btn-sm" onclick="registerPasskey()">
+        + Register New Passkey
+      </button>
+    </div>
+  </div>
+
+  <!-- Account Actions -->
+  <div class="form-card">
+    <div class="section-title">Account Actions</div>
+    <div class="form-actions" style="margin-top: 0;">
+      <form method="post" style="display:inline">
+        <input type="hidden" name="display_name" value="{{ user.display_name }}">
+        <input type="hidden" name="email" value="{{ user.email }}">
+        {% for role in user.roles.split(',') %}<input type="hidden" name="roles" value="{{ role.strip() }}">{% endfor %}
+        {% if user.is_active %}
+        <input type="hidden" name="action" value="deactivate">
+        <button type="submit" class="btn btn-danger">Deactivate User</button>
+        {% else %}
+        <input type="hidden" name="action" value="activate">
+        <button type="submit" class="btn btn-secondary">Activate User</button>
+        {% endif %}
+      </form>
+      <form method="post" style="display:inline">
+        <input type="hidden" name="display_name" value="{{ user.display_name }}">
+        <input type="hidden" name="email" value="{{ user.email }}">
+        {% for role in user.roles.split(',') %}<input type="hidden" name="roles" value="{{ role.strip() }}">{% endfor %}
+        <input type="hidden" name="action" value="reset_password">
+        <button type="submit" class="btn btn-secondary">Reset Password</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    var userId = {{ user.id }};
+
+    function loadPasskeys() {
+      fetch('/api/passkey/user/' + userId)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          var container = document.getElementById('passkey-list');
+          if (!data.passkeys || data.passkeys.length === 0) {
+            container.innerHTML = '<p style="color:#6b7280; font-size:0.85rem;">No passkeys registered.</p>';
+            return;
+          }
+          var html = '';
+          data.passkeys.forEach(function(pk) {
+            html += '<div class="passkey-item">';
+            html += '<div><span class="passkey-name">🔑 ' + pk.name + '</span><br><span class="passkey-date">Added ' + new Date(pk.created_at).toLocaleDateString() + '</span></div>';
+            html += '<button type="button" class="btn btn-danger btn-sm" onclick="deletePasskey(' + pk.id + ')">Remove</button>';
+            html += '</div>';
+          });
+          container.innerHTML = html;
+        })
+        .catch(function() {
+          document.getElementById('passkey-list').innerHTML = '<p style="color:#fca5a5; font-size:0.85rem;">Failed to load passkeys.</p>';
+        });
+    }
+
+    function deletePasskey(id) {
+      if (!confirm('Remove this passkey?')) return;
+      fetch('/api/passkey/' + id, { method: 'DELETE' })
+        .then(function(r) { return r.json(); })
+        .then(function(data) { if (data.ok) loadPasskeys(); else alert(data.error); })
+        .catch(function(e) { alert('Error: ' + e.message); });
+    }
+
+    function bufferToBase64url(buffer) {
+      var bytes = new Uint8Array(buffer);
+      var str = '';
+      for (var i = 0; i < bytes.length; i++) str += String.fromCharCode(bytes[i]);
+      return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+
+    function base64urlToBuffer(b64) {
+      var base64 = b64.replace(/-/g, '+').replace(/_/g, '/');
+      while (base64.length % 4) base64 += '=';
+      var bin = atob(base64);
+      var bytes = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      return bytes.buffer;
+    }
+
+    async function registerPasskey() {
+      var btn = document.getElementById('register-passkey-btn');
+      btn.disabled = true;
+      btn.textContent = 'Waiting…';
+      try {
+        var resp = await fetch('/api/passkey/register/begin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: userId })
+        });
+        var opts = await resp.json();
+        if (!resp.ok) { alert(opts.error || 'Failed'); return; }
+
+        // webauthn v2.5.1 options_to_json() returns flat JSON (no publicKey wrapper)
+        opts.challenge = base64urlToBuffer(opts.challenge);
+        opts.user.id = base64urlToBuffer(opts.user.id);
+        if (opts.excludeCredentials) {
+          opts.excludeCredentials = opts.excludeCredentials.map(function(c) {
+            c.id = base64urlToBuffer(c.id); return c;
+          });
+        }
+
+        var cred = await navigator.credentials.create({ publicKey: opts });
+        var body = JSON.stringify({
+          id: cred.id,
+          rawId: bufferToBase64url(cred.rawId),
+          response: {
+            attestationObject: bufferToBase64url(cred.response.attestationObject),
+            clientDataJSON: bufferToBase64url(cred.response.clientDataJSON)
+          },
+          type: cred.type,
+          name: prompt('Name this passkey:', 'My Passkey') || 'My Passkey'
+        });
+
+        var verifyResp = await fetch('/api/passkey/register/complete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: body
+        });
+        var result = await verifyResp.json();
+        if (verifyResp.ok && result.ok) {
+          loadPasskeys();
+        } else {
+          alert(result.error || 'Registration failed');
+        }
+      } catch (e) {
+        if (e.name !== 'NotAllowedError') alert('Error: ' + e.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '+ Register New Passkey';
+      }
+    }
+
+    // Load passkeys on page load
+    loadPasskeys();
+  </script>
+  {% endif %}
+</div>
+{% endblock %}

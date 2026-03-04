@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\alembic\operations\toimpl.py
+# hypothesis_version: 6.151.6
+
+['Operations', 'Table', 'if_exists', 'if_not_exists', 'ops.AddColumnOp', 'ops.AddConstraintOp', 'ops.AlterColumnOp', 'ops.BulkInsertOp', 'ops.CreateIndexOp', 'ops.CreateTableOp', 'ops.DropColumnOp', 'ops.DropConstraintOp', 'ops.DropIndexOp', 'ops.DropTableOp', 'ops.ExecuteSQLOp', 'ops.RenameTableOp']

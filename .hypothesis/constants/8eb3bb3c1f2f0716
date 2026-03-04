@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\Desktop\health and safety audit tool\totika-audit-app\app\utils\rbac.py
+# hypothesis_version: 6.151.6
+
+[403, ',', 'admin', 'auditee', 'auditor', 'auth.login', 'current_user', 'viewer']

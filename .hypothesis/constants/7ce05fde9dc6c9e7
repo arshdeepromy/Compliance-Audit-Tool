@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\alembic\autogenerate\api.py
+# hypothesis_version: 6.151.6
+
+['"%s"', '%s.%s', ', ', '_needs_render', 'branch_label', 'config', 'depends_on', 'downgrade_token', 'head', 'heads', 'include_name', 'include_object', 'message', 'op.', 'render_as_batch', 'render_item', 'rev_id', 'sa.', 'schema_name', 'splice', 'sql', 'table', 'table_name', 'target_metadata', 'upgrade_token', 'user_module_prefix', 'version_path']

@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\Desktop\health and safety audit tool\totika-audit-app\app\config.py
+# hypothesis_version: 6.151.6
+
+[1024, '..', '/', '30', '8', 'BASE_PATH', 'BEHIND_PROXY', 'DATABASE_URL', 'SECRET_KEY', 'SEED_DATA_DIR', 'SESSION_EXPIRY_HOURS', 'Tōtika Audit Tool', 'UPLOAD_FOLDER', 'admin', 'false', 'seed_data', 'sqlite:///:memory:', 'test-secret-key', 'test_seed_data', 'test_uploads', 'true', 'uploads']

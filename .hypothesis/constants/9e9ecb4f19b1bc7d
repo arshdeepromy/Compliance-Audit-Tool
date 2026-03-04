@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\alembic\script\revision.py
+# hypothesis_version: 6.151.6
+
+['%s(%s)', '%s@%s', '%s@head', "'%s'", '+', ', ', '-', '@', 'Ambiguous walk', 'Cycle', 'Dependency cycle', 'Dependency self-loop', "Literal['base']", "No such branch: '%s'", 'Nothing to drop', 'Revision', 'Self-loop', 'Walked too far', '_T', '_TR', 'base', 'branch_labels=%r', 'dependencies=%r', 'head', 'heads']

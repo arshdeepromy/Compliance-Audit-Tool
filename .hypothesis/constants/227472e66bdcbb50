@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\sqlalchemy\util\compat.py
+# hypothesis_version: 6.151.6
+
+[' -> ', '(', ')', '*', '**', ', ', '.', ': ', '=', 'CPython', 'PyPy', '_T_co', '__module__', 'aarch', 'ascii', 'backslashreplace', 'beta', 'builtins', 'darwin', 'latin-1', 'return', 'select', 'typing', 'typing.', 'win', '~']

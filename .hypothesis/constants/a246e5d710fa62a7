@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\alembic\ddl\oracle.py
+# hypothesis_version: 6.151.6
+
+['%s', '%s %s', '%s %s ', '%s %s %s', '%s RENAME TO %s', '/', 'ADD %s', 'BIGINT', 'COMMIT', 'DECIMAL', 'DEFAULT %s', 'DEFAULT NULL', 'DOUBLE', 'DOUBLE_PRECISION', 'DROP IDENTITY', 'FLOAT', 'INTEGER', 'MODIFY %s', 'NOT NULL', 'NULL', 'NUMBER', 'NUMERIC', 'SMALLINT', 'VARCHAR', 'VARCHAR2', '\\1', '^\\"?\'(.+)\'\\"?$', '^\\((.+)\\)$', 'oracle']

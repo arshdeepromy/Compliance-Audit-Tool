@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\alembic\ddl\postgresql.py
+# hypothesis_version: 6.151.6
+
+[' desc( nulls first)$', '"', '%s %s ', '%s %s %s %s', '%s RENAME TO %s', '%s=%r', "'", '(', '( asc nulls last)$', '( asc) nulls first$', '( asc)$', '(%s, %r)', '(.+?\\()', '(.+?\\(.*text_type=)', '(::[\\w ]+\\w)', ')', ', ', '::', 'ADD ', 'ALWAYS', 'BY DEFAULT', 'DOUBLE PRECISION', 'DROP IDENTITY', 'FLOAT', 'NULL', 'SET %s ', 'SET GENERATED %s ', 'TYPE %s', 'USING %s', "^'|'$", '_ops', '_render_%s_type', 'always', 'args', 'as\\s+[^)]+\\)', 'astext_type', 'cast\\s*\\(', 'default', 'deferrable', 'dialect_options', 'exclude', 'exclude_constraint', 'include_table', 'initially', 'item_type', 'literal_binds', 'name', 'nulls_not_distinct', 'postgresql', 'postgresql.', 'postgresql_include', 'postgresql_using', 'prefix', 'schema', 'text_type', 'type', 'using', 'where=%s']

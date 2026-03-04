@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\Desktop\health and safety audit tool\totika-audit-app\app\blueprints\admin.py
+# hypothesis_version: 6.151.6
+
+[400, '#f97316', '#fb923c', '.', '/admin/branding', 'GET', 'POST', 'Tōtika Audit Tool', 'UPLOAD_FOLDER', 'accent_colour', 'admin', 'admin.branding', 'admin/branding.html', 'company_name', 'error', 'jpeg', 'jpg', 'logo', 'png', 'primary_colour', 'success']

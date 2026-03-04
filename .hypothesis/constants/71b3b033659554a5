@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\werkzeug\routing\converters.py
+# hypothesis_version: 6.151.6
+
+[100, 200, "!$&'()*+,/:;=@", ', ', '/', '[^/]+', '[^/].*?', '\\d+', '\\d+\\.\\d+', 'any', 'default', 'float', 'int', 'part_isolating', 'path', 'regex', 'string', 'uuid']

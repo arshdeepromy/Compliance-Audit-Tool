@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\sqlalchemy\dialects\postgresql\psycopg2.py
+# hypothesis_version: 6.151.6
+
+[100, '"', 'AUTOCOMMIT', 'DateRange', 'DateTimeRange', 'DateTimeTZRange', 'NumericRange', 'READ COMMITTED', 'READ UNCOMMITTED', 'REPEATABLE READ', 'SERIALIZABLE', '[)', '__version__', 'array_oid', 'closed', 'connection not open', 'executemany_mode', 'none', 'oid', 'page_size', 'psycopg2', 'pyformat', 'values_only', 'values_plus_batch']

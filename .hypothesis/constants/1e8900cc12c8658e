@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\sqlalchemy\dialects\postgresql\ext.py
+# hypothesis_version: 6.151.6
+
+['_T', '_default_array_type', 'aggregate_order_by', 'deferrable', 'exclude_constraint', 'gist', 'initially', 'name', 'ops', 'order_by', 'postgresql', 'target', 'type', 'using', 'where']

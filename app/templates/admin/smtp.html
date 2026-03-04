@@ -1,0 +1,106 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}SMTP Settings — {{ branding.company_name }}{% endblock %}
+{% block admin_content %}
+<style>
+  .page-header { margin-bottom: 1.5rem; }
+  .page-header h1 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700; font-size: 1.75rem; color: #f97316;
+  }
+  .notice {
+    background: rgba(251, 146, 60, 0.12); color: #fb923c;
+    border: 1px solid rgba(251, 146, 60, 0.3); padding: 0.75rem 1rem;
+    border-radius: 8px; font-size: 0.875rem; margin-bottom: 1.25rem;
+  }
+  .form-card {
+    background: #16213e; border-radius: 12px;
+    border: 1px solid #2a2a4a; padding: 1.5rem; margin-bottom: 1.25rem;
+  }
+  .form-group { margin-bottom: 1.25rem; }
+  .form-group label {
+    display: block; font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600; font-size: 0.85rem; text-transform: uppercase;
+    letter-spacing: 0.05em; color: #9ca3af; margin-bottom: 0.4rem;
+  }
+  .form-group input[type="text"],
+  .form-group input[type="number"],
+  .form-group input[type="password"],
+  .form-group input[type="email"] {
+    width: 100%; padding: 0.6rem 0.8rem; background: #1a1a2e;
+    border: 1px solid #2a2a4a; border-radius: 8px; color: #e0e0e0;
+    font-family: 'Barlow', sans-serif; font-size: 0.9rem;
+  }
+  .form-group input:focus { outline: none; border-color: #f97316; }
+  .form-group input::placeholder { color: #6b7280; }
+  .form-row { display: flex; gap: 1.5rem; }
+  .form-row .form-group { flex: 1; }
+  .checkbox-group {
+    display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.25rem;
+  }
+  .checkbox-group input[type="checkbox"] { width: 18px; height: 18px; accent-color: #f97316; cursor: pointer; }
+  .checkbox-group label { font-size: 0.9rem; color: #d1d5db; cursor: pointer; margin-bottom: 0; }
+  .form-actions { margin-top: 1.5rem; display: flex; gap: 0.75rem; flex-wrap: wrap; }
+  .btn {
+    display: inline-block; padding: 0.6rem 1.2rem; border: none;
+    border-radius: 8px; font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600; font-size: 0.9rem; cursor: pointer;
+    text-decoration: none; transition: background 0.2s, transform 0.1s;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: #f97316; color: #fff; }
+  .btn-primary:hover { background: #fb923c; }
+  .btn-secondary { background: #2a2a4a; color: #d1d5db; border: 1px solid #3a3a5a; }
+  .btn-secondary:hover { background: #3a3a5a; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+</style>
+
+<div class="page-header"><h1>SMTP Settings</h1></div>
+
+{% if not smtp_configured %}
+<div class="notice">SMTP is not configured. Email MFA, password reset, and notifications are disabled.</div>
+{% endif %}
+
+<form method="post" action="{{ url_for('admin.smtp') }}" class="form-card">
+  <div class="form-row">
+    <div class="form-group">
+      <label for="host">SMTP Host</label>
+      <input type="text" id="host" name="host" value="{{ smtp.host or '' }}" placeholder="smtp.example.com">
+    </div>
+    <div class="form-group" style="max-width: 140px;">
+      <label for="port">Port</label>
+      <input type="number" id="port" name="port" value="{{ smtp.port }}" placeholder="587">
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-group">
+      <label for="username">Username</label>
+      <input type="text" id="username" name="username" value="{{ smtp.username or '' }}" placeholder="user@example.com">
+    </div>
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" placeholder="{{ '••••••••' if password_set else 'Enter password' }}">
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="sender_address">Sender Address</label>
+    <input type="email" id="sender_address" name="sender_address" value="{{ smtp.sender_address or '' }}" placeholder="noreply@example.com">
+  </div>
+  <div class="checkbox-group">
+    <input type="checkbox" id="use_tls" name="use_tls" {{ 'checked' if smtp.use_tls else '' }}>
+    <label for="use_tls">Use TLS</label>
+  </div>
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary">Save SMTP Settings</button>
+  </div>
+</form>
+
+<form method="post" action="{{ url_for('admin.smtp_test') }}" class="form-card">
+  <div class="form-group">
+    <label for="test_recipient">Send Test Email To</label>
+    <input type="email" id="test_recipient" name="test_recipient" value="{{ smtp.sender_address or '' }}" placeholder="recipient@example.com">
+  </div>
+  <div class="form-actions" style="margin-top: 0;">
+    <button type="submit" class="btn btn-secondary" {{ 'disabled' if not smtp_configured else '' }}>Send Test Email</button>
+  </div>
+</form>
+{% endblock %}

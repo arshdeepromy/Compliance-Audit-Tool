@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\werkzeug\sansio\utils.py
+# hypothesis_version: 6.151.6
+
+["!$&'()*+,/:;=?@%", "!$&'()*+,/:;=@%", '.', '/', ':', '://', ':443', ':80', '?', '[', 'ascii', 'chunked', 'http', 'https', 'idna', 'ws', 'wss']

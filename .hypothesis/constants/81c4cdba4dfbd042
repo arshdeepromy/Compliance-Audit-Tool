@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\flask\signals.py
+# hypothesis_version: 6.151.6
+
+['appcontext-popped', 'appcontext-pushed', 'message-flashed', 'request-finished', 'request-started', 'request-tearing-down', 'template-rendered']

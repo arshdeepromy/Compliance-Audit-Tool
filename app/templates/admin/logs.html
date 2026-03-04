@@ -1,0 +1,243 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Activity Log — Admin{% endblock %}
+{% block admin_content %}
+<style>
+  .admin-container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .page-header h1 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 1.75rem;
+    color: #f97316;
+  }
+
+  /* Filter bar */
+  .filter-bar {
+    background: #16213e;
+    border-radius: 12px;
+    border: 1px solid #2a2a4a;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: flex-end;
+  }
+
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .filter-group label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #9ca3af;
+  }
+
+  .filter-group select,
+  .filter-group input[type="date"] {
+    background: #0f172a;
+    border: 1px solid #2a2a4a;
+    border-radius: 6px;
+    color: #d1d5db;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.85rem;
+    font-family: 'Barlow', sans-serif;
+  }
+
+  .filter-group select:focus,
+  .filter-group input[type="date"]:focus {
+    outline: none;
+    border-color: #f97316;
+  }
+
+  .btn {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.2s, transform 0.1s;
+    letter-spacing: 0.025em;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: #f97316; color: #fff; }
+  .btn-primary:hover { background: #fb923c; }
+  .btn-secondary { background: #2a2a4a; color: #d1d5db; }
+  .btn-secondary:hover { background: #3a3a5a; }
+
+  /* Table */
+  .table-card {
+    background: #16213e;
+    border-radius: 12px;
+    border: 1px solid #2a2a4a;
+    overflow: hidden;
+  }
+
+  .logs-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .logs-table th {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #9ca3af;
+    text-align: left;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #2a2a4a;
+    background: rgba(42, 42, 74, 0.3);
+  }
+
+  .logs-table td {
+    padding: 0.6rem 1rem;
+    font-size: 0.85rem;
+    color: #d1d5db;
+    border-bottom: 1px solid rgba(42, 42, 74, 0.5);
+    vertical-align: top;
+  }
+
+  .logs-table tbody tr:hover {
+    background: rgba(249, 115, 22, 0.05);
+  }
+
+  .logs-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .badge-action {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-family: 'Barlow Condensed', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    background: rgba(249, 115, 22, 0.15);
+    color: #fb923c;
+    border: 1px solid rgba(249, 115, 22, 0.3);
+  }
+
+  .details-cell {
+    max-width: 300px;
+    word-break: break-word;
+    font-size: 0.8rem;
+    color: #9ca3af;
+  }
+
+  .ip-cell {
+    font-family: monospace;
+    font-size: 0.8rem;
+    color: #6b7280;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: #6b7280;
+    font-size: 0.9rem;
+  }
+</style>
+
+<div class="admin-container">
+  <div class="page-header">
+    <h1>Activity Log</h1>
+  </div>
+
+  <!-- Filter bar -->
+  <form method="get" action="{{ url_for('admin.activity_logs') }}" class="filter-bar">
+    <div class="filter-group">
+      <label for="user_id">User</label>
+      <select name="user_id" id="user_id">
+        <option value="">All users</option>
+        {% for u in users %}
+        <option value="{{ u.id }}" {% if filter_user_id == u.id|string %}selected{% endif %}>
+          {{ u.display_name }} ({{ u.username }})
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label for="action">Action</label>
+      <select name="action" id="action">
+        <option value="">All actions</option>
+        {% for a in action_types %}
+        <option value="{{ a }}" {% if filter_action == a %}selected{% endif %}>{{ a }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label for="date_from">From</label>
+      <input type="date" name="date_from" id="date_from" value="{{ date_from }}">
+    </div>
+
+    <div class="filter-group">
+      <label for="date_to">To</label>
+      <input type="date" name="date_to" id="date_to" value="{{ date_to }}">
+    </div>
+
+    <button type="submit" class="btn btn-primary">Filter</button>
+    <a href="{{ url_for('admin.activity_logs') }}" class="btn btn-secondary">Clear</a>
+  </form>
+
+  <!-- Log entries table -->
+  <div class="table-card">
+    {% if logs %}
+    <table class="logs-table">
+      <thead>
+        <tr>
+          <th>Timestamp</th>
+          <th>User</th>
+          <th>Action</th>
+          <th>Details</th>
+          <th>IP Address</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in logs %}
+        <tr>
+          <td>{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+          <td>
+            {% if log.user %}
+              {{ log.user.display_name }}
+            {% else %}
+              <span style="color: #6b7280;">System</span>
+            {% endif %}
+          </td>
+          <td><span class="badge-action">{{ log.action }}</span></td>
+          <td class="details-cell">{{ log.details or '—' }}</td>
+          <td class="ip-cell">{{ log.ip_address or '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">No activity log entries found.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

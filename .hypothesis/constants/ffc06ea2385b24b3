@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\mako\_ast_util.py
+# hypothesis_version: 6.151.6
+
+[' %s ', ' = ', ' >> ', ' as ', ' else ', ' for ', ' from ', ' if ', ' in ', '!=', '%', '&', '(', ')', '):', '*', '**', '+', ',', ', ', ',)', '-', '.', '/', '//', ':', ': ', '<', '<<', '<=', '<unknown>', '=', '==', '>', '>=', '>>', '@', 'Ellipsis', 'None', '[', ']', '^', '`', 'and', 'break', 'class %s', 'continue', 'def %s(', 'del ', 'elif ', 'else:', 'exc', 'except', 'exec', 'finally:', 'for ', 'from %s%s import ', 'global ', 'if ', 'import ', 'in', 'is', 'is not', 'keywords', 'kwargs', 'lambda ', 'nonlocal ', 'not', 'not in', 'or', 'pass', 'print ', 'raise', 'return ', 'starargs', 'try:', 'type', 'visit_', 'while ', 'with ', 'yield ', '{', '|', '}', '~']

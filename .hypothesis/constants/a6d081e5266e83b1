@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\sqlalchemy\orm\dependency.py
+# hypothesis_version: 6.151.6
+
+['%s(%s)', '%s_%s', 'add', 'all', 'children_added', 'delete', 'old_', 'pk change', 'pk_switchers', 'reverse_key', 'x', 'y', 'z', 'zm']

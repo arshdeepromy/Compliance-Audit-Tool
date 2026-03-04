@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\sqlalchemy\dialects\postgresql\pg8000.py
+# hypothesis_version: 6.151.6
+
+[114, 650, 869, 3802, ' %% ', ' FROM ', '(\\d+)(?:[-\\.]?|$)', ';', 'AUTOCOMMIT', 'CLOSE ', 'COMMIT', 'DECLARE ', 'DEFERRABLE', 'FETCH FORWARD ', 'NOT DEFERRABLE', 'READ COMMITTED', 'READ ONLY', 'READ UNCOMMITTED', 'READ WRITE', 'REPEATABLE READ', 'SERIALIZABLE', '_', '__version__', 'c_%s_%s', 'connection is closed', 'float', 'format', 'json_int_index', 'json_str_index', 'network error', 'on', 'pg8000', 'port', 'should not be here', 'user']

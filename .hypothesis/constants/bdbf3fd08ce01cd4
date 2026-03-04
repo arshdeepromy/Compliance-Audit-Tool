@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\alembic\autogenerate\compare.py
+# hypothesis_version: 6.151.6
+
+['%s.', '%s.%s', ', ', 'NOT NULL', 'NULL', '[ \\(\\)\'\\"`\\[\\]]', '_C', 'asc', 'autoincrement', 'column', 'column_names', 'column_reflect', 'column_sorting', 'constrained_columns', 'deferrable', 'desc', 'duplicates_index', 'expressions', 'include_schemas', 'index', 'information_schema', 'initially', 'literal_binds', 'name', 'nulls_first', 'nulls_last', 'nullsfirst', 'nullslast', 'ondelete', 'onupdate', 'options', 'referred_columns', 'referred_schema', 'referred_table', 'schema', 'schema_name', 'table', 'table_name', 'unique', 'unique constraint', 'unique_constraint']

@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\werkzeug\middleware\proxy_fix.py
+# hypothesis_version: 6.151.6
+
+[':', 'HTTP_HOST', 'HTTP_X_FORWARDED_FOR', 'REMOTE_ADDR', 'SCRIPT_NAME', 'SERVER_NAME', 'SERVER_PORT', ']', 'wsgi.url_scheme']

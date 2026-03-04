@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\Desktop\health and safety audit tool\totika-audit-app\app\models\action.py
+# hypothesis_version: 6.151.6
+
+['Completed', 'In_Progress', 'Open', 'Overdue', 'User', 'assigned_actions', 'audit.id', 'completed_actions', 'corrective_action', 'user.id']

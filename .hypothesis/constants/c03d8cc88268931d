@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\sqlalchemy\dialects\sqlite\json.py
+# hypothesis_version: 6.151.6
+
+['$%s', '$."%s"', '$[%s]', '."%s"', '[%s]']

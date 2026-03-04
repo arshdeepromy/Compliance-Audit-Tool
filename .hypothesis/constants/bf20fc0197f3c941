@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\Desktop\health and safety audit tool\totika-audit-app\app\services\importer.py
+# hypothesis_version: 6.151.6
+
+['.json', 'Completed', 'In_Progress', 'Open', 'Overdue', 'SEED_DATA_DIR', 'admin', 'assessor', 'assigned_to', 'audit_id', 'auditee', 'criterion_code', 'critical', 'date', 'description', 'due_date', 'evidence', 'gapItems', 'high', 'import', 'medium', 'meta', 'nextReview', 'notes', 'period', 'priority', 'r', 'score', 'scores', 'seed', 'seed_data', 'source', 'status', 'type', 'utf-8']

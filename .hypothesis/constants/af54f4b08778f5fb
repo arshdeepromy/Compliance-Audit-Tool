@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\Desktop\health and safety audit tool\totika-audit-app\app\blueprints\audits.py
+# hypothesis_version: 6.151.6
+
+[400, 403, 404, 1024, '.', '/audits', '/audits/new', 'Archived', 'Audit archived.', 'Audit finalised.', 'Completed', 'Draft', 'GET', 'In_Progress', 'No file selected.', 'Open', 'Overdue', 'POST', 'Review', 'UPLOAD_FOLDER', 'actions', 'admin', 'application/pdf', 'assessment_period', 'audit/detail.html', 'audit/gaps.html', 'audit/list.html', 'audit/new.html', 'audit/score.html', 'audit_date', 'auditee', 'auditee_id', 'auditor', 'audits', 'audits.audit_detail', 'audits.audit_score', 'code', 'completed', 'critical', 'docx', 'error', 'file', 'high', 'image/jpeg', 'image/png', 'in_progress', 'jpeg', 'jpg', 'next_review_due', 'open', 'overdue', 'pdf', 'png', 'priority', 'score', 'status', 'success', 'template_id', 'title', 'total', 'viewer', 'wb']

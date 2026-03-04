@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\Desktop\health and safety audit tool\totika-audit-app\app\models\template.py
+# hypothesis_version: 6.151.6
+
+[200, 'Audit', 'AuditScore', 'EvidenceCheckState', 'TemplateCriterion', 'TemplateSection', 'all, delete-orphan', 'audit_template', 'audit_template.id', 'criterion', 'dynamic', 'evidence_item', 'section', 'template', 'template_criterion', 'template_section', 'template_section.id']

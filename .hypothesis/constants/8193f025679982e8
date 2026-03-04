@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\Desktop\health and safety audit tool\totika-audit-app\app\services\scheduler.py
+# hypothesis_version: 6.151.6
+
+['Archived', 'Completed', 'In_Progress', 'Open', 'Overdue']

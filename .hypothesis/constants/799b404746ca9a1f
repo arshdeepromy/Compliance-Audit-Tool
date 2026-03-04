@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\alembic\config.py
+# hypothesis_version: 6.151.6
+
+['%%(prog)s %s', '+', '--autogenerate', '--branch-label', '--config', '--depends-on', '--head', '--indicate-current', '--message', '--name', '--package', '--purge', '--quiet', '--raiseerr', '--rev-id', '--rev-range', '--splice', '--sql', '--tag', '--template', '--verbose', '--version', '--version-path', '-c', '-i', '-m', '-n', '-q', '-r', '-t', '-v', '-x', 'ALEMBIC_CONFIG', '_', '__main__', 'alembic', 'alembic.command', 'alembic.ini', 'append', 'autogenerate', 'branch_label', 'cmd', 'depends_on', 'directory', 'generic', 'head', 'here', 'indicate_current', 'message', 'package', 'purge', 'quiet', 'resolve_dependencies', 'rev_id', 'rev_range', 'revision', 'revision identifier', 'revisions', 'splice', 'sql', 'store', 'store_true', 'tag', 'template', 'templates', 'too few arguments', 'verbose', 'version', 'version_path']

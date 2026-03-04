@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\factory\base.py
+# hypothesis_version: 6.151.6
+
+['%s is already a %s', '%s_batch', ',', ', ', '<%s (abstract)>', '<%s for %s>', 'Meta', 'Params', 'T', '_', '_meta', '_options_class', 'abstract', 'exclude', 'factory.generate', 'inline_args', 'model', 'rename', 'strategy']

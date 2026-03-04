@@ -1,0 +1,194 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Users — Admin{% endblock %}
+{% block admin_content %}
+<style>
+  .admin-container { max-width: 1000px; margin: 0 auto; padding: 2rem; }
+
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .page-header h1 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 1.75rem;
+    color: #f97316;
+  }
+
+  .btn {
+    display: inline-block;
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.2s, transform 0.1s;
+    letter-spacing: 0.025em;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary {
+    background: #f97316;
+    color: #fff;
+  }
+  .btn-primary:hover { background: #fb923c; }
+
+  .table-card {
+    background: #16213e;
+    border-radius: 12px;
+    border: 1px solid #2a2a4a;
+    overflow: hidden;
+  }
+
+  .users-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .users-table th {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #9ca3af;
+    text-align: left;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #2a2a4a;
+    background: rgba(42, 42, 74, 0.3);
+  }
+
+  .users-table td {
+    padding: 0.7rem 1rem;
+    font-size: 0.9rem;
+    color: #d1d5db;
+    border-bottom: 1px solid rgba(42, 42, 74, 0.5);
+  }
+
+  .users-table tbody tr:hover {
+    background: rgba(249, 115, 22, 0.05);
+  }
+
+  .users-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-family: 'Barlow Condensed', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-right: 0.25rem;
+  }
+  .badge-role {
+    background: rgba(249, 115, 22, 0.15);
+    color: #fb923c;
+    border: 1px solid rgba(249, 115, 22, 0.3);
+  }
+  .badge-active {
+    background: rgba(34, 197, 94, 0.15);
+    color: #86efac;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+  }
+  .badge-inactive {
+    background: rgba(239, 68, 68, 0.15);
+    color: #fca5a5;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
+  .badge-mfa {
+    background: rgba(59, 130, 246, 0.15);
+    color: #93c5fd;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+  }
+  .badge-mfa-none {
+    background: rgba(107, 114, 128, 0.15);
+    color: #9ca3af;
+    border: 1px solid rgba(107, 114, 128, 0.3);
+  }
+
+  .edit-link {
+    color: #f97316;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.85rem;
+  }
+  .edit-link:hover {
+    color: #fb923c;
+    text-decoration: underline;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: #6b7280;
+    font-size: 0.9rem;
+  }
+</style>
+
+<div class="admin-container">
+  <div class="page-header">
+    <h1>User Management</h1>
+    <a href="{{ url_for('admin.user_create') }}" class="btn btn-primary">Create New User</a>
+  </div>
+
+  <div class="table-card">
+    {% if users %}
+    <table class="users-table">
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Display Name</th>
+          <th>Email</th>
+          <th>Roles</th>
+          <th>MFA</th>
+          <th>Active</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td>{{ u.username }}</td>
+          <td>{{ u.display_name }}</td>
+          <td>{{ u.email }}</td>
+          <td>
+            {% for role in u.roles.split(',') %}
+            <span class="badge badge-role">{{ role.strip() }}</span>
+            {% endfor %}
+          </td>
+          <td>
+            {% if u.mfa_type %}
+            <span class="badge badge-mfa">{{ u.mfa_type|upper }}</span>
+            {% else %}
+            <span class="badge badge-mfa-none">None</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if u.is_active %}
+            <span class="badge badge-active">Yes</span>
+            {% else %}
+            <span class="badge badge-inactive">No</span>
+            {% endif %}
+          </td>
+          <td><a href="{{ url_for('admin.user_edit', id=u.id) }}" class="edit-link">Edit</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">No users found.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

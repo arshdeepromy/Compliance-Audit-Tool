@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\pygments\lexers\iolang.py
+# hypothesis_version: 6.151.6
+
+['#(.*?)$', '#pop', '#push', '(nil|false|true)\\b', '*.io', '//(.*?)$', '/\\+', '0.10', 'Io', 'IoLexer', '[+/]', '[^+/]+', '[a-zA-Z_]\\w*', '\\+/', '\\d+', '\\n', '\\s+', 'io', 'nestedcomment', 'root', 'text/x-iosrc']

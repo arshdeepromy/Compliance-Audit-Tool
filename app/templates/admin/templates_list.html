@@ -1,0 +1,115 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Audit Templates — {{ branding.company_name }}{% endblock %}
+{% block admin_content %}
+<style>
+  .page-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;
+  }
+  .page-header h1 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700; font-size: 1.75rem; color: #f97316;
+  }
+  .btn {
+    display: inline-block; padding: 0.6rem 1.2rem; border: none;
+    border-radius: 8px; font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600; font-size: 0.9rem; cursor: pointer;
+    text-decoration: none; transition: background 0.2s, transform 0.1s;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: #f97316; color: #fff; }
+  .btn-primary:hover { background: #fb923c; }
+  .btn-sm { padding: 0.35rem 0.75rem; font-size: 0.8rem; }
+  .btn-secondary { background: #2a2a4a; color: #d1d5db; }
+  .btn-secondary:hover { background: #3a3a5a; }
+  .btn-danger { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+  .btn-danger:hover { background: rgba(239, 68, 68, 0.3); }
+  .btn-success { background: rgba(34, 197, 94, 0.2); color: #86efac; }
+  .btn-success:hover { background: rgba(34, 197, 94, 0.3); }
+  .table-wrap {
+    background: #16213e; border-radius: 12px;
+    border: 1px solid #2a2a4a; overflow-x: auto;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 600;
+    font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;
+    color: #9ca3af; text-align: left; padding: 0.85rem 1rem;
+    border-bottom: 1px solid #2a2a4a;
+  }
+  td { padding: 0.85rem 1rem; border-bottom: 1px solid rgba(42, 42, 74, 0.5); font-size: 0.9rem; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: rgba(249, 115, 22, 0.04); }
+  .link { color: #f97316; text-decoration: none; font-weight: 500; }
+  .link:hover { text-decoration: underline; }
+  .text-muted { color: #6b7280; }
+  .badge {
+    display: inline-block; padding: 0.2rem 0.6rem; border-radius: 9999px;
+    font-size: 0.75rem; font-weight: 600;
+  }
+  .badge-active { background: rgba(34, 197, 94, 0.15); color: #86efac; }
+  .badge-inactive { background: rgba(107, 114, 128, 0.2); color: #9ca3af; }
+  .badge-builtin { background: rgba(59, 130, 246, 0.15); color: #93c5fd; }
+  .action-group { display: flex; gap: 0.5rem; align-items: center; }
+  .empty-state {
+    text-align: center; padding: 3rem; color: #6b7280;
+    background: #16213e; border-radius: 12px; border: 1px solid #2a2a4a;
+  }
+</style>
+
+<div class="page-header">
+  <h1>Audit Templates</h1>
+  <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+    <a href="{{ url_for('templates.template_sample_json') }}" class="btn btn-secondary" download="sample_template.json">📄 Sample JSON</a>
+    <button type="button" class="btn btn-secondary" onclick="document.getElementById('jsonUpload').click()">📥 Import JSON</button>
+    <form id="jsonUploadForm" method="post" action="{{ url_for('templates.template_import_json') }}" enctype="multipart/form-data" style="display:none;">
+      <input type="file" id="jsonUpload" name="json_file" accept=".json" onchange="document.getElementById('jsonUploadForm').submit()">
+    </form>
+    <a href="{{ url_for('templates.template_new') }}" class="btn btn-primary">+ New Template</a>
+  </div>
+</div>
+
+{% if templates %}
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Version</th>
+        <th>Status</th>
+        <th>Built-in</th>
+        <th>Created</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for t in templates %}
+      <tr>
+        <td><a href="{{ url_for('templates.template_edit', template_id=t.id) }}" class="link">{{ t.name }}</a></td>
+        <td>{{ t.version }}</td>
+        <td><span class="badge {{ 'badge-active' if t.is_active else 'badge-inactive' }}">{{ "Active" if t.is_active else "Inactive" }}</span></td>
+        <td>{% if t.is_builtin %}<span class="badge badge-builtin">Built-in</span>{% else %}<span class="text-muted">Custom</span>{% endif %}</td>
+        <td class="text-muted">{{ t.created_at.strftime('%Y-%m-%d') if t.created_at else '—' }}</td>
+        <td>
+          <div class="action-group">
+            <a href="{{ url_for('templates.template_edit', template_id=t.id) }}" class="btn btn-sm btn-secondary">Edit</a>
+            <a href="{{ url_for('templates.template_export_json', template_id=t.id) }}" class="btn btn-sm btn-secondary" download>Export</a>
+            <form method="post" action="{{ url_for('templates.template_toggle', template_id=t.id) }}" style="display:inline">
+              <button type="submit" class="btn btn-sm {{ 'btn-danger' if t.is_active else 'btn-success' }}">{{ "Deactivate" if t.is_active else "Activate" }}</button>
+            </form>
+            {% if not t.audits.first() %}
+            <form method="post" action="{{ url_for('templates.template_delete', template_id=t.id) }}" style="display:inline" onsubmit="return confirm('Delete template \'{{ t.name }}\'? This cannot be undone.')">
+              <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+            </form>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="empty-state"><p>No templates found. Create one to get started.</p></div>
+{% endif %}
+{% endblock %}

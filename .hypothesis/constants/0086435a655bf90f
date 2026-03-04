@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\mako\filters.py
+# hypothesis_version: 6.151.6
+
+[128, 65533, '"', '&', '&#34;', '&#39;', '&#x%X;', '&%s;', '&amp;', '&gt;', '&lt;', "'", '([&<"\\\'>])', '<', '>', '["&<>]|[^\\x00-\\x7f]', 'ascii', 'decode', 'entity', 'filters.html_escape', 'filters.trim', 'filters.url_escape', 'filters.xml_escape', 'h', 'htmlentityreplace', 'n', 'str', 'trim', 'u', 'unicode', 'utf8', 'x']

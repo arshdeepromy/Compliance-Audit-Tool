@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\sqlalchemy\dialects\postgresql\psycopg.py
+# hypothesis_version: 6.151.6
+
+['%s: %s', ';', 'AUTOCOMMIT', 'READ COMMITTED', 'READ UNCOMMITTED', 'REPEATABLE READ', 'SERIALIZABLE', '[)', '_cursor', '_rows', 'async_creator_fn', 'async_fallback', 'await_', 'cidr', 'client_encoding', 'connect', 'context', 'hstore', 'inet', 'json_int_index', 'json_str_index', 'name', 'psycopg', 'pyformat']

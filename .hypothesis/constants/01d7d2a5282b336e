@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\Desktop\health and safety audit tool\totika-audit-app\app\blueprints\templates.py
+# hypothesis_version: 6.151.6
+
+[400, '.', '.1', '/admin/templates', '/admin/templates/new', '1.0', 'GET', 'POST', 'Template not found.', 'activated', 'admin', 'code', 'criteria', 'deactivated', 'description', 'error', 'evidence', 'guidance', 'is_required', 'na_allowed', 'name', 'on', 'question', 'score', 'scoring', 'success', 'templates', 'text', 'tip', 'title', 'version']

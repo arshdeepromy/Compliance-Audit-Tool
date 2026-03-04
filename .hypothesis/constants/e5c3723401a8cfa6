@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\alembic\ddl\mysql.py
+# hypothesis_version: 6.151.6
+
+[' AUTO_INCREMENT', ' COMMENT %s', ' DEFAULT %s', '%s %s', '%s CHANGE %s %s %s', '%s MODIFY %s %s', "'0'", '(.*?)(?:\\(\\))?$', 'BOOL', 'DROP DEFAULT', 'JSON', 'LONGTEXT', 'NOT NULL', 'NULL', 'RESTRICT', 'SET DEFAULT %s', 'TINYINT', '\\1', "^'|'$", 'collate ([\\w\\-_]+)', 'mariadb', 'mysql', 'restrict']

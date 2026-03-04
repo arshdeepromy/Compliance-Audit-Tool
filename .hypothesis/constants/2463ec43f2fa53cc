@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\alembic\util\sqla_compat.py
+# hypothesis_version: 6.151.6
+
+['(\\d+|[abc]\\d)', '.', 'ColumnElement[Any]', 'SchemaItem', '_CE', '_copy', '_immutable', '_readonly', '_textual_idx_element', '_variant_mapping', 'always', 'auto', 'cache', 'column', 'create', 'cycle', 'increment', 'maxvalue', 'minvalue', 'mock', 'nomaxvalue', 'nominvalue', 'on_null', 'order', 'postgresql://', 'quote', 'start']

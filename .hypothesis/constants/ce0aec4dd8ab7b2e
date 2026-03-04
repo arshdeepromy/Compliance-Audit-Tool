@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\Desktop\health and safety audit tool\totika-audit-app\app\models\log.py
+# hypothesis_version: 6.151.6
+
+[255, 'activity_log', 'audit.id', 'seed_file_tracker', 'user.id']

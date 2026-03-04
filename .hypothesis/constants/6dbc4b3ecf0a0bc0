@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\sqlalchemy\dialects\postgresql\__init__.py
+# hypothesis_version: 6.151.6
+
+['ARRAY', 'All', 'Any', 'BIGINT', 'BIT', 'BOOLEAN', 'BYTEA', 'CHAR', 'CIDR', 'CITEXT', 'CreateDomainType', 'CreateEnumType', 'DATE', 'DATEMULTIRANGE', 'DATERANGE', 'DOMAIN', 'DOUBLE_PRECISION', 'DropDomainType', 'DropEnumType', 'ENUM', 'ExcludeConstraint', 'FLOAT', 'HSTORE', 'INET', 'INT4MULTIRANGE', 'INT4RANGE', 'INT8MULTIRANGE', 'INT8RANGE', 'INTEGER', 'INTERVAL', 'Insert', 'JSON', 'JSONB', 'JSONPATH', 'MACADDR', 'MACADDR8', 'MONEY', 'NUMERIC', 'NUMMULTIRANGE', 'NUMRANGE', 'NamedType', 'OID', 'REAL', 'REGCLASS', 'REGCONFIG', 'Range', 'SMALLINT', 'TEXT', 'TIME', 'TIMESTAMP', 'TSMULTIRANGE', 'TSQUERY', 'TSRANGE', 'TSTZMULTIRANGE', 'TSTZRANGE', 'TSVECTOR', 'UUID', 'VARCHAR', 'aggregate_order_by', 'array', 'array_agg', 'dialect', 'hstore', 'insert', 'psycopg_async']

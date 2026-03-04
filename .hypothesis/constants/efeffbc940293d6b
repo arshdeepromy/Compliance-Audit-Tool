@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\alembic\command.py
+# hypothesis_version: 6.151.6
+
+['%s\n%s\n', '%s - %s', '%s -> %s', ':', 'Config', 'No current revisions', 'No such template %r', 'README', '__init__.py', 'alembic.ini.mako', 'base', 'config', 'current', 'generic', 'head', 'heads', 'revision_environment', 'versions', 'w']

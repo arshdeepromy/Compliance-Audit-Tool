@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}{{ branding.company_name }}{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="{% if sidebar_sections is defined and sidebar_sections %}has-sidebar{% endif %}">
+
+  {# ── Header ─────────────────────────────────────────────────────────── #}
+  <header class="app-header">
+    {% if sidebar_sections is defined and sidebar_sections %}
+    <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle sidebar" aria-expanded="false">
+      &#9776;
+    </button>
+    {% endif %}
+
+    <a href="{{ url_for('audits.audit_list') }}" class="header-brand">
+      {% if branding.logo_filename %}
+      <img src="{{ url_for('uploaded_file', filename=branding.logo_filename) }}" alt="{{ branding.company_name }}" class="header-logo">
+      {% else %}
+      {{ branding.company_name }}
+      {% endif %}
+    </a>
+
+    <nav class="header-nav" aria-label="Main navigation">
+      {% if g.current_user %}
+        <a href="{{ url_for('audits.audit_list') }}">Audits</a>
+        {% set user_roles = g.current_user.roles.lower().split(',') %}
+        {% if 'admin' in user_roles %}
+        <a href="{{ url_for('admin.branding') }}">Admin</a>
+        {% endif %}
+        <form method="post" action="{{ url_for('auth.logout') }}" style="display:inline;margin:0;">
+          <button type="submit" class="logout-btn">Logout</button>
+        </form>
+      {% endif %}
+    </nav>
+  </header>
+
+  {# ── Layout wrapper ─────────────────────────────────────────────────── #}
+  <div class="app-layout">
+
+    {# ── Sidebar (only on audit-specific pages) ───────────────────────── #}
+    {% if sidebar_sections is defined and sidebar_sections %}
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+    <aside class="app-sidebar" id="app-sidebar" aria-label="Audit criteria navigation">
+      {% for section in sidebar_sections %}
+      <div class="sidebar-section">
+        <div class="sidebar-section-heading">{{ section.name }}</div>
+        {% for item in section.criteria %}
+        <a href="{{ item.url }}"
+           class="sidebar-item{% if current_criterion is defined and current_criterion == item.code %} active{% endif %}"
+           data-criterion="{{ item.code }}">
+          {% if item.is_na %}
+          <span class="score-dot na" title="N/A"></span>
+          {% elif item.score is none or item.score is undefined %}
+          <span class="score-dot grey" title="Unscored"></span>
+          {% elif item.score >= 3 %}
+          <span class="score-dot green" title="Score: {{ item.score }}"></span>
+          {% elif item.score == 2 %}
+          <span class="score-dot amber" title="Score: {{ item.score }}"></span>
+          {% else %}
+          <span class="score-dot red" title="Score: {{ item.score }}"></span>
+          {% endif %}
+          <span class="sidebar-item-code">{{ item.code }}</span>
+          <span class="sidebar-item-title" title="{{ item.title }}">{{ item.title }}</span>
+        </a>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </aside>
+    {% endif %}
+
+    {# ── Main content ─────────────────────────────────────────────────── #}
+    <main class="app-main" role="main">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="flash-messages">
+          {% for category, message in messages %}
+          <div class="flash {{ category }}" role="alert">{{ message }}</div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      {% endwith %}
+      {% block content %}{% endblock %}
+    </main>
+
+  </div>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

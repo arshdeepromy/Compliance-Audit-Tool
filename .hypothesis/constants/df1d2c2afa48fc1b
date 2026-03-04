@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\coverage\sqldata.py
+# hypothesis_version: 6.151.6
+
+[b'z', ' and context_id in (', ' or ', '%Y-%m-%d %H:%M:%S', ')', ', ', '.*', '.coverage', ':memory:', '?', '???', 'IMMEDIATE', '_filename', 'and file_id = ?', 'argv', 'context regexp ?', 'dataio', 'dataop', 'dataop2', 'from arc ', 'from arc, context ', 'from line_bits ', 'from tracer ', 'has_arcs', 'lock', 'pragma temp_store', 'process', 'sqlite3_temp_store', 'sys_argv', 'utf-8', 'version', 'when']

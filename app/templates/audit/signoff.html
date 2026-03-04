@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign-off — Audit #{{ audit.id }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Barlow', sans-serif;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .container { max-width: 720px; margin: 0 auto; }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .page-header h1 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 1.75rem;
+      color: #f97316;
+    }
+
+    a.back-link {
+      color: #9ca3af;
+      text-decoration: none;
+      font-size: 0.875rem;
+    }
+    a.back-link:hover { color: #f97316; }
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="page-header">
+      <h1>Audit #{{ audit.id }} — Sign-off</h1>
+      <a href="{{ url_for('audits.audit_detail', audit_id=audit.id) }}" class="back-link">← Back to Audit</a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-messages">
+      {% for category, message in messages %}
+      <div class="flash {{ category }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    {# ── Current Sign-off Status ── #}
+    <div class="card">
+      <div class="card-title">Sign-off Status</div>
+      <div class="meta-grid">
+        <div class="meta-item">
+          <span class="label">Auditor Finalised</span>
+          <span class="value">
+            {% if sign_off and sign_off.auditor_finalised_at %}
+            {{ sign_off.auditor_finalised_at.strftime('%d %b %Y %H:%M') }}
+            {% else %}
+            <span class="text-muted">Pending</span>
+            {% endif %}
+          </span>
+        </div>
+        <div class="meta-item">
+          <span class="label">Auditee Acknowledged</span>
+          <span class="value">
+            {% if sign_off and sign_off.auditee_acknowledged_at %}
+            {{ sign_off.auditee_acknowledged_at.strftime('%d %b %Y %H:%M') }}
+            — {{ sign_off.auditee_typed_name or '' }}
+            {% else %}
+            <span class="text-muted">Pending</span>
+            {% endif %}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    {# ── Acknowledgement Form ── #}
+    {% if not sign_off or not sign_off.auditee_acknowledged_at %}
+    <div class="card">
+      <div class="card-title">Auditee Acknowledgement</div>
+      <form method="post" action="{{ url_for('audits.audit_signoff', audit_id=audit.id) }}">
+        <div class="form-group">
+          <label for="typed_name" class="form-label">Your Name (typed signature)</label>
+          <input type="text" id="typed_name" name="typed_name" class="form-input"
+                 placeholder="Enter your full name" required>
+        </div>
+        <div class="form-group">
+          <label for="comments" class="form-label">Comments (optional)</label>
+          <textarea id="comments" name="comments" class="form-input form-textarea"
+                    rows="4" placeholder="Any comments or observations..."></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit Acknowledgement</button>
+      </form>
+    </div>
+    {% else %}
+    <div class="card">
+      <div class="card-title">Acknowledgement Recorded</div>
+      <p class="acknowledged-msg">This audit has been acknowledged by {{ sign_off.auditee_typed_name }}.</p>
+      {% if sign_off.auditee_comments %}
+      <div class="comments-block">
+        <span class="label">Comments</span>
+        <p>{{ sign_off.auditee_comments }}</p>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  <style>
+    .flash-messages { margin-bottom: 1.25rem; }
+    .flash {
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      margin-bottom: 0.5rem;
+    }
+    .flash.error {
+      background: rgba(239, 68, 68, 0.15);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    .flash.success {
+      background: rgba(34, 197, 94, 0.15);
+      color: #86efac;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .card {
+      background: #16213e;
+      border-radius: 12px;
+      border: 1px solid #2a2a4a;
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .card-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: #fb923c;
+      margin-bottom: 1rem;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+
+    .meta-item { padding: 0.5rem 0; }
+
+    .label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #9ca3af;
+      margin-bottom: 0.2rem;
+    }
+
+    .value { font-size: 0.95rem; color: #e0e0e0; }
+    .text-muted { color: #6b7280; }
+
+    .form-group { margin-bottom: 1.25rem; }
+
+    .form-label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #d1d5db;
+      margin-bottom: 0.4rem;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 0.6rem 0.8rem;
+      background: #1a1a2e;
+      border: 1px solid #2a2a4a;
+      border-radius: 8px;
+      color: #e0e0e0;
+      font-family: 'Barlow', sans-serif;
+      font-size: 0.9rem;
+    }
+    .form-input:focus {
+      outline: none;
+      border-color: #f97316;
+    }
+
+    .form-textarea { resize: vertical; }
+
+    .btn {
+      display: inline-block;
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-primary {
+      background: #f97316;
+      color: #fff;
+    }
+    .btn-primary:hover { background: #ea580c; }
+
+    .acknowledged-msg {
+      color: #86efac;
+      margin-bottom: 0.75rem;
+    }
+
+    .comments-block {
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid #2a2a4a;
+    }
+
+    @media (max-width: 768px) {
+      body { padding: 1rem; }
+      .meta-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</body>
+</html>

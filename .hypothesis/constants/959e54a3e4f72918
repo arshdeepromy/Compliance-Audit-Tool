@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py
+# hypothesis_version: 6.151.6
+
+[b'\x01', 100, 1000, '%s: %s', '(\\d+)(?:[-\\.]?|$)', ';', 'AUTOCOMMIT', 'DATETIME', 'NUMBER', 'READ COMMITTED', 'REPEATABLE READ', 'SERIALIZABLE', 'STRING', '[', ']', '__version__', '_adapt_connection', '_connection', '_cursor', '_execute_mutex', '_isolation_setting', '_rowbuffer', '_rows', '_started', '_transaction', 'arraysize', 'async_creator_fn', 'async_fallback', 'asyncpg', 'autocommit', 'binary', 'cidr', 'connection is closed', 'dbapi', 'deferrable', 'description', 'float', 'host', 'inet', 'isolation_level', 'json', 'json_int_index', 'json_str_index', 'jsonb', 'numeric_dollar', 'pg_catalog', 'port', 'read_committed', 'readonly', 'repeatable_read', 'rowcount', 'serializable', 'sqlstate', 'text', 'user']

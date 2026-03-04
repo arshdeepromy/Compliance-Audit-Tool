@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\Desktop\health and safety audit tool\totika-audit-app\app\utils\proxy.py
+# hypothesis_version: 6.151.6
+
+[',', '/', '127.0.0.1', 'BASE_PATH', 'X-Forwarded-For', 'X-Forwarded-Proto', 'https']

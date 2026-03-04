@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\mako\parsetree.py
+# hypothesis_version: 6.151.6
+
+[' + ', '%s(%r, %s, %r, %r)', '%s.%s(%s)', '%s=%s', '(%s)', ',', ':', ':pass', 'Code(%r, %r, %r)', 'Comment(%r, %r)', "No such tag: '%s'", 'TemplateNode(%s, %r)', 'Text(%r, %r)', '\\${.+?}', '^[\\w_]+$', '^\\${(.+?)}$', '__DUMMY', '__DUMMY(%s)', '__M_anon_%d', '__anon_%s', '__keyword__', 'args', 'block', 'buffered', 'cache_', 'cached', 'call', 'decorator', 'def', 'def ', 'elif', 'else', 'enable_loop', 'except', 'expr', 'expression_filter', 'file', 'filename', 'filter', 'finally', 'for', 'if', 'import', 'include', 'inherit', 'inheritable', 'lineno', 'module', 'name', 'namespace', 'page', 'pos', 'source', 'text', 'try', 'visit', 'while', 'with']

@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\alembic\operations\schemaobj.py
+# hypothesis_version: 6.151.6
+
+['%s.%s', ', ', '.', '_table', 'check', 'foreignkey', 'match', 'name', 'naming_convention', 'no_table', 'parent', 'primary', 'target_metadata', 'unique', 'x']

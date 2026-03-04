@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\Desktop\health and safety audit tool\totika-audit-app\app\blueprints\auth.py
+# hypothesis_version: 6.151.6
+
+[300, 400, 401, 403, 3600, '/login', '/login/mfa', '/logout', '/password/reset', 'GET', 'Lax', 'POST', 'SECRET_KEY', 'SESSION_EXPIRY_HOURS', 'auth', 'auth.login', 'auth.login_mfa', 'auth/login.html', 'auth/mfa.html', 'auth/reset_form.html', 'code', 'confirm_password', 'email', 'error', 'https', 'info', 'login', 'login_failed', 'logout', 'mfa_email_code', 'mfa_type', 'mfa_user_id', 'password', 'password-reset-salt', 'success', 'totp', 'username']

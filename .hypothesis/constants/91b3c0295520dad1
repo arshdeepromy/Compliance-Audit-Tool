@@ -1,0 +1,4 @@
+# file: C:\Users\Romy\AppData\Roaming\Python\Python313\site-packages\sqlalchemy\dialects\postgresql\_psycopg_common.py
+# hypothesis_version: 6.151.6
+
+[',', 'AUTOCOMMIT', 'READ COMMITTED', 'READ UNCOMMITTED', 'REPEATABLE READ', 'SERIALIZABLE', 'c_%s_%s', 'dbname', 'float', 'host', 'port', 'pyformat', 'user']

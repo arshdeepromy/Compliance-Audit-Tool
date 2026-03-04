@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Set New Password — {{ branding.company_name }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Barlow', sans-serif;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .auth-container {
+      width: 100%;
+      max-width: 420px;
+      padding: 2rem;
+    }
+
+    .auth-card {
+      background: #16213e;
+      border-radius: 12px;
+      padding: 2.5rem 2rem;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      border: 1px solid #2a2a4a;
+    }
+
+    .auth-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .auth-logo {
+      max-height: 56px;
+      margin-bottom: 1rem;
+    }
+
+    .auth-header h1 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 1.5rem;
+      color: {{ branding.primary_colour }};
+      margin-bottom: 0.25rem;
+    }
+
+    .auth-header p {
+      font-size: 0.9rem;
+      color: #9ca3af;
+    }
+
+    .flash-messages {
+      margin-bottom: 1.25rem;
+    }
+
+    .flash {
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .flash.error {
+      background: rgba(239, 68, 68, 0.15);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .flash.info {
+      background: rgba(59, 130, 246, 0.15);
+      color: #93c5fd;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .flash.success {
+      background: rgba(34, 197, 94, 0.15);
+      color: #86efac;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #d1d5db;
+      margin-bottom: 0.4rem;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 0.7rem 0.9rem;
+      background: #0f1629;
+      border: 1px solid #2a2a4a;
+      border-radius: 8px;
+      color: #e0e0e0;
+      font-family: 'Barlow', sans-serif;
+      font-size: 0.95rem;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: {{ branding.primary_colour }};
+      box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
+    }
+
+    .form-group input::placeholder {
+      color: #6b7280;
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 0.75rem;
+      background: {{ branding.primary_colour }};
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600;
+      font-size: 1rem;
+      letter-spacing: 0.025em;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .btn-primary:hover {
+      background: {{ branding.accent_colour }};
+    }
+
+    .btn-primary:active {
+      transform: scale(0.98);
+    }
+
+    .auth-footer {
+      text-align: center;
+      margin-top: 1.25rem;
+    }
+
+    .auth-footer a {
+      color: {{ branding.primary_colour }};
+      text-decoration: none;
+      font-size: 0.875rem;
+    }
+
+    .auth-footer a:hover {
+      text-decoration: underline;
+    }
+
+    .password-hint {
+      font-size: 0.8rem;
+      color: #6b7280;
+      margin-top: 0.25rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-container">
+    <div class="auth-card">
+      <div class="auth-header">
+        {% if branding.logo_filename %}
+        <img src="{{ url_for('uploaded_file', filename=branding.logo_filename) }}" alt="{{ branding.company_name }}" class="auth-logo">
+        {% endif %}
+        <h1>Set New Password</h1>
+        <p>Choose a new password for your account</p>
+      </div>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      <div class="flash-messages">
+        {% for category, message in messages %}
+        <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% endwith %}
+
+      <form method="post" novalidate>
+        <div class="form-group">
+          <label for="password">New Password</label>
+          <input id="password" name="password" type="password" placeholder="Enter new password" autocomplete="new-password" required>
+          <p class="password-hint">Must be at least 8 characters</p>
+        </div>
+        <div class="form-group">
+          <label for="confirm_password">Confirm Password</label>
+          <input id="confirm_password" name="confirm_password" type="password" placeholder="Confirm new password" autocomplete="new-password" required>
+        </div>
+        <button type="submit" class="btn-primary">Reset Password</button>
+      </form>
+
+      <div class="auth-footer">
+        <a href="{{ url_for('auth.login') }}">Back to login</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
