@@ -3,6 +3,15 @@
 {% block title %}Audits — {{ branding.company_name if branding else 'Tōtika Audit Tool' }}{% endblock %}
 
 {% block content %}
+<style>
+  .audit-tabs { display: flex; gap: 0; margin-bottom: 1.25rem; border-bottom: 2px solid #334155; }
+  .audit-tab { padding: 0.6rem 1.25rem; background: none; border: none; color: #94a3b8; font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.15s; }
+  .audit-tab:hover { color: #e2e8f0; }
+  .audit-tab.active { color: #f97316; border-bottom-color: #f97316; }
+  .audit-tab .tab-count { display: inline-block; background: #1e293b; color: #94a3b8; font-size: 0.8rem; padding: 0.1rem 0.45rem; border-radius: 10px; margin-left: 0.35rem; font-family: 'Barlow', sans-serif; }
+  .audit-tab.active .tab-count { background: rgba(249,115,22,0.2); color: #f97316; }
+</style>
+
 <div class="container">
   <div class="page-header">
     <h1>Audits</h1>
@@ -20,9 +29,20 @@
     </div>
   </div>
 
+  {# ── Status Tabs ── #}
+  {% set count_active = audits | selectattr('status', 'in', ['Draft', 'In_Progress', 'Review']) | list | length %}
+  {% set count_completed = audits | selectattr('status', 'equalto', 'Completed') | list | length %}
+  {% set count_archived = audits | selectattr('status', 'equalto', 'Archived') | list | length %}
+  <div class="audit-tabs" role="tablist">
+    <button class="audit-tab active" role="tab" data-tab="active" aria-selected="true">In Progress <span class="tab-count">{{ count_active }}</span></button>
+    <button class="audit-tab" role="tab" data-tab="completed" aria-selected="false">Completed <span class="tab-count">{{ count_completed }}</span></button>
+    <button class="audit-tab" role="tab" data-tab="archived" aria-selected="false">Archived <span class="tab-count">{{ count_archived }}</span></button>
+    <button class="audit-tab" role="tab" data-tab="all" aria-selected="false">All <span class="tab-count">{{ audits | length }}</span></button>
+  </div>
+
   {% if audits %}
   <div class="table-wrap">
-    <table>
+    <table id="audits-table">
       <thead>
         <tr>
           <th>Template</th>
@@ -36,7 +56,8 @@
       </thead>
       <tbody>
         {% for audit in audits %}
-        <tr>
+        {% set tab_group = 'completed' if audit.status == 'Completed' else ('archived' if audit.status == 'Archived' else 'active') %}
+        <tr data-tab-group="{{ tab_group }}">
           <td>
             <a href="{{ url_for('audits.audit_detail', audit_id=audit.id) }}" class="link">
               {{ audit.template.name if audit.template else 'N/A' }}
@@ -77,6 +98,9 @@
       </tbody>
     </table>
   </div>
+  <div id="empty-tab-msg" class="empty-state" style="display:none;">
+    <p>No audits in this category.</p>
+  </div>
   {% else %}
   <div class="empty-state">
     <p>No audits found. Create one to get started, or import a previous audit JSON.</p>
@@ -91,5 +115,39 @@
     hiddenInput.files = this.files;
     document.getElementById('import-form').submit();
   });
+
+  // Tab filtering
+  (function() {
+    var tabs = document.querySelectorAll('.audit-tab');
+    var rows = document.querySelectorAll('#audits-table tbody tr');
+    var tableWrap = document.querySelector('.table-wrap');
+    var emptyMsg = document.getElementById('empty-tab-msg');
+
+    function filterTab(tabName) {
+      var visibleCount = 0;
+      rows.forEach(function(row) {
+        var group = row.getAttribute('data-tab-group');
+        var show = (tabName === 'all') || (group === tabName);
+        row.style.display = show ? '' : 'none';
+        if (show) visibleCount++;
+      });
+      if (tableWrap && emptyMsg) {
+        tableWrap.style.display = visibleCount > 0 ? '' : 'none';
+        emptyMsg.style.display = visibleCount > 0 ? 'none' : '';
+      }
+    }
+
+    tabs.forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        tabs.forEach(function(t) { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
+        this.classList.add('active');
+        this.setAttribute('aria-selected', 'true');
+        filterTab(this.getAttribute('data-tab'));
+      });
+    });
+
+    // Default to "In Progress" tab
+    filterTab('active');
+  })();
 </script>
 {% endblock %}

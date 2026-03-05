@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sign-off — Audit #{{ audit.id }}</title>
+  <title>Sign-off — {{ audit.template.name if audit.template else 'Audit #' ~ audit.id }}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
@@ -47,7 +47,7 @@
 <body>
   <div class="container">
     <div class="page-header">
-      <h1>Audit #{{ audit.id }} — Sign-off</h1>
+      <h1>{{ audit.template.name if audit.template else 'Audit #' ~ audit.id }} — Sign-off</h1>
       <a href="{{ url_for('audits.audit_detail', audit_id=audit.id) }}" class="back-link">← Back to Audit</a>
     </div>
 

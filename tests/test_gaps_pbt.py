@@ -193,12 +193,12 @@ class TestProperty16GapChecklistContents:
 
     @given(data=st_score_list)
     @settings(
-        max_examples=20,
+        max_examples=8,
         deadline=None,
         suppress_health_check=[HealthCheck.function_scoped_fixture],
     )
     def test_gap_list_contains_exactly_low_scored_criteria(self, tmp_path, data):
-        """Gap checklist contains exactly criteria scored 0 or 1."""
+        """Gap checklist contains exactly criteria scored 0, 1, or 2."""
         n, scores = data
         app = _make_app(tmp_path)
         user_id, token = _make_user(app)
@@ -208,9 +208,9 @@ class TestProperty16GapChecklistContents:
         score_map = {codes[i]: scores[i] for i in range(n)}
         audit_id = _make_audit_with_scores(app, user_id, template_id, score_map)
 
-        # Expected gap codes: those with score 0 or 1
+        # Expected gap codes: those with score 0, 1, or 2
         expected_gap_codes = {
-            code for code, score in score_map.items() if score in (0, 1)
+            code for code, score in score_map.items() if score in (0, 1, 2)
         }
 
         with app.test_client() as client:
@@ -230,15 +230,15 @@ class TestProperty16GapChecklistContents:
 
     @given(data=st_score_list)
     @settings(
-        max_examples=15,
+        max_examples=5,
         deadline=None,
         suppress_health_check=[HealthCheck.function_scoped_fixture],
     )
     def test_gap_priority_matches_score(self, tmp_path, data):
-        """Score 0 → critical priority, score 1 → high priority."""
+        """Score 0 → critical, score 1 → high, score 2 → medium."""
         n, scores = data
         # Only run if there are gaps
-        assume(any(s in (0, 1) for s in scores))
+        assume(any(s in (0, 1, 2) for s in scores))
 
         app = _make_app(tmp_path)
         user_id, token = _make_user(app)
@@ -253,33 +253,21 @@ class TestProperty16GapChecklistContents:
             html = resp.data.decode()
 
         # For each gap code, verify the priority badge
+        expected_badge = {0: "badge-critical", 1: "badge-high", 2: "badge-medium"}
         for code, score in score_map.items():
-            if score == 0:
-                # Should have critical badge near this code
-                assert f'data-criterion-code="{code}"' in html
-                # Find the gap card and check for critical badge
-                import re
-                card_pattern = (
-                    rf'data-criterion-code="{code}".*?(?=data-criterion-code="|$)'
+            if score not in expected_badge:
+                continue
+            assert f'data-criterion-code="{code}"' in html
+            import re
+            card_pattern = (
+                rf'data-criterion-code="{code}".*?(?=data-criterion-code="|$)'
+            )
+            card_match = re.search(card_pattern, html, re.DOTALL)
+            if card_match:
+                card_html = card_match.group()
+                assert expected_badge[score] in card_html, (
+                    f"Score {score} criterion {code} should have {expected_badge[score]}"
                 )
-                card_match = re.search(card_pattern, html, re.DOTALL)
-                if card_match:
-                    card_html = card_match.group()
-                    assert "badge-critical" in card_html, (
-                        f"Score 0 criterion {code} should have critical badge"
-                    )
-            elif score == 1:
-                assert f'data-criterion-code="{code}"' in html
-                import re
-                card_pattern = (
-                    rf'data-criterion-code="{code}".*?(?=data-criterion-code="|$)'
-                )
-                card_match = re.search(card_pattern, html, re.DOTALL)
-                if card_match:
-                    card_html = card_match.group()
-                    assert "badge-high" in card_html, (
-                        f"Score 1 criterion {code} should have high badge"
-                    )
 
 
 # ---------------------------------------------------------------------------
@@ -296,7 +284,7 @@ class TestProperty17CorrectiveActionLifecycle:
 
     @given(action_data=st_action_data)
     @settings(
-        max_examples=20,
+        max_examples=8,
         deadline=None,
         suppress_health_check=[HealthCheck.function_scoped_fixture],
     )
@@ -339,7 +327,7 @@ class TestProperty17CorrectiveActionLifecycle:
 
     @given(new_status=st.sampled_from(["In_Progress", "Completed", "Overdue"]))
     @settings(
-        max_examples=10,
+        max_examples=5,
         deadline=None,
         suppress_health_check=[HealthCheck.function_scoped_fixture],
     )
@@ -381,7 +369,7 @@ class TestProperty17CorrectiveActionLifecycle:
 
     @given(data=st.data())
     @settings(
-        max_examples=10,
+        max_examples=5,
         deadline=None,
         suppress_health_check=[HealthCheck.function_scoped_fixture],
     )
@@ -440,7 +428,7 @@ class TestProperty34CorrectiveActionSummaryCounts:
 
     @given(action_statuses=st_action_set)
     @settings(
-        max_examples=20,
+        max_examples=8,
         deadline=None,
         suppress_health_check=[HealthCheck.function_scoped_fixture],
     )

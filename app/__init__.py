@@ -62,12 +62,14 @@ def create_app(config_class=None, run_startup=True):
     from .blueprints.templates import templates_bp
     from .blueprints.api import api_bp
     from .blueprints.admin import admin_bp
+    from .blueprints.risks import risks_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(audits_bp)
     app.register_blueprint(templates_bp)
     app.register_blueprint(api_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(risks_bp)
 
     # Root redirect — send / to login (or audits if already authenticated)
     from flask import redirect, url_for, g, send_from_directory
@@ -96,6 +98,11 @@ def create_app(config_class=None, run_startup=True):
                     "primary_colour": branding_row.primary_colour,
                     "accent_colour": branding_row.accent_colour,
                     "logo_filename": branding_row.logo_filename,
+                    "header_bg_colour": branding_row.header_bg_colour,
+                    "header_text_colour": branding_row.header_text_colour,
+                    "footer_text": branding_row.footer_text,
+                    "footer_bg_colour": branding_row.footer_bg_colour,
+                    "footer_text_colour": branding_row.footer_text_colour,
                 }
             }
         return {
@@ -106,6 +113,11 @@ def create_app(config_class=None, run_startup=True):
                 "primary_colour": "#f97316",
                 "accent_colour": "#fb923c",
                 "logo_filename": None,
+                "header_bg_colour": "#0a0a23",
+                "header_text_colour": "#ffffff",
+                "footer_text": "",
+                "footer_bg_colour": "#0a0a23",
+                "footer_text_colour": "#94a3b8",
             }
         }
 

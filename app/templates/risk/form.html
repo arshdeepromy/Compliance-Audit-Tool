@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit Risk' if mode == 'edit' else 'Add Risk' }} — {{ branding.company_name }}{% endblock %}
+
+{% block content %}
+<style>
+  .rf-page{width:100%;max-width:900px;margin:0 auto;padding:1rem 1.5rem;font-family:"Barlow",sans-serif;color:#e2e8f0;box-sizing:border-box}
+  .rf-page h2{font-family:"Barlow Condensed",sans-serif;font-size:26px;font-weight:800;color:#fff;margin-bottom:16px}
+  .back-link{display:inline-flex;align-items:center;gap:.4rem;color:#f97316;text-decoration:none;font-weight:600;font-size:13px;margin-bottom:8px}
+  .back-link:hover{color:#fb923c}
+
+  .form-card{background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:20px 24px;margin-bottom:20px}
+  .form-card .card-title{font-family:"Barlow Condensed",sans-serif;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid #1e293b}
+
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:14px}
+  .form-row.full{grid-template-columns:1fr}
+  .form-group{display:flex;flex-direction:column;gap:4px}
+  .form-group label{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:#64748b;font-weight:700}
+  .form-group input,.form-group select,.form-group textarea{background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:8px 10px;border-radius:4px;font-size:13px;font-family:"Barlow",sans-serif}
+  .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:#f97316;outline:none}
+  .form-group textarea{min-height:80px;resize:vertical}
+
+  .score-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .score-section{background:#1e293b;border-radius:6px;padding:14px}
+  .score-section h4{font-family:"Barlow Condensed",sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#94a3b8;margin-bottom:10px}
+  .score-preview{text-align:center;margin-top:8px;font-family:"Barlow Condensed",sans-serif;font-size:20px;font-weight:800}
+
+  .btn{display:inline-block;padding:8px 18px;border-radius:4px;font-size:13px;font-weight:600;text-decoration:none;border:none;cursor:pointer;font-family:"Barlow",sans-serif}
+  .btn-primary{background:#f97316;color:#fff}
+  .btn-primary:hover{background:#fb923c}
+  .btn-secondary{background:#1e293b;color:#94a3b8;border:1px solid #334155}
+  .btn-secondary:hover{color:#fff;border-color:#f97316}
+  .form-actions{display:flex;gap:10px;margin-top:20px}
+</style>
+
+<div class="rf-page">
+  {% if mode == 'edit' %}
+  <a href="{{ url_for('risks.risk_detail', risk_id=risk.id) }}" class="back-link">&#8592; Back to Risk</a>
+  <h2>Edit Risk — R{{ '%03d' % risk.id }}</h2>
+  {% else %}
+  <a href="{{ url_for('risks.risk_register') }}" class="back-link">&#8592; Back to Register</a>
+  <h2>Add New Risk</h2>
+  {% endif %}
+
+  <form method="post">
+    {# ── Basic Info ── #}
+    <div class="form-card">
+      <div class="card-title">Risk Information</div>
+      <div class="form-row full">
+        <div class="form-group">
+          <label>Risk Title *</label>
+          <input type="text" name="title" required value="{{ risk.title if risk else '' }}" placeholder="Brief description of the risk">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Category *</label>
+          <select name="category_id" required>
+            <option value="">Select category…</option>
+            {% for cat in categories %}
+            <option value="{{ cat.id }}" {% if risk and risk.category_id == cat.id %}selected{% endif %}>{{ cat.icon }} {{ cat.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Risk Source</label>
+          <input type="text" name="risk_source" value="{{ risk.risk_source if risk else '' }}" placeholder="Where does this risk originate?">
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="form-group">
+          <label>Description</label>
+          <textarea name="description" placeholder="Detailed description of the risk, its context, and potential consequences">{{ risk.description if risk else '' }}</textarea>
+        </div>
+      </div>
+    </div>
+
+    {# ── Risk Assessment ── #}
+    <div class="form-card">
+      <div class="card-title">Risk Assessment (ISO 31000)</div>
+      <div class="score-grid">
+        <div class="score-section">
+          <h4>Inherent Risk (Before Controls)</h4>
+          <div class="form-group" style="margin-bottom:10px">
+            <label>Likelihood</label>
+            <select name="inherent_likelihood" id="inh_l" onchange="updateScores()">
+              <option value="">Select…</option>
+              {% for val, lbl in likelihood_labels.items() %}
+              <option value="{{ val }}" {% if risk and risk.inherent_likelihood == val %}selected{% endif %}>{{ val }} — {{ lbl }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Impact</label>
+            <select name="inherent_impact" id="inh_i" onchange="updateScores()">
+              <option value="">Select…</option>
+              {% for val, lbl in impact_labels.items() %}
+              <option value="{{ val }}" {% if risk and risk.inherent_impact == val %}selected{% endif %}>{{ val }} — {{ lbl }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="score-preview" id="inh_score">—</div>
+        </div>
+        <div class="score-section">
+          <h4>Residual Risk (After Controls)</h4>
+          <div class="form-group" style="margin-bottom:10px">
+            <label>Likelihood</label>
+            <select name="residual_likelihood" id="res_l" onchange="updateScores()">
+              <option value="">Select…</option>
+              {% for val, lbl in likelihood_labels.items() %}
+              <option value="{{ val }}" {% if risk and risk.residual_likelihood == val %}selected{% endif %}>{{ val }} — {{ lbl }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Impact</label>
+            <select name="residual_impact" id="res_i" onchange="updateScores()">
+              <option value="">Select…</option>
+              {% for val, lbl in impact_labels.items() %}
+              <option value="{{ val }}" {% if risk and risk.residual_impact == val %}selected{% endif %}>{{ val }} — {{ lbl }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="score-preview" id="res_score">—</div>
+        </div>
+      </div>
+    </div>
+
+    {# ── Management ── #}
+    <div class="form-card">
+      <div class="card-title">Risk Management</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Status</label>
+          <select name="status">
+            {% for s in statuses %}
+            <option value="{{ s }}" {% if risk and risk.status == s %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Treatment Type</label>
+          <select name="treatment_type">
+            <option value="">Select…</option>
+            {% for t in treatment_types %}
+            <option value="{{ t }}" {% if risk and risk.treatment_type == t %}selected{% endif %}>{{ t }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Risk Owner</label>
+          <select name="owner_id">
+            <option value="">Unassigned</option>
+            {% for u in users %}
+            <option value="{{ u.id }}" {% if risk and risk.owner_id == u.id %}selected{% endif %}>{{ u.display_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Due Date</label>
+          <input type="date" name="due_date" value="{{ risk.due_date.strftime('%Y-%m-%d') if risk and risk.due_date else '' }}">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Review Frequency (days)</label>
+          <input type="number" name="review_frequency_days" min="7" max="365" value="{{ risk.review_frequency_days if risk and risk.review_frequency_days else 90 }}">
+        </div>
+        <div class="form-group"></div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">{{ 'Update Risk' if mode == 'edit' else 'Create Risk' }}</button>
+      {% if mode == 'edit' %}
+      <a href="{{ url_for('risks.risk_detail', risk_id=risk.id) }}" class="btn btn-secondary">Cancel</a>
+      {% else %}
+      <a href="{{ url_for('risks.risk_register') }}" class="btn btn-secondary">Cancel</a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+<script>
+function updateScores(){
+  calcScore('inh_l','inh_i','inh_score');
+  calcScore('res_l','res_i','res_score');
+}
+function calcScore(lId,iId,outId){
+  var l=parseInt(document.getElementById(lId).value)||0;
+  var i=parseInt(document.getElementById(iId).value)||0;
+  var el=document.getElementById(outId);
+  if(l&&i){
+    var s=l*i;
+    var lvl=s<=4?'Low':s<=9?'Medium':s<=15?'High':'Critical';
+    var clr=s<=4?'#22c55e':s<=9?'#eab308':s<=15?'#f97316':'#ef4444';
+    el.innerHTML='<span style="color:'+clr+'">'+s+' — '+lvl+'</span>';
+  }else{el.textContent='—';}
+}
+updateScores();
+</script>
+{% endblock %}

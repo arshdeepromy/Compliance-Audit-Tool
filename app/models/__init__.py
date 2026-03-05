@@ -19,3 +19,9 @@ from app.models.action import CorrectiveAction, ACTION_STATUSES  # noqa: F401
 from app.models.attachment import EvidenceAttachment  # noqa: F401
 from app.models.settings import BrandingSettings, SMTPSettings  # noqa: F401
 from app.models.log import ActivityLog, SeedFileTracker  # noqa: F401
+from app.models.scoping import (  # noqa: F401
+    ScopingQuestion,
+    ScopingRule,
+    ScopingProfile,
+    CriterionApplicability,
+)

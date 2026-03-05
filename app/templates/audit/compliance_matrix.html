@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Compliance Matrix — {{ branding.company_name if branding else 'Tōtika Audit Tool' }}{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <h1>Compliance Matrix</h1>
+  </div>
+
+  {# ── Overall compliance score ──────────────────────────────────────── #}
+  <div class="card" style="margin-bottom:1.5rem; text-align:center;">
+    <div class="card-title">Overall Compliance Score</div>
+    {% if matrix.overall_score is not none %}
+    <span class="stat-value" style="font-size:2.5rem; color:#f97316;">
+      {{ '%.1f' | format(matrix.overall_score) }}
+    </span>
+    <span class="text-muted" style="display:block; font-size:0.85rem;">out of 4.0</span>
+    {% else %}
+    <span class="text-muted" style="font-size:1.5rem;">—</span>
+    <span class="text-muted" style="display:block; font-size:0.85rem;">No completed audits</span>
+    {% endif %}
+  </div>
+
+  {# ── Heatmap grid grouped by domain type ───────────────────────────── #}
+  {% if matrix.domains %}
+  {% for domain in matrix.domains %}
+  <div class="card" style="margin-bottom:1.25rem;">
+    <div class="card-title">{{ domain.domain_type }}</div>
+    <div class="heatmap-grid">
+      {% for fw in domain.frameworks %}
+      <div class="heatmap-cell {{ 'heatmap-' ~ fw.cell_colour }}">
+        {% if fw.audit_id %}
+        <a href="{{ url_for('audits.control_area_breakdown', audit_id=fw.audit_id) }}"
+           style="color:inherit; text-decoration:none; display:block;">
+        {% endif %}
+          <div class="heatmap-framework">{{ fw.framework }}</div>
+          <div class="heatmap-score">
+            {% if fw.score is not none %}
+              {{ '%.1f' | format(fw.score) }}
+            {% else %}
+              Not Assessed
+            {% endif %}
+          </div>
+          {% if fw.trend %}
+          <div class="heatmap-trend">
+            {% if fw.trend == 'up' %}&#8593;{% elif fw.trend == 'down' %}&#8595;{% else %}—{% endif %}
+          </div>
+          {% endif %}
+        {% if fw.audit_id %}
+        </a>
+        {% endif %}
+      </div>
+      {% endfor %}
+
+      {# Domain average cell #}
+      <div class="heatmap-cell heatmap-domain-avg">
+        <div class="heatmap-framework">Domain Avg</div>
+        <div class="heatmap-score">
+          {% if domain.domain_avg is not none %}
+            {{ '%.1f' | format(domain.domain_avg) }}
+          {% else %}
+            —
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+  {% else %}
+  <div class="empty-state">
+    <p>No compliance frameworks configured yet. Create audit templates with domain types and frameworks to populate this matrix.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

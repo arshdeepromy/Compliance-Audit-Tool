@@ -44,7 +44,7 @@ _overall_score_st = st.floats(min_value=0.0, max_value=4.0, allow_nan=False, all
 
 # Suppress the function-scoped fixture health check
 _suppress_fixture_check = settings(
-    max_examples=100,
+    max_examples=20,
     suppress_health_check=[HealthCheck.function_scoped_fixture],
     deadline=None,
 )

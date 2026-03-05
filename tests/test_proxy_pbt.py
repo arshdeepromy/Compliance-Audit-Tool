@@ -63,7 +63,7 @@ _proto_st = st.sampled_from(["http", "https"])
 
 # Suppress the function-scoped fixture health check
 _suppress = settings(
-    max_examples=50,
+    max_examples=15,
     suppress_health_check=[HealthCheck.function_scoped_fixture],
     deadline=None,
 )

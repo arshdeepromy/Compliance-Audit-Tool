@@ -123,6 +123,9 @@
     var notesEl = form.querySelector('textarea[name="notes"]');
     var notes = notesEl ? notesEl.value : "";
 
+    var infoAnswerEl = form.querySelector('textarea[name="info_answer"]');
+    var infoAnswer = infoAnswerEl ? infoAnswerEl.value : "";
+
     // Evidence checks — collect all checkboxes whose name starts with "evidence_"
     var evidenceChecks = {};
     var checkboxes = form.querySelectorAll('input[type="checkbox"]');
@@ -140,6 +143,7 @@
       is_na: isNa,
       na_reason: naReason,
       notes: notes,
+      info_answer: infoAnswer,
       evidence_checks: evidenceChecks,
     };
   }
@@ -213,9 +217,9 @@
 
     var naRadio = form.querySelector('input[name="score"][value="na"]');
     if (naRadio && naRadio.checked) {
-      naField.style.display = "";
+      naField.classList.add("show");
     } else {
-      naField.style.display = "none";
+      naField.classList.remove("show");
     }
   }
 

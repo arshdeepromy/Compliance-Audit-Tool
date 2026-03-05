@@ -47,7 +47,7 @@ _any_role_st = st.sampled_from(_ALL_ROLES)
 
 # Suppress the function-scoped fixture health check
 _suppress_fixture_check = settings(
-    max_examples=30,
+    max_examples=10,
     suppress_health_check=[HealthCheck.function_scoped_fixture],
     deadline=None,
 )

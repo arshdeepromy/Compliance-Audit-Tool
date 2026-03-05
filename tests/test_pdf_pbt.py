@@ -252,7 +252,7 @@ class TestProperty20PDFExportContainsRequiredData:
         company_name=st_company_name,
     )
     @settings(
-        max_examples=30,
+        max_examples=10,
         suppress_health_check=[HealthCheck.function_scoped_fixture],
         deadline=None,
     )

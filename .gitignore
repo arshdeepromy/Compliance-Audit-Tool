@@ -8,6 +8,7 @@ build/
 .venv/
 venv/
 env/
+.hypothesis/
 
 # Instance data (SQLite DB, uploads)
 instance/

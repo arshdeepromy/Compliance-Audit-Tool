@@ -1,4 +1,5 @@
-"""JSON API blueprint — auto-save scoring, corrective actions, imports, attachments.
+"""JSON API blueprint — auto-save scoring, corrective actions, imports, attachments,
+scoping, and compliance.
 
 Routes:
     PUT    /api/audits/<id>/score        — Auto-save criterion score, evidence, notes
@@ -6,6 +7,11 @@ Routes:
     PUT    /api/audits/<id>/actions/<aid> — Update corrective action
     POST   /api/audits/<id>/import       — Import legacy JSON into existing audit
     DELETE /api/attachments/<id>         — Delete attachment
+    GET    /api/audit/<id>/scoping       — Get scoping profile and applicability
+    POST   /api/audit/<id>/scoping       — Submit scoping answers
+    GET    /api/compliance/matrix        — Full compliance matrix JSON
+    GET    /api/compliance/trend/<fw>    — Trend data for a framework
+    GET    /api/compliance/breakdown/<id>— Control area breakdown for an audit
 """
 
 import os
@@ -17,7 +23,10 @@ from app.extensions import db
 from app.models.action import CorrectiveAction
 from app.models.attachment import EvidenceAttachment
 from app.models.audit import Audit, AuditScore, EvidenceCheckState
+from app.models.scoping import CriterionApplicability, ScopingProfile, ScopingQuestion
 from app.models.template import TemplateCriterion, TemplateSection
+from app.services.scoping import evaluate_scoping, persist_scoping_profile, persist_applicability
+from app.services.compliance import get_compliance_matrix, get_trend_data, get_control_area_breakdown
 from app.utils.rbac import roles_required
 from app.utils.logging import log_activity
 
@@ -25,7 +34,27 @@ api_bp = Blueprint("api", __name__)
 
 
 def _calculate_overall_score(audit: Audit) -> float | None:
-    """Calculate the overall average score excluding N/A and unscored criteria."""
+    """Calculate the overall average score excluding N/A, unscored, info-only, and not-applicable criteria."""
+    from app.models.scoping import CriterionApplicability
+    from app.models.template import TemplateCriterion, TemplateSection
+
+    # Get not-applicable criterion IDs from scoping
+    na_criteria = (
+        CriterionApplicability.query
+        .filter_by(audit_id=audit.id, applicability_status="not_applicable")
+        .with_entities(CriterionApplicability.criterion_id)
+        .all()
+    )
+    na_criterion_ids = {r[0] for r in na_criteria}
+
+    # Get info-only criterion IDs
+    info_only_ids = {
+        c.id for c in TemplateCriterion.query
+        .join(TemplateSection)
+        .filter(TemplateSection.template_id == audit.template_id, TemplateCriterion.info_only == True)
+        .all()
+    }
+
     scores = (
         AuditScore.query
         .filter_by(audit_id=audit.id)
@@ -35,9 +64,12 @@ def _calculate_overall_score(audit: Audit) -> float | None:
         )
         .all()
     )
-    if not scores:
+    # Filter out not-applicable and info-only criteria
+    applicable_scores = [s for s in scores if s.criterion_id not in na_criterion_ids and s.criterion_id not in info_only_ids]
+    if not applicable_scores:
         return None
-    return sum(s.score for s in scores) / len(scores)
+    return sum(s.score for s in applicable_scores) / len(applicable_scores)
+
 
 
 @api_bp.route("/api/audits/<int:audit_id>/score", methods=["PUT"])
@@ -87,6 +119,57 @@ def save_score(audit_id):
     na_reason = data.get("na_reason", "")
     notes = data.get("notes", "")
     evidence_checks = data.get("evidence_checks", {})
+    info_answer = data.get("info_answer", "")
+
+    # Handle info-only criteria — skip score validation, save info_answer
+    if criterion.info_only:
+        audit_score.score = None
+        audit_score.is_na = False
+        audit_score.na_reason = None
+        audit_score.info_answer = info_answer.strip() if info_answer else None
+        audit_score.notes = notes if notes else None
+        audit_score.updated_at = datetime.utcnow()
+
+        # Persist evidence check states
+        for item_id_str, is_checked in evidence_checks.items():
+            try:
+                item_id = int(item_id_str)
+            except (ValueError, TypeError):
+                continue
+            check_state = EvidenceCheckState.query.filter_by(
+                audit_score_id=audit_score.id,
+                evidence_item_id=item_id,
+            ).first()
+            if check_state is not None:
+                check_state.is_checked = bool(is_checked)
+
+        # Auto-transition Draft → In_Progress on first save
+        if audit.status == "Draft":
+            audit.status = "In_Progress"
+            audit.updated_at = datetime.utcnow()
+
+        audit.overall_score = _calculate_overall_score(audit)
+        audit.updated_at = datetime.utcnow()
+
+        log_activity("score_change", {
+            "audit_id": audit.id,
+            "criterion_code": criterion_code,
+            "info_only": True,
+            "info_answer": audit_score.info_answer,
+        })
+        db.session.commit()
+
+        return jsonify({
+            "ok": True,
+            "criterion_code": criterion_code,
+            "score": None,
+            "is_na": False,
+            "info_only": True,
+            "info_answer": audit_score.info_answer,
+            "notes": audit_score.notes,
+            "overall_score": audit.overall_score,
+            "audit_status": audit.status,
+        })
 
     # Validate N/A handling (Req 5.3)
     if is_na and not criterion.na_allowed:
@@ -336,6 +419,17 @@ def update_action(audit_id, action_id):
                 action.completed_at = None
                 action.completed_by_id = None
 
+    if "notes" in data:
+        action.notes = (data["notes"] or "").strip() or None
+
+    if "resolution_notes" in data:
+        action.resolution_notes = (data["resolution_notes"] or "").strip() or None
+
+    if "priority" in data:
+        p = data["priority"]
+        if p in ("critical", "high", "medium"):
+            action.priority = p
+
     db.session.commit()
     db.session.refresh(action)
 
@@ -397,6 +491,125 @@ def delete_attachment(attachment_id):
 
 
 # ---------------------------------------------------------------------------
+# Action evidence upload / delete
+# ---------------------------------------------------------------------------
+
+EVIDENCE_MIME_TYPES = {
+    "pdf": "application/pdf",
+    "png": "image/png",
+    "jpg": "image/jpeg",
+    "jpeg": "image/jpeg",
+    "gif": "image/gif",
+    "doc": "application/msword",
+    "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "xls": "application/vnd.ms-excel",
+    "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "txt": "text/plain",
+    "csv": "text/csv",
+}
+
+EVIDENCE_ALLOWED_EXTENSIONS = set(EVIDENCE_MIME_TYPES.keys())
+
+
+@api_bp.route(
+    "/api/audits/<int:audit_id>/actions/<int:action_id>/evidence",
+    methods=["POST"],
+)
+@roles_required("auditor")
+def upload_action_evidence(audit_id, action_id):
+    """Upload evidence file for a corrective action."""
+    import uuid
+
+    audit = db.session.get(Audit, audit_id)
+    if audit is None:
+        return jsonify({"error": "Audit not found"}), 404
+
+    if audit.status in ("Completed", "Archived"):
+        return jsonify({"error": "This audit is locked"}), 400
+
+    action = db.session.get(CorrectiveAction, action_id)
+    if action is None or action.audit_id != audit.id:
+        return jsonify({"error": "Action not found"}), 404
+
+    if "file" not in request.files:
+        return jsonify({"error": "No file provided"}), 400
+
+    file = request.files["file"]
+    if not file.filename:
+        return jsonify({"error": "No file selected"}), 400
+
+    original_filename = file.filename
+    ext = original_filename.rsplit(".", 1)[-1].lower() if "." in original_filename else ""
+    if ext not in EVIDENCE_ALLOWED_EXTENSIONS:
+        return jsonify({"error": f"File type .{ext} not allowed"}), 400
+
+    file_data = file.read()
+    file_size = len(file_data)
+    if file_size == 0:
+        return jsonify({"error": "Empty file"}), 400
+
+    unique_filename = f"action_{uuid.uuid4().hex}.{ext}"
+    upload_folder = current_app.config["UPLOAD_FOLDER"]
+    os.makedirs(upload_folder, exist_ok=True)
+    filepath = os.path.join(upload_folder, unique_filename)
+    with open(filepath, "wb") as f:
+        f.write(file_data)
+
+    from app.models.action import ActionEvidence
+
+    evidence = ActionEvidence(
+        action_id=action.id,
+        filename=unique_filename,
+        original_filename=original_filename,
+        file_size=file_size,
+        mime_type=EVIDENCE_MIME_TYPES.get(ext, "application/octet-stream"),
+        uploaded_by_id=g.current_user.id,
+    )
+    db.session.add(evidence)
+    db.session.commit()
+    db.session.refresh(evidence)
+
+    return jsonify({
+        "ok": True,
+        "evidence": {
+            "id": evidence.id,
+            "original_filename": evidence.original_filename,
+            "file_size": evidence.file_size,
+            "uploaded_at": evidence.uploaded_at.isoformat(),
+        },
+    }), 201
+
+
+@api_bp.route("/api/action-evidence/<int:evidence_id>", methods=["DELETE"])
+@roles_required("auditor")
+def delete_action_evidence(evidence_id):
+    """Delete an evidence file from a corrective action."""
+    from app.models.action import ActionEvidence
+
+    evidence = db.session.get(ActionEvidence, evidence_id)
+    if evidence is None:
+        return jsonify({"error": "Evidence not found"}), 404
+
+    action = db.session.get(CorrectiveAction, evidence.action_id)
+    if action is None:
+        return jsonify({"error": "Evidence not found"}), 404
+
+    audit = db.session.get(Audit, action.audit_id)
+    if audit and audit.status in ("Completed", "Archived"):
+        return jsonify({"error": "This audit is locked"}), 400
+
+    upload_folder = current_app.config["UPLOAD_FOLDER"]
+    filepath = os.path.join(upload_folder, evidence.filename)
+    if os.path.exists(filepath):
+        os.remove(filepath)
+
+    db.session.delete(evidence)
+    db.session.commit()
+
+    return jsonify({"ok": True, "message": "Evidence deleted"})
+
+
+# ---------------------------------------------------------------------------
 # Legacy JSON import (Req 17.1, 17.2, 17.3, 17.8)
 # ---------------------------------------------------------------------------
 
@@ -448,6 +661,124 @@ def import_legacy(audit_id):
         "audit_id": imported_audit.id,
         "message": "Legacy data imported successfully",
     }), 201
+
+
+# ---------------------------------------------------------------------------
+# Scoping API endpoints (Req 2.3, 2.4, 2.6, 2.7)
+# ---------------------------------------------------------------------------
+
+
+@api_bp.route("/api/audit/<int:audit_id>/scoping", methods=["GET"])
+@roles_required("auditor")
+def get_scoping(audit_id):
+    """Return current scoping profile and applicability data."""
+    audit = db.session.get(Audit, audit_id)
+    if audit is None:
+        return jsonify({"error": "Audit not found"}), 404
+
+    # Get scoping profile (answers)
+    profiles = ScopingProfile.query.filter_by(audit_id=audit_id).all()
+    answers = {}
+    for p in profiles:
+        q = db.session.get(ScopingQuestion, p.question_id)
+        if q:
+            answers[q.identifier] = p.answer_value
+
+    # Get applicability
+    app_records = CriterionApplicability.query.filter_by(audit_id=audit_id).all()
+    applicability = {str(r.criterion_id): r.applicability_status for r in app_records}
+
+    applicable_count = sum(1 for s in applicability.values() if s == "applicable")
+    not_applicable_count = sum(1 for s in applicability.values() if s == "not_applicable")
+
+    return jsonify({
+        "ok": True,
+        "audit_id": audit_id,
+        "answers": answers,
+        "applicability": applicability,
+        "summary": {
+            "total": len(applicability),
+            "applicable": applicable_count,
+            "not_applicable": not_applicable_count,
+        },
+    })
+
+
+@api_bp.route("/api/audit/<int:audit_id>/scoping", methods=["POST"])
+@roles_required("auditor")
+def submit_scoping(audit_id):
+    """Submit scoping answers, evaluate, and persist."""
+    audit = db.session.get(Audit, audit_id)
+    if audit is None:
+        return jsonify({"error": "Audit not found"}), 404
+
+    if audit.status not in ("Draft", "In_Progress"):
+        return jsonify({"error": "Scoping can only be modified for Draft or In Progress audits"}), 400
+
+    data = request.get_json(silent=True)
+    if data is None or "answers" not in data:
+        return jsonify({"error": "JSON body with 'answers' dict required"}), 400
+
+    answers = data["answers"]
+    if not isinstance(answers, dict):
+        return jsonify({"error": "'answers' must be a dict of identifier → answer"}), 400
+
+    # Get old applicability for re-scoping
+    old_app_records = CriterionApplicability.query.filter_by(audit_id=audit_id).all()
+    old_app = {r.criterion_id: r.applicability_status for r in old_app_records}
+
+    # Evaluate
+    result = evaluate_scoping(audit_id, answers)
+    new_app = result["criteria"]
+
+    # Clear scores for newly applicable criteria
+    if old_app:
+        from app.services.scoping import clear_scores_for_newly_applicable
+        clear_scores_for_newly_applicable(audit_id, old_app, new_app)
+
+    # Persist
+    persist_scoping_profile(audit_id, answers)
+    persist_applicability(audit_id, new_app)
+
+    return jsonify({
+        "ok": True,
+        "audit_id": audit_id,
+        "applicable_count": result["applicable_count"],
+        "not_applicable_count": result["not_applicable_count"],
+        "total_count": result["total_count"],
+    })
+
+
+# ---------------------------------------------------------------------------
+# Compliance API endpoints (Req 8.1, 9.2, 10.1)
+# ---------------------------------------------------------------------------
+
+
+@api_bp.route("/api/compliance/matrix")
+@roles_required("auditor")
+def compliance_matrix():
+    """Return full compliance matrix JSON."""
+    matrix = get_compliance_matrix()
+    return jsonify({"ok": True, "matrix": matrix})
+
+
+@api_bp.route("/api/compliance/trend/<string:framework>")
+@roles_required("auditor")
+def compliance_trend(framework):
+    """Return trend data for a specific framework."""
+    trend = get_trend_data(framework)
+    return jsonify({"ok": True, "framework": framework, "trend": trend})
+
+
+@api_bp.route("/api/compliance/breakdown/<int:audit_id>")
+@roles_required("auditor")
+def compliance_breakdown(audit_id):
+    """Return control area breakdown for an audit."""
+    audit = db.session.get(Audit, audit_id)
+    if audit is None:
+        return jsonify({"error": "Audit not found"}), 404
+    breakdown = get_control_area_breakdown(audit_id)
+    return jsonify({"ok": True, "audit_id": audit_id, "breakdown": breakdown})
 
 
 # ---------------------------------------------------------------------------

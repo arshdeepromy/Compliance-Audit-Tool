@@ -834,3 +834,108 @@ a.back-link:hover { color: #f97316; }
   .meta-grid { grid-template-columns: 1fr; }
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
 }
+
+
+/* ── Compliance Heatmap Colours ────────────────────────────────────────── */
+.heatmap-red { background: #ef4444; color: #fff; }
+.heatmap-amber { background: #f59e0b; color: #fff; }
+.heatmap-light-green { background: #86efac; color: #1a1a2e; }
+.heatmap-green { background: #22c55e; color: #fff; }
+.heatmap-grey { background: #4b5563; color: #d1d5db; }
+
+/* ── Heatmap Grid ──────────────────────────────────────────────────────── */
+.heatmap-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.heatmap-cell {
+  flex: 1 1 160px;
+  max-width: 220px;
+  min-width: 140px;
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+  transition: opacity 0.15s;
+}
+.heatmap-cell:hover { opacity: 0.9; }
+
+.heatmap-cell a { display: block; }
+
+.heatmap-framework {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin-bottom: 0.35rem;
+}
+
+.heatmap-score {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 1.5rem;
+}
+
+.heatmap-trend {
+  font-size: 1rem;
+  margin-top: 0.2rem;
+}
+
+.heatmap-domain-avg {
+  background: #1a1a2e;
+  border: 1px solid #2a2a4a;
+  color: #f97316;
+}
+
+/* ── Control Area Breakdown ────────────────────────────────────────────── */
+.control-area-row {
+  display: grid;
+  grid-template-columns: 1fr 2fr auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(42, 42, 74, 0.5);
+}
+.control-area-row:last-child { border-bottom: none; }
+
+.control-area-name {
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: #e0e0e0;
+}
+
+.control-area-stats {
+  display: block;
+  font-size: 0.75rem;
+  margin-top: 0.15rem;
+}
+
+.control-area-bar-wrap {
+  height: 24px;
+  background: rgba(42, 42, 74, 0.5);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.control-area-bar {
+  height: 100%;
+  border-radius: 4px;
+  min-width: 4px;
+  transition: width 0.3s ease;
+}
+
+.control-area-score {
+  min-width: 48px;
+  text-align: right;
+}
+
+@media (max-width: 767px) {
+  .control-area-row {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+  .heatmap-cell {
+    flex: 1 1 100%;
+    max-width: none;
+  }
+}

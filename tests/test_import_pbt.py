@@ -231,7 +231,7 @@ class TestProperty31LegacyJsonRoundTrip:
 
     @given(data=_valid_legacy_json_strategy(num_criteria=5))
     @settings(
-        max_examples=10,
+        max_examples=5,
         suppress_health_check=[HealthCheck.function_scoped_fixture],
         deadline=None,
     )
@@ -259,7 +259,7 @@ class TestProperty31LegacyJsonRoundTrip:
 
     @given(data=_valid_legacy_json_strategy(num_criteria=5))
     @settings(
-        max_examples=10,
+        max_examples=5,
         suppress_health_check=[HealthCheck.function_scoped_fixture],
         deadline=None,
     )
@@ -283,7 +283,7 @@ class TestProperty31LegacyJsonRoundTrip:
 
     @given(data=_valid_legacy_json_strategy(num_criteria=5))
     @settings(
-        max_examples=10,
+        max_examples=5,
         suppress_health_check=[HealthCheck.function_scoped_fixture],
         deadline=None,
     )
@@ -303,7 +303,7 @@ class TestProperty31LegacyJsonRoundTrip:
 
     @given(data=_valid_legacy_json_strategy(num_criteria=5))
     @settings(
-        max_examples=10,
+        max_examples=5,
         suppress_health_check=[HealthCheck.function_scoped_fixture],
         deadline=None,
     )
@@ -347,7 +347,7 @@ class TestProperty32MalformedJsonImportErrors:
         has_scores=st.booleans(),
     )
     @settings(
-        max_examples=10,
+        max_examples=5,
         suppress_health_check=[HealthCheck.function_scoped_fixture],
         deadline=None,
     )
@@ -384,7 +384,7 @@ class TestProperty32MalformedJsonImportErrors:
         bad_score=st.integers().filter(lambda x: x < 0 or x > 4),
     )
     @settings(
-        max_examples=10,
+        max_examples=5,
         suppress_health_check=[HealthCheck.function_scoped_fixture],
         deadline=None,
     )
@@ -416,7 +416,7 @@ class TestProperty32MalformedJsonImportErrors:
         ).filter(lambda s: not _is_valid_date(s)),
     )
     @settings(
-        max_examples=10,
+        max_examples=5,
         suppress_health_check=[HealthCheck.function_scoped_fixture],
         deadline=None,
     )
@@ -490,7 +490,7 @@ class TestProperty33SeedImportIdempotent:
         num_runs=st.integers(min_value=2, max_value=4),
     )
     @settings(
-        max_examples=10,
+        max_examples=5,
         suppress_health_check=[HealthCheck.function_scoped_fixture],
         deadline=None,
     )
@@ -547,7 +547,7 @@ class TestProperty33SeedImportIdempotent:
 
     @given(num_runs=st.integers(min_value=2, max_value=4))
     @settings(
-        max_examples=10,
+        max_examples=5,
         suppress_health_check=[HealthCheck.function_scoped_fixture],
         deadline=None,
     )

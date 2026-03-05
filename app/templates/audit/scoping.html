@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scoping — {{ audit.template.name if audit.template else 'Audit #' ~ audit.id }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Barlow', sans-serif;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .container { max-width: 720px; margin: 0 auto; }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .page-header h1 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 1.75rem;
+      color: #f97316;
+    }
+
+    a.back-link {
+      color: #9ca3af;
+      text-decoration: none;
+      font-size: 0.875rem;
+    }
+    a.back-link:hover { color: #f97316; }
+</style>
+
+    .flash-messages { margin-bottom: 1.25rem; }
+    .flash {
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      margin-bottom: 0.5rem;
+    }
+    .flash.error {
+      background: rgba(239, 68, 68, 0.15);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    .flash.success {
+      background: rgba(34, 197, 94, 0.15);
+      color: #86efac;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .card {
+      background: #16213e;
+      border-radius: 12px;
+      border: 1px solid #2a2a4a;
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .card-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: #fb923c;
+      margin-bottom: 1rem;
+    }
+
+    .card-description {
+      font-size: 0.85rem;
+      color: #9ca3af;
+      margin-bottom: 1rem;
+      line-height: 1.5;
+    }
+
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #d1d5db;
+      margin-bottom: 0.35rem;
+    }
+
+    .question-number {
+      color: #f97316;
+      font-weight: 600;
+      margin-right: 0.35rem;
+    }
+
+    .radio-group {
+      display: flex;
+      gap: 1.5rem;
+      margin-top: 0.35rem;
+    }
+
+    .radio-group label {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.9rem;
+      color: #e0e0e0;
+      cursor: pointer;
+    }
+
+    .radio-group input[type="radio"] {
+      accent-color: #f97316;
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    select {
+      width: 100%;
+      padding: 0.6rem 0.8rem;
+      background: #0f1629;
+      border: 1px solid #2a2a4a;
+      border-radius: 8px;
+      color: #e0e0e0;
+      font-family: 'Barlow', sans-serif;
+      font-size: 0.9rem;
+      transition: border-color 0.2s;
+      margin-top: 0.35rem;
+    }
+    select:focus {
+      outline: none;
+      border-color: #f97316;
+      box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
+    }
+    select option {
+      background: #0f1629;
+      color: #e0e0e0;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.2s, transform 0.1s;
+      letter-spacing: 0.025em;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary { background: #f97316; color: #fff; }
+    .btn-primary:hover { background: #fb923c; }
+    .btn-secondary { background: #2a2a4a; color: #d1d5db; }
+    .btn-secondary:hover { background: #3a3a5a; }
+
+    .form-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 0.5rem;
+    }
+
+    @media (max-width: 768px) {
+      body { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="page-header">
+      <h1>Scoping — {{ audit.template.name if audit.template else 'Audit #' ~ audit.id }}</h1>
+      <a href="{{ url_for('audits.audit_detail', audit_id=audit.id) }}" class="back-link">Skip Scoping →</a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-messages">
+      {% for category, message in messages %}
+      <div class="flash {{ category }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <div class="card">
+      <div class="card-title">{{ template.name }} (v{{ template.version }})</div>
+      {% if template.description %}
+      <div class="card-description">{{ template.description }}</div>
+      {% endif %}
+      <div class="card-description">
+        Answer the following scoping questions to determine which criteria apply to this audit.
+      </div>
+    </div>
+
+    <form method="post">
+      <div class="card">
+        <div class="card-title">Scoping Questions</div>
+
+        {% for question in questions %}
+        <div class="form-group">
+          <label>
+            <span class="question-number">{{ loop.index }}.</span>
+            {{ question.question_text }}
+          </label>
+
+          {% if question.answer_type == "yes_no" %}
+          <div class="radio-group">
+            <label>
+              <input type="radio" name="{{ question.identifier }}" value="Yes"
+                     {% if existing_answers.get(question.identifier) == "Yes" %}checked{% endif %}>
+              Yes
+            </label>
+            <label>
+              <input type="radio" name="{{ question.identifier }}" value="No"
+                     {% if existing_answers.get(question.identifier) == "No" %}checked{% endif %}>
+              No
+            </label>
+          </div>
+          {% elif question.answer_type == "single_select" %}
+          <select name="{{ question.identifier }}">
+            <option value="">Select an option…</option>
+            {% for option in question.parsed_options %}
+            <option value="{{ option }}"
+                    {% if existing_answers.get(question.identifier) == option %}selected{% endif %}>
+              {{ option }}
+            </option>
+            {% endfor %}
+          </select>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+
+      <div class="form-actions">
+        <a href="{{ url_for('audits.audit_detail', audit_id=audit.id) }}" class="btn btn-secondary">Skip Scoping</a>
+        <button type="submit" class="btn btn-primary">Save Scoping &amp; Continue</button>
+      </div>
+    </form>
+  </div>
+</body>
+</html>

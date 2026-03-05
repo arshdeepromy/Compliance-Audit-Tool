@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Control Area Breakdown — {{ branding.company_name if branding else 'Tōtika Audit Tool' }}{% endblock %}
+
+{% block content %}
+<div class="container">
+  <a href="{{ url_for('audits.compliance_matrix') }}" class="back-link">&larr; Back to Compliance Matrix</a>
+
+  <div class="page-header" style="margin-top:1rem;">
+    <h1>Control Area Breakdown</h1>
+  </div>
+
+  {# ── Audit info header ────────────────────────────────────────────── #}
+  <div class="card" style="margin-bottom:1.5rem;">
+    <div class="meta-grid">
+      <div class="meta-item">
+        <span class="label">Template</span>
+        <span class="value">{{ audit.template.name if audit.template else '—' }}</span>
+      </div>
+      <div class="meta-item">
+        <span class="label">Framework</span>
+        <span class="value">{{ audit.template.compliance_framework if audit.template and audit.template.compliance_framework else '—' }}</span>
+      </div>
+      <div class="meta-item">
+        <span class="label">Date</span>
+        <span class="value">{{ audit.audit_date.strftime('%Y-%m-%d') if audit.audit_date else '—' }}</span>
+      </div>
+      <div class="meta-item">
+        <span class="label">Overall Score</span>
+        <span class="value score-value">
+          {% if audit.overall_score is not none %}
+            {{ '%.1f' | format(audit.overall_score) }}
+          {% else %}
+            —
+          {% endif %}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  {# ── Per-section breakdown bars ────────────────────────────────────── #}
+  {% if breakdown %}
+  <div class="card">
+    <div class="card-title">Sections</div>
+    {% for section in breakdown %}
+    <div class="control-area-row">
+      <div class="control-area-header">
+        <span class="control-area-name">{{ section.section_name }}</span>
+        <span class="control-area-stats text-muted">
+          {{ section.applicable_count }} applicable · {{ section.scored_count }} scored · {{ section.gap_count }} gaps
+        </span>
+      </div>
+      <div class="control-area-bar-wrap">
+        <div class="control-area-bar heatmap-{{ section.colour }}"
+             style="width: {{ (section.avg_score / 4.0 * 100) if section.avg_score is not none else 0 }}%;">
+        </div>
+      </div>
+      <div class="control-area-score">
+        {% if section.avg_score is not none %}
+          <span class="score-pill score-{{ 'green' if section.avg_score >= 3.5 else ('amber' if section.avg_score >= 2.5 else ('red' if section.avg_score < 1.5 else 'amber')) }}">
+            {{ '%.1f' | format(section.avg_score) }}
+          </span>
+        {% else %}
+          <span class="score-pill score-grey">—</span>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <p>No section data available for this audit.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

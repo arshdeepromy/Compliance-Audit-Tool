@@ -13,14 +13,14 @@
 <body class="{% if sidebar_sections is defined and sidebar_sections %}has-sidebar{% endif %}">
 
   {# ── Header ─────────────────────────────────────────────────────────── #}
-  <header class="app-header">
+  <header class="app-header" style="background: {{ branding.header_bg_colour if branding.header_bg_colour else '#0a0a23' }}; color: {{ branding.header_text_colour if branding.header_text_colour else '#ffffff' }};">
     {% if sidebar_sections is defined and sidebar_sections %}
     <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle sidebar" aria-expanded="false">
       &#9776;
     </button>
     {% endif %}
 
-    <a href="{{ url_for('audits.audit_list') }}" class="header-brand">
+    <a href="{{ url_for('audits.audit_list') }}" class="header-brand" style="color: {{ branding.header_text_colour if branding.header_text_colour else '#ffffff' }};">
       {% if branding.logo_filename %}
       <img src="{{ url_for('uploaded_file', filename=branding.logo_filename) }}" alt="{{ branding.company_name }}" class="header-logo">
       {% else %}
@@ -30,13 +30,15 @@
 
     <nav class="header-nav" aria-label="Main navigation">
       {% if g.current_user %}
-        <a href="{{ url_for('audits.audit_list') }}">Audits</a>
+        <a href="{{ url_for('audits.audit_list') }}" style="color: {{ branding.header_text_colour if branding.header_text_colour else '#ffffff' }};">Audits</a>
+        <a href="{{ url_for('audits.compliance_matrix') }}" style="color: {{ branding.header_text_colour if branding.header_text_colour else '#ffffff' }};">Compliance</a>
+        <a href="{{ url_for('risks.risk_register') }}" style="color: {{ branding.header_text_colour if branding.header_text_colour else '#ffffff' }};">Risks</a>
         {% set user_roles = g.current_user.roles.lower().split(',') %}
         {% if 'admin' in user_roles %}
-        <a href="{{ url_for('admin.branding') }}">Admin</a>
+        <a href="{{ url_for('admin.branding') }}" style="color: {{ branding.header_text_colour if branding.header_text_colour else '#ffffff' }};">Admin</a>
         {% endif %}
         <form method="post" action="{{ url_for('auth.logout') }}" style="display:inline;margin:0;">
-          <button type="submit" class="logout-btn">Logout</button>
+          <button type="submit" class="logout-btn" style="color: {{ branding.header_text_colour if branding.header_text_colour else '#ffffff' }};">Logout</button>
         </form>
       {% endif %}
     </nav>
@@ -94,5 +96,11 @@
 
   <script src="{{ url_for('static', filename='js/app.js') }}"></script>
   {% block extra_js %}{% endblock %}
+
+  {% if branding.footer_text %}
+  <footer style="background: {{ branding.footer_bg_colour if branding.footer_bg_colour else '#0a0a23' }}; color: {{ branding.footer_text_colour if branding.footer_text_colour else '#94a3b8' }}; text-align: center; padding: 0.75rem 1rem; font-size: 0.85rem; font-family: 'Barlow', sans-serif; border-top: 1px solid #334155;">
+    {{ branding.footer_text }}
+  </footer>
+  {% endif %}
 </body>
 </html>

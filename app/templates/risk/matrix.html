@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Risk Matrix — {{ branding.company_name }}{% endblock %}
+
+{% block content %}
+<style>
+  .rm-page{width:100%;max-width:100%;padding:1rem 1.5rem;font-family:"Barlow",sans-serif;color:#e2e8f0;box-sizing:border-box}
+  .rm-page h2{font-family:"Barlow Condensed",sans-serif;font-size:26px;font-weight:800;color:#fff;margin-bottom:4px}
+  .rm-page .subtitle{color:#94a3b8;font-size:13px;margin-bottom:20px}
+  .back-link{display:inline-flex;align-items:center;gap:.4rem;color:#f97316;text-decoration:none;font-weight:600;font-size:13px;margin-bottom:8px}
+  .back-link:hover{color:#fb923c}
+
+  .matrix-wrap{overflow-x:auto;margin-bottom:24px}
+  .matrix-table{border-collapse:collapse;width:100%;min-width:700px}
+  .matrix-table th,.matrix-table td{border:1px solid #334155;text-align:center;vertical-align:top;padding:0;width:18%}
+  .matrix-table th{background:#16213e;padding:10px 8px;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:#94a3b8}
+  .matrix-table .row-label{background:#16213e;padding:10px 8px;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:#94a3b8;width:14%;text-align:right;white-space:nowrap}
+
+  .cell{min-height:70px;padding:6px;display:flex;flex-direction:column;gap:3px;align-items:center;justify-content:flex-start}
+  .cell-low{background:rgba(34,197,94,.08)}
+  .cell-medium{background:rgba(234,179,8,.08)}
+  .cell-high{background:rgba(249,115,22,.1)}
+  .cell-critical{background:rgba(239,68,68,.12)}
+
+  .cell-risk{font-size:10px;background:#1e293b;border:1px solid #334155;border-radius:3px;padding:2px 5px;color:#e2e8f0;cursor:pointer;text-decoration:none;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
+  .cell-risk:hover{border-color:#f97316;color:#f97316}
+  .cell-count{font-family:"Barlow Condensed",sans-serif;font-size:18px;font-weight:800;color:#64748b}
+  .cell-score{font-size:9px;color:#64748b;margin-bottom:2px}
+
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+  .legend-item{display:flex;align-items:center;gap:5px;font-size:12px;color:#94a3b8}
+  .legend-box{width:14px;height:14px;border-radius:2px}
+
+  .btn{display:inline-block;padding:6px 14px;border-radius:4px;font-size:13px;font-weight:600;text-decoration:none;border:none;cursor:pointer;font-family:"Barlow",sans-serif}
+  .btn-secondary{background:#1e293b;color:#94a3b8;border:1px solid #334155}
+  .btn-secondary:hover{color:#fff;border-color:#f97316}
+</style>
+
+<div class="rm-page">
+  <a href="{{ url_for('risks.risk_register') }}" class="back-link">&#8592; Back to Risk Register</a>
+  <h2>Risk Assessment Matrix</h2>
+  <p class="subtitle">5×5 heatmap — Likelihood vs Impact (ISO 31000)</p>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-box" style="background:rgba(34,197,94,.3)"></div> Low (1–4)</div>
+    <div class="legend-item"><div class="legend-box" style="background:rgba(234,179,8,.3)"></div> Medium (5–9)</div>
+    <div class="legend-item"><div class="legend-box" style="background:rgba(249,115,22,.35)"></div> High (10–15)</div>
+    <div class="legend-item"><div class="legend-box" style="background:rgba(239,68,68,.35)"></div> Critical (16–25)</div>
+  </div>
+
+  <div class="matrix-wrap">
+    <table class="matrix-table">
+      <thead>
+        <tr>
+          <th></th>
+          {% for im in range(1, 6) %}
+          <th>{{ impact_labels[im] }}<br><span style="font-size:10px;color:#64748b">Impact {{ im }}</span></th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for li in range(5, 0, -1) %}
+        <tr>
+          <td class="row-label">{{ likelihood_labels[li] }}<br><span style="font-size:10px;color:#64748b">Likelihood {{ li }}</span></td>
+          {% for im in range(1, 6) %}
+          {% set score = li * im %}
+          {% set lvl = risk_level(score) %}
+          <td>
+            <div class="cell cell-{{ lvl|lower }}">
+              <div class="cell-score">{{ score }}</div>
+              {% if matrix[li][im] %}
+              <div class="cell-count">{{ matrix[li][im]|length }}</div>
+              {% for r in matrix[li][im][:3] %}
+              <a href="{{ url_for('risks.risk_detail', risk_id=r.id) }}" class="cell-risk" title="{{ r.title }}">R{{ '%03d' % r.id }}</a>
+              {% endfor %}
+              {% if matrix[li][im]|length > 3 %}
+              <span style="font-size:9px;color:#64748b">+{{ matrix[li][im]|length - 3 }} more</span>
+              {% endif %}
+              {% endif %}
+            </div>
+          </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

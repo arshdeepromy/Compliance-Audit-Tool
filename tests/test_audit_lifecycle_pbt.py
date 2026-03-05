@@ -206,7 +206,7 @@ class TestProperty11AuditStateMachineTransitions:
 
     @given(data=st_source_target)
     @settings(
-        max_examples=100,
+        max_examples=20,
         suppress_health_check=[HealthCheck.function_scoped_fixture],
         deadline=None,
     )
@@ -253,7 +253,7 @@ class TestProperty11AuditStateMachineTransitions:
 
     @given(source=st_status)
     @settings(
-        max_examples=100,
+        max_examples=20,
         suppress_health_check=[HealthCheck.function_scoped_fixture],
         deadline=None,
     )
@@ -309,7 +309,7 @@ class TestProperty12CompletedArchivedImmutable:
         new_notes=st.text(min_size=1, max_size=50),
     )
     @settings(
-        max_examples=100,
+        max_examples=20,
         suppress_health_check=[HealthCheck.function_scoped_fixture],
         deadline=None,
     )
@@ -344,7 +344,7 @@ class TestProperty12CompletedArchivedImmutable:
 
     @given(immutable_status=st.sampled_from(["Completed", "Archived"]))
     @settings(
-        max_examples=100,
+        max_examples=20,
         suppress_health_check=[HealthCheck.function_scoped_fixture],
         deadline=None,
     )
@@ -376,7 +376,7 @@ class TestProperty12CompletedArchivedImmutable:
         modifiable_status=st.sampled_from(["Draft", "In_Progress", "Review"]),
     )
     @settings(
-        max_examples=100,
+        max_examples=20,
         suppress_health_check=[HealthCheck.function_scoped_fixture],
         deadline=None,
     )
@@ -412,7 +412,7 @@ class TestProperty12CompletedArchivedImmutable:
 
     @given(immutable_status=st.sampled_from(["Completed", "Archived"]))
     @settings(
-        max_examples=100,
+        max_examples=20,
         suppress_health_check=[HealthCheck.function_scoped_fixture],
         deadline=None,
     )

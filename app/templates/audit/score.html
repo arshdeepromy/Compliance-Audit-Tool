@@ -4,225 +4,328 @@
 
 {% block content %}
 <style>
-  /* Dark theme scoring page styles */
-  .score-page { max-width: 900px; margin: 0 auto; padding: 1rem; font-family: 'Barlow', sans-serif; color: #fff; }
-  .score-page h2 { font-family: 'Barlow Condensed', sans-serif; color: #f97316; margin-bottom: 0.5rem; font-size: 1.6rem; }
-  .score-page h3 { font-family: 'Barlow Condensed', sans-serif; color: #fb923c; margin: 1rem 0 0.5rem; font-size: 1.2rem; }
+  /* ── Full-width scoring page matching v3 HTML design ── */
+  .sp{width:100%;max-width:100%;padding:1rem 1.5rem;font-family:'Barlow',sans-serif;color:#e2e8f0;box-sizing:border-box}
 
-  .save-status { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.85rem; margin-left: 1rem; vertical-align: middle; }
-  .save-status.saving { color: #fbbf24; }
-  .save-status.saved { color: #4ade80; }
-  .save-status.error { color: #f87171; }
-  .save-status.pending { color: #94a3b8; }
+  /* Nav arrows bar */
+  .nav-arrows{display:flex;gap:10px;margin-bottom:20px;justify-content:space-between;align-items:center}
+  .nav-arrows .nav-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;background:#0f172a;border:1px solid #1e293b;border-radius:6px;color:#f97316;text-decoration:none;font-weight:600;font-size:13px;cursor:pointer;transition:all .12s}
+  .nav-arrows .nav-btn:hover{background:#f97316;color:#fff;border-color:#f97316}
+  .nav-arrows .nav-btn:disabled,.nav-arrows .nav-btn.disabled{opacity:.35;pointer-events:none}
+  .criteria-counter{font-family:'Barlow Condensed',sans-serif;font-size:16px;color:#94a3b8}
 
-  .guidance-box { background: #16213e; border-left: 3px solid #f97316; padding: 0.75rem 1rem; margin-bottom: 1rem; border-radius: 4px; }
-  .guidance-box p { margin: 0; line-height: 1.5; color: #cbd5e1; }
+  /* Header */
+  .criteria-section{font-size:11px;color:#f97316;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;font-weight:700}
+  .criteria-header{margin-bottom:16px}
+  .criteria-code{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:#f97316;margin-right:8px}
+  .criteria-title{font-size:18px;font-weight:600;margin-top:4px;color:#fff}
+  .guide-header-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 
-  .question-box { background: #1e293b; padding: 0.75rem 1rem; margin-bottom: 1rem; border-radius: 4px; font-style: italic; color: #e2e8f0; }
+  /* Save status */
+  .save-status{display:inline-block;padding:2px 10px;border-radius:4px;font-size:12px;margin-left:auto}
+  .save-status.saving{color:#fbbf24}.save-status.saved{color:#4ade80}.save-status.error{color:#f87171}.save-status.pending{color:#94a3b8}
 
-  .tip-box { background: #1a1a2e; border: 1px solid #334155; padding: 0.75rem 1rem; margin-bottom: 1rem; border-radius: 4px; color: #94a3b8; font-size: 0.9rem; }
-  .tip-box strong { color: #f97316; }
+  /* Guidance box */
+  .criteria-guidance{background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:14px 16px;margin-bottom:20px}
+  .guidance-label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#f97316;margin-bottom:8px}
+  .guidance-text{font-size:13px;color:#94a3b8;line-height:1.65}
 
-  /* Scoring anchors */
-  .anchors-list { list-style: none; padding: 0; margin: 0 0 1rem; }
-  .anchors-list li { display: flex; gap: 0.75rem; padding: 0.5rem 0.75rem; margin-bottom: 0.25rem; background: #16213e; border-radius: 4px; align-items: flex-start; }
-  .anchor-score { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 1.1rem; min-width: 1.5rem; text-align: center; color: #f97316; flex-shrink: 0; }
-  .anchor-desc { color: #cbd5e1; line-height: 1.4; }
+  /* Tip box */
+  .tip-box{background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.3);border-radius:6px;padding:10px 14px;margin-bottom:16px;font-size:12.5px;color:#f97316}
 
-  /* Form sections */
-  .score-form fieldset { border: 1px solid #334155; border-radius: 6px; padding: 1rem; margin-bottom: 1rem; background: #0f172a; }
-  .score-form legend { font-family: 'Barlow Condensed', sans-serif; color: #fb923c; font-size: 1.05rem; padding: 0 0.5rem; }
+  /* Scoped-out banner */
+  .scoped-out-banner{background:rgba(148,163,184,.1);border:1px solid rgba(148,163,184,.25);border-radius:8px;padding:12px 16px;margin-bottom:16px;color:#94a3b8;font-size:13px}
 
-  /* Score radio buttons */
-  .score-options { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-  .score-option { position: relative; }
-  .score-option input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
-  .score-option label { display: inline-block; padding: 0.5rem 1rem; border: 2px solid #334155; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 1rem; text-align: center; min-width: 3rem; transition: all 0.15s ease; color: #e2e8f0; background: #1e293b; }
-  .score-option input[type="radio"]:checked + label { border-color: #f97316; background: #f97316; color: #fff; }
-  .score-option input[type="radio"]:focus + label { box-shadow: 0 0 0 2px rgba(249,115,22,0.4); }
-  .score-option label:hover { border-color: #fb923c; }
-  .score-option.na-option label { font-size: 0.9rem; }
+  /* Two-column form grid */
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px}
+  @media(max-width:900px){.form-grid{grid-template-columns:1fr}}
+
+  .form-card{background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:18px}
+  .form-card-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.8px;color:#94a3b8;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid #1e293b}
+  .form-card-title span{color:#f97316}
+</style>
+<style>
+  /* Score selector buttons (v3 style) */
+  .score-selector{display:flex;gap:8px;flex-wrap:wrap}
+  .score-btn{flex:1;min-width:50px;padding:10px 6px;border:2px solid #1e293b;border-radius:6px;cursor:pointer;background:#0f172a;text-align:center;transition:all .12s;position:relative}
+  .score-btn:hover{border-color:#94a3b8}
+  .score-btn input[type="radio"]{position:absolute;opacity:0;width:0;height:0}
+  .score-num{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:22px;line-height:1;color:#e2e8f0}
+  .score-desc{font-size:10px;color:#64748b;margin-top:2px;line-height:1.3}
+  .score-btn.sel-0{border-color:#ef4444;background:rgba(239,68,68,.12)}.score-btn.sel-0 .score-num{color:#ef4444}
+  .score-btn.sel-1{border-color:#ff6b35;background:rgba(255,107,53,.12)}.score-btn.sel-1 .score-num{color:#ff6b35}
+  .score-btn.sel-2{border-color:#eab308;background:rgba(234,179,8,.12)}.score-btn.sel-2 .score-num{color:#eab308}
+  .score-btn.sel-3{border-color:#22c55e;background:rgba(34,197,94,.12)}.score-btn.sel-3 .score-num{color:#22c55e}
+  .score-btn.sel-4{border-color:#3b82f6;background:rgba(59,130,246,.12)}.score-btn.sel-4 .score-num{color:#3b82f6}
+  .score-btn.sel-na{border-color:#a855f7;background:rgba(168,85,247,.12)}.score-btn.sel-na .score-num{color:#a855f7}
 
   /* N/A reason */
-  .na-reason-wrap { margin-top: 0.75rem; }
-  .na-reason-wrap textarea { width: 100%; min-height: 60px; background: #1e293b; border: 1px solid #334155; border-radius: 4px; color: #e2e8f0; padding: 0.5rem; font-family: 'Barlow', sans-serif; resize: vertical; }
-  .na-reason-wrap textarea:focus { outline: none; border-color: #f97316; }
+  .na-reason-wrap{margin-top:12px;display:none}
+  .na-reason-wrap.show{display:block}
 
-  /* Evidence checklist */
-  .evidence-list { list-style: none; padding: 0; margin: 0; }
-  .evidence-item { display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.4rem 0; }
-  .evidence-item input[type="checkbox"] { accent-color: #f97316; margin-top: 0.25rem; flex-shrink: 0; width: 1.1rem; height: 1.1rem; }
-  .evidence-item .ev-text { color: #e2e8f0; line-height: 1.4; }
-  .evidence-item .ev-age { font-size: 0.8rem; color: #94a3b8; margin-left: 0.25rem; }
+  /* Field label */
+  .field-label{font-size:11px;font-weight:600;letter-spacing:.5px;color:#94a3b8;margin-bottom:5px;text-transform:uppercase}
 
-  /* Notes textarea */
-  .notes-wrap textarea { width: 100%; min-height: 100px; background: #1e293b; border: 1px solid #334155; border-radius: 4px; color: #e2e8f0; padding: 0.5rem; font-family: 'Barlow', sans-serif; resize: vertical; }
-  .notes-wrap textarea:focus { outline: none; border-color: #f97316; }
+  /* Textarea / inputs */
+  .sp textarea,.sp input[type=text]{width:100%;background:#0f172a;border:1px solid #1e293b;color:#e2e8f0;border-radius:5px;padding:9px 11px;font-family:'Barlow',sans-serif;font-size:13px;line-height:1.5;transition:border-color .12s;resize:vertical;box-sizing:border-box}
+  .sp textarea:focus,.sp input:focus{outline:none;border-color:#f97316}
+  .sp textarea{min-height:90px}
 
-  /* Navigation */
-  .criterion-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #334155; }
-  .criterion-nav a { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 1rem; background: #1e293b; border: 1px solid #334155; border-radius: 6px; color: #f97316; text-decoration: none; font-weight: 600; transition: all 0.15s ease; }
-  .criterion-nav a:hover { background: #f97316; color: #fff; border-color: #f97316; }
-  .criterion-nav .spacer { flex: 1; }
+  /* Evidence items */
+  .evidence-item{display:flex;gap:10px;align-items:flex-start;padding:9px 10px;border-radius:5px;margin-bottom:6px;background:#0f172a;border:1px solid #1e293b}
+  .evidence-item input[type="checkbox"]{width:16px;height:16px;accent-color:#f97316;flex-shrink:0;cursor:pointer;margin-top:1px}
+  .evidence-text{font-size:12.5px;color:#94a3b8;flex:1;line-height:1.5}
+  .evidence-age{flex-shrink:0;font-size:10px;font-weight:700;padding:2px 7px;border-radius:3px;margin-top:2px;white-space:nowrap}
+  .age-1y{background:rgba(239,68,68,.2);color:#ef4444}
+  .age-2y{background:rgba(234,179,8,.2);color:#eab308}
+  .age-3y{background:rgba(249,115,22,.2);color:#f97316}
+  .age-5y{background:rgba(59,130,246,.2);color:#3b82f6}
+  .age-na{background:#1e293b;color:#64748b}
+
+  /* Scoring guide anchors */
+  .score-anchor{padding:8px 12px;border-radius:5px;margin-bottom:6px;border-left:3px solid #1e293b;background:#0f172a;font-size:12px;line-height:1.55;color:#94a3b8}
+  .score-anchor.s0{border-color:#ef4444}.score-anchor.s1{border-color:#ff6b35}
+  .score-anchor.s2{border-color:#eab308}.score-anchor.s3{border-color:#22c55e}.score-anchor.s4{border-color:#3b82f6}
+
+  /* Attachments */
+  .att-item{display:flex;align-items:center;gap:10px;padding:8px 12px;margin-bottom:6px;background:#0f172a;border:1px solid #1e293b;border-radius:5px}
+  .att-item a{color:#f97316;text-decoration:none;flex:1;font-size:13px}
+  .att-item a:hover{text-decoration:underline}
+  .att-size{color:#64748b;font-size:11px;flex-shrink:0}
+  .att-btn{border:none;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:12px;font-weight:600}
+  .att-btn-preview{background:#3b82f6;color:#fff}.att-btn-delete{background:#dc2626;color:#fff}
+
+  /* Bottom nav */
+  .bottom-nav{display:flex;gap:10px;margin-top:4px;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;gap:4px;padding:7px 16px;border-radius:6px;font-size:13px;font-weight:600;text-decoration:none;border:none;cursor:pointer;font-family:'Barlow',sans-serif;transition:all .12s}
+  .btn-primary{background:#f97316;color:#fff}.btn-primary:hover{background:#fb923c}
+  .btn-secondary{background:#0f172a;color:#94a3b8;border:1px solid #1e293b}.btn-secondary:hover{color:#fff;border-color:#f97316}
 </style>
 
-<div class="score-page">
-  <div style="display:flex; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:1rem;">
-    <h2 style="margin:0;">{{ criterion.code }}: {{ criterion.title }}</h2>
-    <span id="save-status" class="save-status"></span>
-    <button type="button" id="save-btn" style="margin-left:auto; background:#f97316; color:#fff; border:none; border-radius:6px; padding:0.4rem 1rem; cursor:pointer; font-family:'Barlow Condensed',sans-serif; font-weight:600; font-size:0.9rem;">Save</button>
+<div class="sp">
+  {# ── Top Navigation Bar ── #}
+  <div class="nav-arrows">
+    {% if prev_code %}
+    <a href="{{ url_for('audits.audit_score', audit_id=audit.id, code=prev_code) }}" class="nav-btn">&#8592; Previous</a>
+    {% else %}
+    <span class="nav-btn disabled">&#8592; Previous</span>
+    {% endif %}
+    <span class="criteria-counter">{{ criterion_index }} / {{ total_criteria }}</span>
+    {% if next_code %}
+    <a href="{{ url_for('audits.audit_score', audit_id=audit.id, code=next_code) }}" class="nav-btn">Next &#8594;</a>
+    {% else %}
+    <span class="nav-btn disabled">Next &#8594;</span>
+    {% endif %}
   </div>
 
-  {% if criterion.question %}
-  <div class="question-box">{{ criterion.question }}</div>
+  {# ── Criterion Header ── #}
+  <div class="criteria-header">
+    <div class="criteria-section">{{ criterion.section.name }}</div>
+    <div class="guide-header-row">
+      <span class="criteria-code">{{ criterion.code }}</span>
+      <span id="save-status" class="save-status"></span>
+    </div>
+    <div class="criteria-title">{{ criterion.title }}</div>
+  </div>
+
+  {% if is_not_applicable %}
+  <div class="scoped-out-banner">⊘ This criterion has been scoped out and is not applicable to this audit. Scoring is disabled.</div>
   {% endif %}
 
+  {# ── Guidance ── #}
   {% if criterion.guidance %}
-  <div class="guidance-box">
-    <p>{{ criterion.guidance }}</p>
+  <div class="criteria-guidance">
+    <div class="guidance-label">🔍 Criteria Guidance</div>
+    <div class="guidance-text">{{ criterion.guidance }}</div>
   </div>
   {% endif %}
 
   {% if criterion.tip %}
-  <div class="tip-box">
-    <strong>Tip:</strong> {{ criterion.tip }}
-  </div>
+  <div class="tip-box">💡 <strong>Auditor Tip:</strong> {{ criterion.tip }}</div>
   {% endif %}
 
-  {% if scoring_anchors %}
-  <h3>Scoring Guide</h3>
-  <ul class="anchors-list">
-    {% for anchor in scoring_anchors %}
-    <li>
-      <span class="anchor-score">{{ anchor.score }}</span>
-      <span class="anchor-desc">{{ anchor.description }}</span>
-    </li>
-    {% endfor %}
-  </ul>
-  {% endif %}
-
-  <form id="score-form" data-audit-id="{{ audit.id }}" data-criterion-code="{{ criterion.code }}" class="score-form">
-
-    <fieldset>
-      <legend>Score</legend>
-      <div class="score-options">
+  {# ── Two-Column Form Grid ── #}
+  <form id="score-form" data-audit-id="{{ audit.id }}" data-criterion-code="{{ criterion.code }}">
+  <div class="form-grid">
+    {# ── LEFT COLUMN: Score + Notes ── #}
+    <div class="form-card">
+      {% if criterion.info_only %}
+      <div class="form-card-title">Score <span>— Info Only</span></div>
+      <div style="background:rgba(129,140,248,.1);border:1px solid rgba(129,140,248,.3);border-radius:6px;padding:10px 14px;margin-bottom:14px;font-size:12.5px;color:#818cf8;">
+        ℹ️ This criterion is for information provision only. No score is awarded.
+      </div>
+      <div style="margin-top:12px">
+        <div class="field-label">Response (Yes / No / Details)</div>
+        <textarea name="info_answer" id="info-answer" placeholder="Record response to this information provision item…" {% if is_not_applicable %}disabled{% endif %}>{{ audit_score.info_answer or '' }}</textarea>
+      </div>
+      {% else %}
+      <div class="form-card-title">Score <span>(select 0–4{% if criterion.na_allowed %} or N/A{% endif %})</span></div>
+      <div class="score-selector">
+        {% set score_descs = {0: 'No Evidence', 1: 'Basic Gap', 2: 'Partial', 3: 'Performing', 4: 'Leading'} %}
         {% for i in range(5) %}
-        <div class="score-option">
-          <input type="radio" name="score" id="score-{{ i }}" value="{{ i }}"
-            {% if audit_score.score == i and not audit_score.is_na %}checked{% endif %}>
-          <label for="score-{{ i }}">{{ i }}</label>
-        </div>
+        <label class="score-btn {% if audit_score.score == i and not audit_score.is_na %}sel-{{ i }}{% endif %}" id="score-btn-{{ i }}">
+          <input type="radio" name="score" value="{{ i }}"
+            {% if audit_score.score == i and not audit_score.is_na %}checked{% endif %}
+            {% if is_not_applicable %}disabled{% endif %}>
+          <div class="score-num">{{ i }}</div>
+          <div class="score-desc">{{ score_descs[i] }}</div>
+        </label>
         {% endfor %}
         {% if criterion.na_allowed %}
-        <div class="score-option na-option">
-          <input type="radio" name="score" id="score-na" value="na"
-            {% if audit_score.is_na %}checked{% endif %}>
-          <label for="score-na">N/A</label>
-        </div>
+        <label class="score-btn {% if audit_score.is_na %}sel-na{% endif %}" id="score-btn-na">
+          <input type="radio" name="score" value="na"
+            {% if audit_score.is_na %}checked{% endif %}
+            {% if is_not_applicable %}disabled{% endif %}>
+          <div class="score-num" style="font-size:14px;padding-top:4px">N/A</div>
+          <div class="score-desc">Not Applicable</div>
+        </label>
         {% endif %}
       </div>
 
       {% if criterion.na_allowed %}
-      <div id="na-reason-field" class="na-reason-wrap" {% if not audit_score.is_na %}style="display:none"{% endif %}>
-        <label for="na-reason" style="display:block; margin-bottom:0.25rem; color:#94a3b8; font-size:0.9rem;">Reason for N/A</label>
-        <textarea id="na-reason" name="na_reason">{{ audit_score.na_reason or '' }}</textarea>
+      <div id="na-reason-field" class="na-reason-wrap {% if audit_score.is_na %}show{% endif %}">
+        <div class="field-label" style="margin-bottom:6px">N/A Justification (required)</div>
+        <input type="text" id="na-reason" name="na_reason" placeholder="Provide specific reason why this criterion does not apply…"
+          value="{{ audit_score.na_reason or '' }}" {% if is_not_applicable %}disabled{% endif %}>
       </div>
       {% endif %}
-    </fieldset>
 
-    {% if evidence_items %}
-    <fieldset>
-      <legend>Evidence Checklist</legend>
-      <ul class="evidence-list">
-        {% for item in evidence_items %}
-        <li class="evidence-item">
-          <input type="checkbox" id="ev-{{ item.id }}" name="evidence_{{ item.id }}"
-            {% if evidence_states.get(item.id) %}checked{% endif %}>
-          <label for="ev-{{ item.id }}">
-            <span class="ev-text">{{ item.text }}</span>
-            {% if item.age_label %}
-            <span class="ev-age">({{ item.age_label }})</span>
-            {% endif %}
-          </label>
-        </li>
-        {% endfor %}
-      </ul>
-    </fieldset>
-    {% endif %}
-
-    <fieldset>
-      <legend>Notes &amp; Observations</legend>
-      <div class="notes-wrap">
-        <textarea name="notes" placeholder="Enter observations, findings, or comments for this criterion…">{{ audit_score.notes or '' }}</textarea>
+      <div style="margin-top:16px">
+        <div class="field-label">Audit Notes / Evidence References</div>
+        <textarea name="notes" placeholder="Document evidence reviewed, reference file names, record any gaps or actions required…" {% if is_not_applicable %}disabled{% endif %}>{{ audit_score.notes or '' }}</textarea>
       </div>
-    </fieldset>
+      {% endif %}
+    </div>
+
+    {# ── RIGHT COLUMN: Evidence + Scoring Guide ── #}
+    <div>
+      {% if evidence_items %}
+      <div class="form-card" style="margin-bottom:16px">
+        <div class="form-card-title">Evidence Required <span style="color:#94a3b8;font-weight:400;font-size:11px">tick when sighted/assembled</span></div>
+        {% for item in evidence_items %}
+        <div class="evidence-item">
+          <input type="checkbox" id="ev-{{ item.id }}" name="evidence_{{ item.id }}"
+            {% if evidence_states.get(item.id) %}checked{% endif %}
+            {% if is_not_applicable %}disabled{% endif %}>
+          <label for="ev-{{ item.id }}" class="evidence-text">{{ item.text }}</label>
+          {% if item.age_label %}
+          <span class="evidence-age {{ item.age_class or 'age-na' }}">{{ item.age_label }}</span>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if scoring_anchors and not criterion.info_only %}
+      <div class="form-card">
+        <div class="form-card-title">Scoring Guide <span>(anchors)</span></div>
+        {% for anchor in scoring_anchors %}
+        <div class="score-anchor s{{ anchor.score }}">
+          <strong>{{ anchor.score }}:</strong> {{ anchor.description }}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
   </form>
 
-  {# --- Attachments section (Req 8.3) --- #}
-  <div class="attachments-section" style="margin-top:1rem;">
-    <h3>Evidence Attachments</h3>
-
+  {# ── Attachments ── #}
+  <div class="form-card" style="margin-bottom:20px">
+    <div class="form-card-title">Evidence Attachments</div>
     {% if attachments %}
-    <ul class="attachments-list" style="list-style:none; padding:0; margin:0 0 1rem;">
-      {% for att in attachments %}
-      <li style="display:flex; align-items:center; gap:0.75rem; padding:0.5rem 0.75rem; margin-bottom:0.25rem; background:#16213e; border-radius:4px;">
-        <a href="{{ url_for('audits.download_attachment', audit_id=audit.id, code=criterion.code, attachment_id=att.id) }}"
-           style="color:#f97316; text-decoration:none; flex:1;">
-          {{ att.original_filename }}
-        </a>
-        <span style="color:#94a3b8; font-size:0.85rem;">
-          {{ (att.file_size / 1024)|round(1) }} KB
-        </span>
-        {% if audit.status not in ('Completed', 'Archived') %}
-        <button type="button" class="delete-attachment-btn"
-                data-attachment-id="{{ att.id }}"
-                style="background:#dc2626; color:#fff; border:none; border-radius:4px; padding:0.25rem 0.5rem; cursor:pointer; font-size:0.85rem;">
-          Delete
-        </button>
-        {% endif %}
-      </li>
-      {% endfor %}
-    </ul>
+    {% for att in attachments %}
+    <div class="att-item">
+      <a href="{{ url_for('audits.download_attachment', audit_id=audit.id, code=criterion.code, attachment_id=att.id) }}">{{ att.original_filename }}</a>
+      <span class="att-size">{{ (att.file_size / 1024)|round(1) }} KB</span>
+      <button type="button" class="att-btn att-btn-preview preview-attachment-btn"
+              data-preview-url="{{ url_for('audits.preview_attachment', audit_id=audit.id, code=criterion.code, attachment_id=att.id) }}"
+              data-filename="{{ att.original_filename }}"
+              data-mime="{{ att.mime_type }}">Preview</button>
+      {% if audit.status not in ('Completed', 'Archived') %}
+      <button type="button" class="att-btn att-btn-delete delete-attachment-btn"
+              data-attachment-id="{{ att.id }}">Delete</button>
+      {% endif %}
+    </div>
+    {% endfor %}
     {% else %}
-    <p style="color:#94a3b8; font-size:0.9rem;">No attachments uploaded yet.</p>
+    <p style="color:#64748b;font-size:12.5px;margin:0">No attachments uploaded yet.</p>
     {% endif %}
 
     {% if audit.status not in ('Completed', 'Archived') %}
     <form method="POST"
           action="{{ url_for('audits.upload_attachment', audit_id=audit.id, code=criterion.code) }}"
           enctype="multipart/form-data"
-          style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
-      <input type="file" name="file" accept=".pdf,.png,.jpg,.jpeg,.docx"
-             style="color:#e2e8f0; font-size:0.9rem;">
-      <button type="submit"
-              style="background:#f97316; color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; cursor:pointer; font-weight:600;">
-        Upload
-      </button>
+          style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px">
+      <input type="file" name="file" accept=".pdf,.png,.jpg,.jpeg,.docx" style="color:#e2e8f0;font-size:12px">
+      <button type="submit" class="btn btn-primary">Upload</button>
     </form>
-    <p style="color:#64748b; font-size:0.8rem; margin-top:0.25rem;">
-      Accepted: PDF, PNG, JPG, JPEG, DOCX — Max 20 MB
-    </p>
+    <p style="color:#475569;font-size:10px;margin-top:4px">Accepted: PDF, PNG, JPG, JPEG, DOCX — Max 20 MB</p>
     {% endif %}
   </div>
 
-  <nav class="criterion-nav">
+  {# ── Bottom Navigation ── #}
+  <div class="bottom-nav">
     {% if prev_code %}
-    <a href="{{ url_for('audits.audit_score', audit_id=audit.id, code=prev_code) }}">&#8592; Previous</a>
-    {% else %}
-    <span></span>
+    <a href="{{ url_for('audits.audit_score', audit_id=audit.id, code=prev_code) }}" class="btn btn-secondary">&#8592; Previous</a>
     {% endif %}
-    <span class="spacer"></span>
-    {% if next_code %}
-    <a href="{{ url_for('audits.audit_score', audit_id=audit.id, code=next_code) }}">Next &#8594;</a>
-    {% else %}
-    <span></span>
-    {% endif %}
-  </nav>
+    <button type="button" id="save-btn" class="btn btn-primary" {% if is_not_applicable %}disabled{% endif %}>Save &amp; Continue &#8594;</button>
+    <a href="{{ url_for('audits.audit_detail', audit_id=audit.id) }}" class="btn btn-secondary" style="margin-left:auto">Back to Dashboard</a>
+  </div>
 </div>
 
 <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 <script>
-  // Attachment deletion via DELETE /api/attachments/<id>
+(function() {
+  // Score button visual toggle
+  var scoreBtns = document.querySelectorAll('.score-selector .score-btn');
+  scoreBtns.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var radio = btn.querySelector('input[type="radio"]');
+      if (radio && !radio.disabled) {
+        radio.checked = true;
+        radio.dispatchEvent(new Event('change', {bubbles: true}));
+        // Update visual classes
+        scoreBtns.forEach(function(b) {
+          b.className = 'score-btn';
+        });
+        var val = radio.value;
+        if (val === 'na') {
+          btn.classList.add('sel-na');
+        } else {
+          btn.classList.add('sel-' + val);
+        }
+        // Toggle NA reason
+        var naField = document.getElementById('na-reason-field');
+        if (naField) {
+          if (val === 'na') { naField.classList.add('show'); } else { naField.classList.remove('show'); }
+        }
+      }
+    });
+  });
+
+  // Save & Continue button: save then navigate to next
+  var saveBtn = document.getElementById('save-btn');
+  if (saveBtn) {
+    saveBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      var form = document.getElementById('score-form');
+      if (!form) return;
+      // Trigger immediate save via app.js
+      var evt = new Event('change', {bubbles: true});
+      form.dispatchEvent(evt);
+      // Wait for save then navigate
+      setTimeout(function() {
+        {% if next_code %}
+        window.location.href = "{{ url_for('audits.audit_score', audit_id=audit.id, code=next_code) }}";
+        {% else %}
+        window.location.href = "{{ url_for('audits.audit_detail', audit_id=audit.id) }}";
+        {% endif %}
+      }, 600);
+    });
+  }
+
+  // Attachment deletion
   document.querySelectorAll('.delete-attachment-btn').forEach(function(btn) {
     btn.addEventListener('click', function() {
       var attachmentId = this.getAttribute('data-attachment-id');
@@ -230,14 +333,66 @@
       fetch('/api/attachments/' + attachmentId, { method: 'DELETE' })
         .then(function(resp) { return resp.json().then(function(data) { return { status: resp.status, data: data }; }); })
         .then(function(result) {
-          if (result.status === 200 && result.data.ok) {
-            location.reload();
-          } else {
-            alert(result.data.error || 'Failed to delete attachment.');
-          }
+          if (result.status === 200 && result.data.ok) { location.reload(); }
+          else { alert(result.data.error || 'Failed to delete attachment.'); }
         })
         .catch(function() { alert('Failed to delete attachment.'); });
     });
   });
+})();
+</script>
+
+{# ── Preview Modal ── #}
+<div id="preview-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.8);align-items:center;justify-content:center;">
+  <div style="background:#1e293b;border-radius:8px;width:90vw;max-width:900px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;position:relative;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid #334155;">
+      <span id="preview-filename" style="color:#f97316;font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+      <button id="preview-close-btn" type="button" style="background:none;border:none;color:#94a3b8;font-size:1.5rem;cursor:pointer;line-height:1;" aria-label="Close preview">&times;</button>
+    </div>
+    <div id="preview-body" style="flex:1;overflow:auto;padding:1rem;min-height:300px;display:flex;align-items:center;justify-content:center;">
+      <p style="color:#94a3b8;">Loading preview…</p>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
+<script>
+(function() {
+  var modal = document.getElementById('preview-modal');
+  var body = document.getElementById('preview-body');
+  var filenameEl = document.getElementById('preview-filename');
+  function closeModal() { modal.style.display = 'none'; body.innerHTML = ''; }
+  document.getElementById('preview-close-btn').addEventListener('click', closeModal);
+  modal.addEventListener('click', function(e) { if (e.target === modal) closeModal(); });
+  document.addEventListener('keydown', function(e) { if (e.key === 'Escape' && modal.style.display === 'flex') closeModal(); });
+
+  document.querySelectorAll('.preview-attachment-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var url = this.getAttribute('data-preview-url');
+      var filename = this.getAttribute('data-filename');
+      var mime = this.getAttribute('data-mime');
+      filenameEl.textContent = filename;
+      body.innerHTML = '<p style="color:#94a3b8;">Loading preview…</p>';
+      modal.style.display = 'flex';
+      if (mime.startsWith('image/')) {
+        var img = document.createElement('img');
+        img.src = url; img.alt = filename;
+        img.style.cssText = 'max-width:100%;max-height:70vh;object-fit:contain;border-radius:4px;';
+        img.onload = function() { body.innerHTML = ''; body.appendChild(img); };
+        img.onerror = function() { body.innerHTML = '<p style="color:#f87171;">Failed to load image.</p>'; };
+      } else if (mime === 'application/pdf') {
+        body.innerHTML = '<iframe src="' + url + '" style="width:100%;height:70vh;border:none;border-radius:4px;background:#fff;" title="PDF preview"></iframe>';
+      } else if (mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+        fetch(url).then(function(r){return r.arrayBuffer();}).then(function(ab){return mammoth.convertToHtml({arrayBuffer:ab});}).then(function(result){
+          var c = document.createElement('div');
+          c.style.cssText = 'background:#fff;color:#1e293b;padding:1.5rem;border-radius:4px;max-height:70vh;overflow:auto;width:100%;font-family:sans-serif;line-height:1.6;';
+          c.innerHTML = result.value; body.innerHTML = ''; body.appendChild(c);
+        }).catch(function(){body.innerHTML='<p style="color:#f87171;">Failed to preview DOCX.</p>';});
+      } else {
+        body.innerHTML = '<p style="color:#94a3b8;">Preview not available for this file type.</p>';
+      }
+    });
+  });
+})();
 </script>
 {% endblock %}

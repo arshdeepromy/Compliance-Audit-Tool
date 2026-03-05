@@ -118,13 +118,28 @@
         <div class="card-title">Audit Setup</div>
 
         <div class="form-group">
+          <label for="domain_type">Domain Type</label>
+          <select id="domain_type" name="domain_type" onchange="filterByDomain(this.value)">
+            <option value="">All Domains</option>
+            {% for dt in domain_types %}
+            <option value="{{ dt }}" {% if selected_domain_type == dt %}selected{% endif %}>{{ dt }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
           <label for="template_id">Audit Template</label>
-          <select id="template_id" name="template_id" required>
+          <select id="template_id" name="template_id" required onchange="checkScoping(this.value)">
             <option value="">Select a template…</option>
             {% for t in templates %}
             <option value="{{ t.id }}">{{ t.name }} (v{{ t.version }})</option>
             {% endfor %}
           </select>
+        </div>
+
+        <div id="scoping-info" class="scoping-info" style="display: none;">
+          <span class="scoping-info-icon">ℹ</span>
+          This template includes scoping questions. You'll be asked to answer them after creating the audit.
         </div>
 
         <div class="form-group">
@@ -229,6 +244,46 @@
       .form-row { grid-template-columns: 1fr; }
       body { padding: 1rem; }
     }
+
+    .scoping-info {
+      background: rgba(249, 115, 22, 0.1);
+      border: 1px solid rgba(249, 115, 22, 0.3);
+      border-radius: 8px;
+      padding: 0.65rem 0.85rem;
+      font-size: 0.85rem;
+      color: #fb923c;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .scoping-info-icon {
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
   </style>
+
+  <script>
+    var hasScoping = {{ has_scoping | tojson }};
+
+    function filterByDomain(value) {
+      var url = new URL(window.location.href);
+      if (value) {
+        url.searchParams.set('domain_type', value);
+      } else {
+        url.searchParams.delete('domain_type');
+      }
+      window.location.href = url.toString();
+    }
+
+    function checkScoping(templateId) {
+      var infoDiv = document.getElementById('scoping-info');
+      if (templateId && hasScoping[parseInt(templateId)]) {
+        infoDiv.style.display = 'flex';
+      } else {
+        infoDiv.style.display = 'none';
+      }
+    }
+  </script>
 </body>
 </html>

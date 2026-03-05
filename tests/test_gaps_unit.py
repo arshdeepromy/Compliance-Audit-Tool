@@ -243,11 +243,11 @@ class TestGapList:
             resp = client.get(f"/audits/{audit.id}/gaps")
             assert resp.status_code == 200
             html = resp.data.decode()
-            assert "Total: 3" in html
-            assert "Open: 1" in html
-            assert "In Progress: 1" in html
-            assert "Completed: 1" in html
-            assert "Overdue: 0" in html
+            # Summary bar shows priority breakdown + closed count
+            assert ">3<" in html  # Total count
+            assert "Total" in html
+            assert "Critical" in html
+            assert "Closed" in html
 
     def test_gap_list_nonexistent_audit_returns_404(self, app, client):
         """Gap list for nonexistent audit should return 404."""

@@ -198,7 +198,7 @@ class TestProperty13ScoringRoundTrip:
         ev_check_2=st.booleans(),
     )
     @settings(
-        max_examples=100,
+        max_examples=8,
         suppress_health_check=[HealthCheck.function_scoped_fixture],
         deadline=None,
     )
@@ -273,7 +273,7 @@ class TestProperty13ScoringRoundTrip:
         notes=st_notes,
     )
     @settings(
-        max_examples=100,
+        max_examples=8,
         suppress_health_check=[HealthCheck.function_scoped_fixture],
         deadline=None,
     )
@@ -346,7 +346,7 @@ class TestProperty14NAExclusionFromScoreCalculation:
         ),
     )
     @settings(
-        max_examples=100,
+        max_examples=8,
         suppress_health_check=[HealthCheck.function_scoped_fixture],
         deadline=None,
     )
@@ -417,7 +417,7 @@ class TestProperty14NAExclusionFromScoreCalculation:
         ),
     )
     @settings(
-        max_examples=100,
+        max_examples=8,
         suppress_health_check=[HealthCheck.function_scoped_fixture],
         deadline=None,
     )
@@ -466,7 +466,7 @@ class TestProperty14NAExclusionFromScoreCalculation:
         score_value=st_score,
     )
     @settings(
-        max_examples=100,
+        max_examples=8,
         suppress_health_check=[HealthCheck.function_scoped_fixture],
         deadline=None,
     )

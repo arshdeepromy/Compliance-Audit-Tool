@@ -68,6 +68,39 @@
       <input type="color" id="accent_colour" name="accent_colour" value="{{ branding.accent_colour }}">
     </div>
   </div>
+
+  <div style="border-top:1px solid #2a2a4a; margin:1.5rem 0; padding-top:1.25rem;">
+    <h3 style="font-family:'Barlow Condensed',sans-serif; color:#f97316; font-size:1.1rem; margin:0 0 1rem;">Header Styling</h3>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="header_bg_colour">Header Background Colour</label>
+        <input type="color" id="header_bg_colour" name="header_bg_colour" value="{{ branding.header_bg_colour }}">
+      </div>
+      <div class="form-group">
+        <label for="header_text_colour">Header Text Colour</label>
+        <input type="color" id="header_text_colour" name="header_text_colour" value="{{ branding.header_text_colour }}">
+      </div>
+    </div>
+  </div>
+
+  <div style="border-top:1px solid #2a2a4a; margin:1.5rem 0; padding-top:1.25rem;">
+    <h3 style="font-family:'Barlow Condensed',sans-serif; color:#f97316; font-size:1.1rem; margin:0 0 1rem;">Footer</h3>
+    <div class="form-group">
+      <label for="footer_text">Footer Text (e.g. copyright notice)</label>
+      <input type="text" id="footer_text" name="footer_text"
+             value="{{ branding.footer_text }}" placeholder="© 2026 Your Company. All rights reserved.">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="footer_bg_colour">Footer Background Colour</label>
+        <input type="color" id="footer_bg_colour" name="footer_bg_colour" value="{{ branding.footer_bg_colour }}">
+      </div>
+      <div class="form-group">
+        <label for="footer_text_colour">Footer Text Colour</label>
+        <input type="color" id="footer_text_colour" name="footer_text_colour" value="{{ branding.footer_text_colour }}">
+      </div>
+    </div>
+  </div>
   <div class="form-actions">
     <button type="submit" class="btn btn-primary">Save Branding</button>
   </div>

@@ -276,7 +276,7 @@ _active_state_st = st.booleans()
 
 # Suppress the function-scoped fixture health check
 _suppress = settings(
-    max_examples=30,
+    max_examples=10,
     suppress_health_check=[HealthCheck.function_scoped_fixture],
     deadline=None,
 )

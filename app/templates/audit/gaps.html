@@ -1,135 +1,119 @@
 {% extends "base.html" %}
-
 {% block title %}Gap Checklist — Audit #{{ audit.id }} — {{ branding.company_name }}{% endblock %}
-
 {% block content %}
 <style>
-  /* Dark theme gap checklist styles */
-  .gaps-page { max-width: 960px; margin: 0 auto; padding: 1rem; font-family: 'Barlow', sans-serif; color: #fff; }
-  .gaps-page h2 { font-family: 'Barlow Condensed', sans-serif; color: #f97316; margin-bottom: 0.5rem; font-size: 1.6rem; }
-  .gaps-page h3 { font-family: 'Barlow Condensed', sans-serif; color: #fb923c; margin: 0; font-size: 1.15rem; }
-
-  /* Summary bar */
-  .summary-bar { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.25rem; }
-  .summary-card { background: #16213e; border-radius: 6px; padding: 0.6rem 1rem; text-align: center; min-width: 100px; flex: 1; }
-  .summary-card .count { font-family: 'Barlow Condensed', sans-serif; font-size: 1.5rem; font-weight: 700; color: #f97316; }
-  .summary-card .label { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
-
-  /* Filter controls */
-  .filter-bar { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.25rem; align-items: center; }
-  .filter-bar label { font-size: 0.85rem; color: #94a3b8; }
-  .filter-bar select { background: #1e293b; border: 1px solid #334155; border-radius: 4px; color: #e2e8f0; padding: 0.4rem 0.6rem; font-family: 'Barlow', sans-serif; font-size: 0.9rem; }
-  .filter-bar select:focus { outline: none; border-color: #f97316; }
-  .filter-bar .filter-btn { background: #f97316; color: #fff; border: none; border-radius: 4px; padding: 0.4rem 1rem; cursor: pointer; font-weight: 600; font-family: 'Barlow', sans-serif; }
-  .filter-bar .filter-btn:hover { background: #fb923c; }
-  .filter-bar .clear-btn { background: transparent; color: #94a3b8; border: 1px solid #334155; border-radius: 4px; padding: 0.4rem 0.75rem; cursor: pointer; font-family: 'Barlow', sans-serif; text-decoration: none; font-size: 0.9rem; }
-  .filter-bar .clear-btn:hover { color: #fff; border-color: #f97316; }
-
-  /* Gap item card */
-  .gap-card { background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 1rem; margin-bottom: 1rem; }
-  .gap-header { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
-  .gap-code { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 1.1rem; color: #e2e8f0; }
-  .gap-title { color: #cbd5e1; font-size: 0.95rem; }
-  .gap-score { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 0.95rem; padding: 0.15rem 0.5rem; border-radius: 4px; background: #1e293b; color: #94a3b8; }
-  .badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
-  .badge-critical { background: rgba(239,68,68,0.2); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
-  .badge-high { background: rgba(249,115,22,0.2); color: #fb923c; border: 1px solid rgba(249,115,22,0.3); }
-
-  /* Actions list under each gap */
-  .actions-section { margin-top: 0.5rem; }
-  .actions-section h4 { font-family: 'Barlow Condensed', sans-serif; color: #94a3b8; font-size: 0.9rem; margin: 0 0 0.4rem; text-transform: uppercase; letter-spacing: 0.05em; }
-  .action-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; background: #16213e; border-radius: 4px; margin-bottom: 0.35rem; font-size: 0.9rem; }
-  .action-desc { flex: 1; color: #e2e8f0; min-width: 150px; }
-  .action-meta { color: #94a3b8; font-size: 0.8rem; }
-  .action-status { padding: 0.1rem 0.4rem; border-radius: 3px; font-size: 0.8rem; font-weight: 600; }
-  .status-open { background: rgba(59,130,246,0.2); color: #60a5fa; }
-  .status-in_progress { background: rgba(250,204,21,0.2); color: #fbbf24; }
-  .status-completed { background: rgba(74,222,128,0.2); color: #4ade80; }
-  .status-overdue { background: rgba(239,68,68,0.2); color: #f87171; }
-
-  /* Status update select */
-  .status-select { background: #1e293b; border: 1px solid #334155; border-radius: 3px; color: #e2e8f0; padding: 0.2rem 0.4rem; font-size: 0.8rem; font-family: 'Barlow', sans-serif; }
-  .status-select:focus { outline: none; border-color: #f97316; }
-
-  /* Add action form */
-  .add-action-toggle { background: transparent; color: #f97316; border: 1px dashed #f97316; border-radius: 4px; padding: 0.35rem 0.75rem; cursor: pointer; font-size: 0.85rem; font-family: 'Barlow', sans-serif; margin-top: 0.5rem; }
-  .add-action-toggle:hover { background: rgba(249,115,22,0.1); }
-  .add-action-form { background: #16213e; border: 1px solid #334155; border-radius: 6px; padding: 0.75rem; margin-top: 0.5rem; display: none; }
-  .add-action-form.visible { display: block; }
-  .add-action-form .form-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
-  .add-action-form label { display: block; font-size: 0.8rem; color: #94a3b8; margin-bottom: 0.2rem; }
-  .add-action-form input, .add-action-form textarea, .add-action-form select { background: #1e293b; border: 1px solid #334155; border-radius: 4px; color: #e2e8f0; padding: 0.4rem 0.5rem; font-family: 'Barlow', sans-serif; font-size: 0.9rem; width: 100%; }
-  .add-action-form input:focus, .add-action-form textarea:focus, .add-action-form select:focus { outline: none; border-color: #f97316; }
-  .add-action-form textarea { min-height: 60px; resize: vertical; }
-  .add-action-form .field { flex: 1; min-width: 140px; }
-  .add-action-form .submit-btn { background: #f97316; color: #fff; border: none; border-radius: 4px; padding: 0.4rem 1rem; cursor: pointer; font-weight: 600; font-family: 'Barlow', sans-serif; }
-  .add-action-form .submit-btn:hover { background: #fb923c; }
-
-  /* Back link */
-  .back-link { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 1rem; background: #1e293b; border: 1px solid #334155; border-radius: 6px; color: #f97316; text-decoration: none; font-weight: 600; transition: all 0.15s ease; margin-bottom: 1rem; }
-  .back-link:hover { background: #f97316; color: #fff; border-color: #f97316; }
-
-  /* Empty state */
-  .empty-state { text-align: center; padding: 2rem; color: #94a3b8; }
-  .empty-state p { font-size: 1rem; }
+  .gaps-page{max-width:960px;margin:0 auto;padding:1rem;font-family:"Barlow",sans-serif;color:#fff}
+  .gaps-page h2{font-family:"Barlow Condensed",sans-serif;color:#f97316;margin-bottom:.5rem;font-size:1.6rem}
+  .summary-bar{display:flex;flex-wrap:wrap;gap:.75rem;margin-bottom:1.25rem}
+  .summary-card{background:#16213e;border-radius:6px;padding:.6rem 1rem;text-align:center;min-width:100px;flex:1;border:1px solid transparent;transition:all .15s;cursor:pointer;text-decoration:none}
+  .summary-card .count{font-family:"Barlow Condensed",sans-serif;font-size:1.5rem;font-weight:700;color:#f97316}
+  .summary-card .label{font-size:.8rem;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em}
+  .summary-card:hover{background:#1e293b;border:1px solid #f97316;transform:translateY(-1px)}
+  .filter-bar{display:flex;flex-wrap:wrap;gap:.75rem;margin-bottom:1.25rem;align-items:center}
+  .filter-bar label{font-size:.85rem;color:#94a3b8}
+  .filter-bar select{background:#1e293b;border:1px solid #334155;border-radius:4px;color:#e2e8f0;padding:.4rem .6rem;font-family:"Barlow",sans-serif;font-size:.9rem}
+  .filter-bar select:focus{outline:none;border-color:#f97316}
+  .filter-bar .filter-btn{background:#f97316;color:#fff;border:none;border-radius:4px;padding:.4rem 1rem;cursor:pointer;font-weight:600}
+  .filter-bar .filter-btn:hover{background:#fb923c}
+  .filter-bar .clear-btn{background:transparent;color:#94a3b8;border:1px solid #334155;border-radius:4px;padding:.4rem .75rem;cursor:pointer;text-decoration:none;font-size:.9rem}
+  .filter-bar .clear-btn:hover{color:#fff;border-color:#f97316}
+  .gap-card{background:#0f172a;border:1px solid #334155;border-radius:6px;padding:1rem;margin-bottom:1rem}
+  .gap-header{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;margin-bottom:.75rem}
+  .gap-code{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:1.1rem;color:#e2e8f0}
+  .gap-title{color:#cbd5e1;font-size:.95rem}
+  .gap-score{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:.95rem;padding:.15rem .5rem;border-radius:4px;background:#1e293b;color:#94a3b8}
+  .badge{display:inline-block;padding:.15rem .5rem;border-radius:4px;font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+  .badge-critical{background:rgba(239,68,68,.2);color:#f87171;border:1px solid rgba(239,68,68,.3)}
+  .badge-high{background:rgba(249,115,22,.2);color:#fb923c;border:1px solid rgba(249,115,22,.3)}
+  .badge-medium{background:rgba(250,204,21,.2);color:#fbbf24;border:1px solid rgba(250,204,21,.3)}
+  .actions-section{margin-top:.5rem}
+  .actions-section h4{font-family:"Barlow Condensed",sans-serif;color:#94a3b8;font-size:.9rem;margin:0 0 .4rem;text-transform:uppercase;letter-spacing:.05em}
+  .action-item{background:#16213e;border-radius:4px;margin-bottom:.4rem;border:1px solid #1e293b;overflow:hidden}
+  .action-summary{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;padding:.5rem .75rem;cursor:pointer;user-select:none}
+  .action-summary:hover{background:#1e293b}
+  .action-expand-icon{color:#64748b;font-size:.75rem;transition:transform .2s;min-width:16px}
+  .action-item.expanded .action-expand-icon{transform:rotate(90deg)}
+  .action-desc{flex:1;color:#e2e8f0;font-size:.9rem;min-width:150px}
+  .action-meta{color:#94a3b8;font-size:.8rem}
+  .action-status{padding:.1rem .4rem;border-radius:3px;font-size:.8rem;font-weight:600}
+  .status-open{background:rgba(59,130,246,.2);color:#60a5fa}
+  .status-in_progress{background:rgba(250,204,21,.2);color:#fbbf24}
+  .status-completed{background:rgba(74,222,128,.2);color:#4ade80}
+  .status-overdue{background:rgba(239,68,68,.2);color:#f87171}
+  .action-detail{display:none;padding:.75rem;border-top:1px solid #334155;background:#0f172a}
+  .action-item.expanded .action-detail{display:block}
+  .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.75rem}
+  .detail-field label{display:block;font-size:.8rem;color:#94a3b8;margin-bottom:.2rem}
+  .detail-field select,.detail-field input{background:#1e293b;border:1px solid #334155;border-radius:4px;color:#e2e8f0;padding:.35rem .5rem;font-size:.85rem;width:100%}
+  .detail-field select:focus,.detail-field input:focus,.detail-field textarea:focus{outline:none;border-color:#f97316}
+  .detail-field textarea{background:#1e293b;border:1px solid #334155;border-radius:4px;color:#e2e8f0;padding:.35rem .5rem;font-size:.85rem;width:100%;min-height:50px;resize:vertical}
+  .detail-full{grid-column:1/-1}
+  .detail-actions{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem}
+  .btn-save{background:#f97316;color:#fff;border:none;border-radius:4px;padding:.35rem .75rem;cursor:pointer;font-weight:600;font-size:.85rem}
+  .btn-save:hover{background:#fb923c}
+  .btn-complete{background:#22c55e;color:#fff;border:none;border-radius:4px;padding:.35rem .75rem;cursor:pointer;font-weight:600;font-size:.85rem}
+  .btn-complete:hover{background:#16a34a}
+  .btn-reopen{background:#3b82f6;color:#fff;border:none;border-radius:4px;padding:.35rem .75rem;cursor:pointer;font-weight:600;font-size:.85rem}
+  .btn-reopen:hover{background:#2563eb}
+  .completed-banner{background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.3);border-radius:4px;padding:.5rem .75rem;margin-bottom:.5rem;font-size:.85rem;color:#4ade80}
+  .evidence-section{margin-top:.75rem;border-top:1px solid #334155;padding-top:.5rem}
+  .evidence-section h5{font-family:"Barlow Condensed",sans-serif;color:#94a3b8;font-size:.85rem;margin:0 0 .4rem;text-transform:uppercase}
+  .evidence-file{display:flex;align-items:center;gap:.5rem;padding:.3rem .5rem;background:#1e293b;border-radius:3px;margin-bottom:.25rem;font-size:.85rem}
+  .evidence-file .ev-name{flex:1;color:#e2e8f0}
+  .evidence-file .ev-size{color:#64748b;font-size:.75rem}
+  .evidence-file .ev-delete{background:transparent;border:none;color:#f87171;cursor:pointer;font-size:.85rem;padding:.1rem .3rem}
+  .evidence-file .ev-delete:hover{color:#ef4444}
+  .evidence-upload{margin-top:.4rem}
+  .evidence-upload input[type="file"]{font-size:.8rem;color:#94a3b8}
+  .add-action-toggle{background:transparent;color:#f97316;border:1px dashed #f97316;border-radius:4px;padding:.35rem .75rem;cursor:pointer;font-size:.85rem;margin-top:.5rem}
+  .add-action-toggle:hover{background:rgba(249,115,22,.1)}
+  .add-action-form{background:#16213e;border:1px solid #334155;border-radius:6px;padding:.75rem;margin-top:.5rem;display:none}
+  .add-action-form.visible{display:block}
+  .add-action-form .form-row{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.5rem}
+  .add-action-form label{display:block;font-size:.8rem;color:#94a3b8;margin-bottom:.2rem}
+  .add-action-form input,.add-action-form textarea,.add-action-form select{background:#1e293b;border:1px solid #334155;border-radius:4px;color:#e2e8f0;padding:.4rem .5rem;font-size:.9rem;width:100%}
+  .add-action-form textarea{min-height:60px;resize:vertical}
+  .add-action-form .field{flex:1;min-width:140px}
+  .back-link{display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1rem;background:#1e293b;border:1px solid #334155;border-radius:6px;color:#f97316;text-decoration:none;font-weight:600;transition:all .15s;margin-bottom:1rem}
+  .back-link:hover{background:#f97316;color:#fff;border-color:#f97316}
+  .empty-state{text-align:center;padding:2rem;color:#94a3b8}
+  .read-only-val{color:#e2e8f0;font-size:.85rem;padding:.35rem 0}
 </style>
 
 <div class="gaps-page">
   <a href="{{ url_for('audits.audit_detail', audit_id=audit.id) }}" class="back-link">&#8592; Back to Audit</a>
-
   <h2>Gap Checklist — Audit #{{ audit.id }}</h2>
 
-  <!-- Summary bar -->
   <div class="summary-bar">
-    <div class="summary-card">
-      <div class="count">{{ summary.total }}</div>
-      <div class="label">Total: {{ summary.total }}</div>
-    </div>
-    <div class="summary-card">
-      <div class="count">{{ summary.open }}</div>
-      <div class="label">Open: {{ summary.open }}</div>
-    </div>
-    <div class="summary-card">
-      <div class="count">{{ summary.in_progress }}</div>
-      <div class="label">In Progress: {{ summary.in_progress }}</div>
-    </div>
-    <div class="summary-card">
-      <div class="count">{{ summary.completed }}</div>
-      <div class="label">Completed: {{ summary.completed }}</div>
-    </div>
-    <div class="summary-card">
-      <div class="count">{{ summary.overdue }}</div>
-      <div class="label">Overdue: {{ summary.overdue }}</div>
-    </div>
+    <a href="{{ url_for('audits.audit_gaps', audit_id=audit.id) }}" class="summary-card"><div class="count">{{ summary.total }}</div><div class="label">Total</div></a>
+    <a href="{{ url_for('audits.audit_gaps', audit_id=audit.id, priority='critical') }}" class="summary-card"><div class="count" style="color:#f87171;">{{ summary.critical }}</div><div class="label">Critical</div></a>
+    <a href="{{ url_for('audits.audit_gaps', audit_id=audit.id, priority='high') }}" class="summary-card"><div class="count" style="color:#fb923c;">{{ summary.high }}</div><div class="label">High</div></a>
+    <a href="{{ url_for('audits.audit_gaps', audit_id=audit.id, priority='medium') }}" class="summary-card"><div class="count" style="color:#fbbf24;">{{ summary.medium }}</div><div class="label">Medium</div></a>
+    <a href="{{ url_for('audits.audit_gaps', audit_id=audit.id, status='Open') }}" class="summary-card"><div class="count" style="color:#60a5fa;">{{ summary.actions_open }}</div><div class="label">Actions Open</div></a>
+    <a href="{{ url_for('audits.audit_gaps', audit_id=audit.id, status='Completed') }}" class="summary-card"><div class="count" style="color:#4ade80;">{{ summary.actions_closed }}</div><div class="label">Actions Closed</div></a>
   </div>
 
-  <!-- Filter controls -->
   <form class="filter-bar" method="get" action="{{ url_for('audits.audit_gaps', audit_id=audit.id) }}">
-    <div>
-      <label for="priority-filter">Priority:</label>
-      <select name="priority" id="priority-filter">
+    <div><label for="pf">Priority:</label>
+      <select name="priority" id="pf">
         <option value="">All</option>
         <option value="critical" {% if priority_filter == 'critical' %}selected{% endif %}>Critical</option>
         <option value="high" {% if priority_filter == 'high' %}selected{% endif %}>High</option>
-      </select>
-    </div>
-    <div>
-      <label for="status-filter">Status:</label>
-      <select name="status" id="status-filter">
+        <option value="medium" {% if priority_filter == 'medium' %}selected{% endif %}>Medium</option>
+      </select></div>
+    <div><label for="sf">Status:</label>
+      <select name="status" id="sf">
         <option value="">All</option>
         <option value="Open" {% if status_filter == 'Open' %}selected{% endif %}>Open</option>
         <option value="In_Progress" {% if status_filter == 'In_Progress' %}selected{% endif %}>In Progress</option>
         <option value="Completed" {% if status_filter == 'Completed' %}selected{% endif %}>Completed</option>
         <option value="Overdue" {% if status_filter == 'Overdue' %}selected{% endif %}>Overdue</option>
-      </select>
-    </div>
+      </select></div>
     <button type="submit" class="filter-btn">Filter</button>
-    {% if priority_filter or status_filter %}
-    <a href="{{ url_for('audits.audit_gaps', audit_id=audit.id) }}" class="clear-btn">Clear</a>
-    {% endif %}
+    {% if priority_filter or status_filter %}<a href="{{ url_for('audits.audit_gaps', audit_id=audit.id) }}" class="clear-btn">Clear</a>{% endif %}
   </form>
 
-  <!-- Gap items -->
+  {% set is_locked = audit.status in ('Completed', 'Archived') %}
   {% if gap_items %}
     {% for gap in gap_items %}
     <div class="gap-card" data-criterion-code="{{ gap.code }}">
@@ -137,78 +121,133 @@
         <span class="gap-code">{{ gap.code }}</span>
         <span class="gap-title">{{ gap.title }}</span>
         <span class="gap-score">Score: {{ gap.score }}</span>
-        {% if gap.priority == 'critical' %}
-        <span class="badge badge-critical">Critical</span>
-        {% else %}
-        <span class="badge badge-high">High</span>
-        {% endif %}
+        {% if gap.priority == 'critical' %}<span class="badge badge-critical">Critical</span>
+        {% elif gap.priority == 'high' %}<span class="badge badge-high">High</span>
+        {% else %}<span class="badge badge-medium">Medium</span>{% endif %}
       </div>
-
-      <!-- Corrective actions for this gap -->
       <div class="actions-section">
         {% if gap.actions %}
         <h4>Corrective Actions ({{ gap.actions|length }})</h4>
         {% for action in gap.actions %}
-        <div class="action-row" data-action-id="{{ action.id }}">
-          <span class="action-desc">{{ action.description }}</span>
-          {% if action.due_date %}
-          <span class="action-meta">Due: {{ action.due_date.strftime('%Y-%m-%d') }}</span>
-          {% endif %}
-          {% if action.assigned_to %}
-          <span class="action-meta">Assigned: {{ action.assigned_to.display_name }}</span>
-          {% endif %}
-          <span class="action-status status-{{ action.status|lower }}">{{ action.status|replace('_', ' ') }}</span>
-          {% if audit.status not in ('Completed', 'Archived') %}
-          <select class="status-select" onchange="updateActionStatus({{ audit.id }}, {{ action.id }}, this.value)">
-            <option value="Open" {% if action.status == 'Open' %}selected{% endif %}>Open</option>
-            <option value="In_Progress" {% if action.status == 'In_Progress' %}selected{% endif %}>In Progress</option>
-            <option value="Completed" {% if action.status == 'Completed' %}selected{% endif %}>Completed</option>
-            <option value="Overdue" {% if action.status == 'Overdue' %}selected{% endif %}>Overdue</option>
-          </select>
-          {% endif %}
+        <div class="action-item" id="action-{{ action.id }}">
+          <div class="action-summary" onclick="toggleAction({{ action.id }})">
+            <span class="action-expand-icon">&#9654;</span>
+            <span class="action-desc">{{ action.description[:120] }}{% if action.description|length > 120 %}…{% endif %}</span>
+            {% if action.due_date %}<span class="action-meta">Due: {{ action.due_date.strftime('%Y-%m-%d') }}</span>{% endif %}
+            {% if action.assigned_to %}<span class="action-meta">{{ action.assigned_to.display_name }}</span>{% endif %}
+            <span class="action-status status-{{ action.status|lower }}">{{ action.status|replace('_', ' ') }}</span>
+          </div>
+          <div class="action-detail">
+            {% if action.status == 'Completed' and action.completed_at %}
+            <div class="completed-banner">
+              Completed {{ action.completed_at.strftime('%Y-%m-%d %H:%M') }}{% if action.completed_by %} by {{ action.completed_by.display_name }}{% endif %}
+            </div>
+            {% endif %}
+            <div class="detail-grid">
+              <div class="detail-field"><label>Status</label>
+                {% if is_locked %}<div class="read-only-val">{{ action.status|replace('_', ' ') }}</div>
+                {% else %}<select id="status-{{ action.id }}">
+                  <option value="Open" {% if action.status == 'Open' %}selected{% endif %}>Open</option>
+                  <option value="In_Progress" {% if action.status == 'In_Progress' %}selected{% endif %}>In Progress</option>
+                  <option value="Completed" {% if action.status == 'Completed' %}selected{% endif %}>Completed</option>
+                  <option value="Overdue" {% if action.status == 'Overdue' %}selected{% endif %}>Overdue</option>
+                </select>{% endif %}</div>
+              <div class="detail-field"><label>Priority</label>
+                {% if is_locked %}<div class="read-only-val">{{ action.priority|capitalize }}</div>
+                {% else %}<select id="priority-{{ action.id }}">
+                  <option value="critical" {% if action.priority == 'critical' %}selected{% endif %}>Critical</option>
+                  <option value="high" {% if action.priority == 'high' %}selected{% endif %}>High</option>
+                  <option value="medium" {% if action.priority == 'medium' %}selected{% endif %}>Medium</option>
+                </select>{% endif %}</div>
+              <div class="detail-field"><label>Assigned To</label>
+                {% if is_locked %}<div class="read-only-val">{{ action.assigned_to.display_name if action.assigned_to else '—' }}</div>
+                {% else %}<select id="assigned-{{ action.id }}">
+                  <option value="">Unassigned</option>
+                  {% for u in users %}<option value="{{ u.id }}" {% if action.assigned_to_id == u.id %}selected{% endif %}>{{ u.display_name }}</option>{% endfor %}
+                </select>{% endif %}</div>
+              <div class="detail-field"><label>Due Date</label>
+                {% if is_locked %}<div class="read-only-val">{{ action.due_date.strftime('%Y-%m-%d') if action.due_date else '—' }}</div>
+                {% else %}<input type="date" id="due-{{ action.id }}" value="{{ action.due_date.strftime('%Y-%m-%d') if action.due_date else '' }}">{% endif %}</div>
+              <div class="detail-field detail-full"><label>Description</label>
+                {% if is_locked %}<div class="read-only-val">{{ action.description }}</div>
+                {% else %}<textarea id="desc-{{ action.id }}" rows="2">{{ action.description }}</textarea>{% endif %}</div>
+              <div class="detail-field detail-full"><label>Notes</label>
+                {% if is_locked %}<div class="read-only-val">{{ action.notes or '—' }}</div>
+                {% else %}<textarea id="notes-{{ action.id }}" rows="2" placeholder="Working notes…">{{ action.notes or '' }}</textarea>{% endif %}</div>
+              <div class="detail-field detail-full"><label>Resolution Notes</label>
+                {% if is_locked %}<div class="read-only-val">{{ action.resolution_notes or '—' }}</div>
+                {% else %}<textarea id="resnotes-{{ action.id }}" rows="2" placeholder="How was this resolved?">{{ action.resolution_notes or '' }}</textarea>{% endif %}</div>
+            </div>
+            {% if not is_locked %}
+            <div class="detail-actions">
+              <button class="btn-save" onclick="saveAction({{ audit.id }}, {{ action.id }})">Save Changes</button>
+              {% if action.status != 'Completed' %}
+              <button class="btn-complete" onclick="completeAction({{ audit.id }}, {{ action.id }})">Mark Complete</button>
+              {% else %}
+              <button class="btn-reopen" onclick="reopenAction({{ audit.id }}, {{ action.id }})">Reopen</button>
+              {% endif %}
+            </div>
+            {% endif %}
+            <div class="evidence-section">
+              <h5>Evidence Files</h5>
+              <div id="evidence-list-{{ action.id }}">
+                {% for ev in action.evidence_files %}
+                <div class="evidence-file" id="ev-{{ ev.id }}">
+                  <span class="ev-name">{{ ev.original_filename }}</span>
+                  <span class="ev-size">{{ (ev.file_size / 1024)|round(1) }} KB</span>
+                  {% if not is_locked %}<button class="ev-delete" onclick="deleteEvidence({{ ev.id }})" title="Delete">&#10005;</button>{% endif %}
+                </div>
+                {% endfor %}
+              </div>
+              {% if not is_locked %}
+              <div class="evidence-upload">
+                <input type="file" id="evfile-{{ action.id }}" onchange="uploadEvidence({{ audit.id }}, {{ action.id }}, this)">
+              </div>
+              {% endif %}
+            </div>
+          </div>
         </div>
         {% endfor %}
         {% else %}
-        <p style="color:#64748b; font-size:0.85rem; margin:0.25rem 0;">No corrective actions yet.</p>
+        <p style="color:#64748b;font-size:.85rem;margin:.25rem 0;">No corrective actions yet.</p>
         {% endif %}
-
-        {% if audit.status not in ('Completed', 'Archived') %}
+        {% if not is_locked %}
         <button class="add-action-toggle" onclick="toggleAddForm(this)">+ Add Action</button>
         <div class="add-action-form" data-audit-id="{{ audit.id }}" data-code="{{ gap.code }}">
           <div class="form-row">
-            <div class="field" style="flex:2;">
-              <label>Description</label>
-              <textarea name="description" placeholder="Describe the corrective action…"></textarea>
-            </div>
+            <div class="field" style="flex:2;"><label>Description</label><textarea name="description" placeholder="Describe the corrective action…"></textarea></div>
           </div>
           <div class="form-row">
-            <div class="field">
-              <label>Priority</label>
+            <div class="field"><label>Priority</label>
               <select name="priority">
                 <option value="critical" {% if gap.priority == 'critical' %}selected{% endif %}>Critical</option>
                 <option value="high" {% if gap.priority == 'high' %}selected{% endif %}>High</option>
                 <option value="medium">Medium</option>
-              </select>
-            </div>
-            <div class="field">
-              <label>Due Date</label>
-              <input type="date" name="due_date">
-            </div>
+              </select></div>
+            <div class="field"><label>Due Date</label><input type="date" name="due_date"></div>
+            <div class="field"><label>Assign To</label>
+              <select name="assigned_to_id">
+                <option value="">Unassigned</option>
+                {% for u in users %}<option value="{{ u.id }}">{{ u.display_name }}</option>{% endfor %}
+              </select></div>
           </div>
-          <button type="button" class="submit-btn" onclick="submitAction(this)">Create Action</button>
+          <button type="button" class="btn-save" onclick="submitAction(this)">Create Action</button>
         </div>
         {% endif %}
       </div>
     </div>
     {% endfor %}
   {% else %}
-    <div class="empty-state">
-      <p>No gaps found{% if priority_filter or status_filter %} matching the current filters{% endif %}.</p>
-    </div>
+    <div class="empty-state"><p>No gaps found{% if priority_filter or status_filter %} matching the current filters{% endif %}.</p></div>
   {% endif %}
 </div>
 
 <script>
+function toggleAction(actionId) {
+  var el = document.getElementById('action-' + actionId);
+  if (el) el.classList.toggle('expanded');
+}
+
 function toggleAddForm(btn) {
   var form = btn.nextElementSibling;
   form.classList.toggle('visible');
@@ -221,54 +260,72 @@ function submitAction(btn) {
   var desc = form.querySelector('textarea[name="description"]').value.trim();
   var priority = form.querySelector('select[name="priority"]').value;
   var dueDate = form.querySelector('input[name="due_date"]').value;
-
-  if (!desc) {
-    alert('Please enter a description.');
-    return;
-  }
-
-  var body = {
-    criterion_code: code,
-    description: desc,
-    priority: priority
-  };
+  var assignedTo = form.querySelector('select[name="assigned_to_id"]').value;
+  if (!desc) { alert('Please enter a description.'); return; }
+  var body = { criterion_code: code, description: desc, priority: priority };
   if (dueDate) body.due_date = dueDate;
-
+  if (assignedTo) body.assigned_to_id = parseInt(assignedTo);
   fetch('/api/audits/' + auditId + '/actions', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify(body)
-  })
-  .then(function(resp) { return resp.json(); })
-  .then(function(data) {
-    if (data.ok) {
-      location.reload();
-    } else {
-      alert('Error: ' + (data.error || 'Unknown error'));
-    }
-  })
-  .catch(function(err) {
-    alert('Network error: ' + err.message);
-  });
+    method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)
+  }).then(function(r) { return r.json(); }).then(function(d) {
+    if (d.ok) location.reload(); else alert('Error: ' + (d.error || 'Unknown'));
+  }).catch(function(e) { alert('Network error: ' + e.message); });
 }
 
-function updateActionStatus(auditId, actionId, newStatus) {
+function saveAction(auditId, actionId) {
+  var body = {
+    status: document.getElementById('status-' + actionId).value,
+    priority: document.getElementById('priority-' + actionId).value,
+    assigned_to_id: document.getElementById('assigned-' + actionId).value || null,
+    due_date: document.getElementById('due-' + actionId).value || null,
+    description: document.getElementById('desc-' + actionId).value.trim(),
+    notes: document.getElementById('notes-' + actionId).value.trim() || null,
+    resolution_notes: document.getElementById('resnotes-' + actionId).value.trim() || null
+  };
   fetch('/api/audits/' + auditId + '/actions/' + actionId, {
-    method: 'PUT',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({status: newStatus})
-  })
-  .then(function(resp) { return resp.json(); })
-  .then(function(data) {
-    if (data.ok) {
-      location.reload();
-    } else {
-      alert('Error: ' + (data.error || 'Unknown error'));
-    }
-  })
-  .catch(function(err) {
-    alert('Network error: ' + err.message);
-  });
+    method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)
+  }).then(function(r) { return r.json(); }).then(function(d) {
+    if (d.ok) location.reload(); else alert('Error: ' + (d.error || 'Unknown'));
+  }).catch(function(e) { alert('Network error: ' + e.message); });
+}
+
+function completeAction(auditId, actionId) {
+  var notes = document.getElementById('notes-' + actionId).value.trim();
+  var resNotes = document.getElementById('resnotes-' + actionId).value.trim();
+  var body = { status: 'Completed', notes: notes || null, resolution_notes: resNotes || null };
+  fetch('/api/audits/' + auditId + '/actions/' + actionId, {
+    method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)
+  }).then(function(r) { return r.json(); }).then(function(d) {
+    if (d.ok) location.reload(); else alert('Error: ' + (d.error || 'Unknown'));
+  }).catch(function(e) { alert('Network error: ' + e.message); });
+}
+
+function reopenAction(auditId, actionId) {
+  fetch('/api/audits/' + auditId + '/actions/' + actionId, {
+    method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ status: 'Open' })
+  }).then(function(r) { return r.json(); }).then(function(d) {
+    if (d.ok) location.reload(); else alert('Error: ' + (d.error || 'Unknown'));
+  }).catch(function(e) { alert('Network error: ' + e.message); });
+}
+
+function uploadEvidence(auditId, actionId, input) {
+  if (!input.files || !input.files[0]) return;
+  var fd = new FormData();
+  fd.append('file', input.files[0]);
+  fetch('/api/audits/' + auditId + '/actions/' + actionId + '/evidence', {
+    method: 'POST', body: fd
+  }).then(function(r) { return r.json(); }).then(function(d) {
+    if (d.ok) location.reload(); else alert('Error: ' + (d.error || 'Unknown'));
+  }).catch(function(e) { alert('Network error: ' + e.message); });
+}
+
+function deleteEvidence(evidenceId) {
+  if (!confirm('Delete this evidence file?')) return;
+  fetch('/api/action-evidence/' + evidenceId, { method: 'DELETE' })
+  .then(function(r) { return r.json(); }).then(function(d) {
+    if (d.ok) { var el = document.getElementById('ev-' + evidenceId); if (el) el.remove(); }
+    else alert('Error: ' + (d.error || 'Unknown'));
+  }).catch(function(e) { alert('Network error: ' + e.message); });
 }
 </script>
 {% endblock %}

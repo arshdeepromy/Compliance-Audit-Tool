@@ -17,6 +17,8 @@ class AuditTemplate(db.Model):
     description = db.Column(db.Text, nullable=True)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     is_builtin = db.Column(db.Boolean, default=False, nullable=False)
+    domain_type = db.Column(db.String(100), nullable=True)
+    compliance_framework = db.Column(db.String(200), nullable=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
     # Relationships
@@ -72,6 +74,7 @@ class TemplateCriterion(db.Model):
     guidance = db.Column(db.Text, nullable=True)
     question = db.Column(db.Text, nullable=True)
     na_allowed = db.Column(db.Boolean, default=False, nullable=False)
+    info_only = db.Column(db.Boolean, default=False, nullable=False)
     tip = db.Column(db.Text, nullable=True)
     sort_order = db.Column(db.Integer, nullable=False)
 

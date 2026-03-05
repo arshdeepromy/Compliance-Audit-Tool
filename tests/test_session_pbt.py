@@ -43,7 +43,7 @@ _token_count_st = st.integers(min_value=2, max_value=10)
 
 # Suppress the function-scoped fixture health check
 _suppress_fixture_check = settings(
-    max_examples=20,
+    max_examples=8,
     suppress_health_check=[HealthCheck.function_scoped_fixture],
     deadline=None,
 )

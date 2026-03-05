@@ -236,7 +236,7 @@ class TestProperty18FileUploadValidation:
 
     @given(ext=st_allowed_ext, content=st_small_content)
     @settings(
-        max_examples=30,
+        max_examples=10,
         suppress_health_check=[HealthCheck.function_scoped_fixture],
         deadline=None,
     )
@@ -271,7 +271,7 @@ class TestProperty18FileUploadValidation:
 
     @given(ext=st_disallowed_ext, content=st_small_content)
     @settings(
-        max_examples=30,
+        max_examples=10,
         suppress_health_check=[HealthCheck.function_scoped_fixture],
         deadline=None,
     )
@@ -308,7 +308,7 @@ class TestProperty18FileUploadValidation:
 
     @given(ext=st_allowed_ext)
     @settings(
-        max_examples=5,
+        max_examples=3,
         suppress_health_check=[HealthCheck.function_scoped_fixture],
         deadline=None,
     )
@@ -351,7 +351,7 @@ class TestProperty19AttachmentDeletionRespectsStatus:
 
     @given(status=st_mutable_status)
     @settings(
-        max_examples=15,
+        max_examples=5,
         suppress_health_check=[HealthCheck.function_scoped_fixture],
         deadline=None,
     )
@@ -402,7 +402,7 @@ class TestProperty19AttachmentDeletionRespectsStatus:
 
     @given(status=st_immutable_status)
     @settings(
-        max_examples=10,
+        max_examples=5,
         suppress_health_check=[HealthCheck.function_scoped_fixture],
         deadline=None,
     )

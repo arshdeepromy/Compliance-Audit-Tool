@@ -22,6 +22,7 @@ from app.models.template import (
     TemplateCriterion,
     TemplateSection,
 )
+from app.models.scoping import ScopingQuestion, ScopingRule
 from app.utils.rbac import roles_required
 
 templates_bp = Blueprint("templates", __name__)
@@ -225,6 +226,101 @@ def _template_has_audits(template_id):
     )
 
 
+def _parse_scoping_from_form(form):
+    """Parse scoping question hidden fields from the submitted form.
+
+    Returns a list of dicts with question data and nested rules.
+    """
+    questions = []
+    q_idx = 0
+    while True:
+        prefix = f"scoping_question_{q_idx}_"
+        identifier = form.get(f"{prefix}identifier", "").strip()
+        if not identifier:
+            break
+        text = form.get(f"{prefix}text", "").strip()
+        answer_type = form.get(f"{prefix}answer_type", "yes_no").strip()
+        options_str = form.get(f"{prefix}options", "").strip()
+        options = [o.strip() for o in options_str.split(",") if o.strip()] if options_str else []
+
+        rules = []
+        r_idx = 0
+        while True:
+            r_prefix = f"{prefix}rule_{r_idx}_"
+            trigger = form.get(f"{r_prefix}trigger", "").strip()
+            if not trigger:
+                break
+            rules.append({
+                "trigger_answer": trigger,
+                "target_type": form.get(f"{r_prefix}target_type", "criterion").strip(),
+                "target_code": form.get(f"{r_prefix}target_code", "").strip(),
+                "applicability_status": form.get(f"{r_prefix}status", "not_applicable").strip(),
+            })
+            r_idx += 1
+
+        questions.append({
+            "identifier": identifier,
+            "question_text": text,
+            "answer_type": answer_type,
+            "options_json": json.dumps(options) if options else None,
+            "sort_order": q_idx,
+            "rules": rules,
+        })
+        q_idx += 1
+    return questions
+
+
+def _build_scoping_questions(template, scoping_data, valid_codes):
+    """Create ScopingQuestion and ScopingRule records.
+
+    Args:
+        template: The AuditTemplate (must have id set).
+        scoping_data: List of question dicts from ``_parse_scoping_from_form``.
+        valid_codes: Dict with ``criteria`` (set of codes) and ``sections`` (set of names).
+
+    Returns:
+        List of validation error strings (empty if all valid).
+    """
+    errors = []
+    for q_data in scoping_data:
+        question = ScopingQuestion(
+            template_id=template.id,
+            identifier=q_data["identifier"],
+            question_text=q_data["question_text"],
+            answer_type=q_data["answer_type"],
+            options_json=q_data["options_json"],
+            sort_order=q_data["sort_order"],
+        )
+        db.session.add(question)
+        db.session.flush()
+
+        for rule_data in q_data["rules"]:
+            target_code = rule_data["target_code"]
+            if not target_code:
+                continue
+            # Validate target_code exists
+            if rule_data["target_type"] == "criterion" and target_code not in valid_codes["criteria"]:
+                errors.append(
+                    f"Rule for question '{q_data['identifier']}': criterion code '{target_code}' not found in template"
+                )
+                continue
+            if rule_data["target_type"] == "section" and target_code not in valid_codes["sections"]:
+                errors.append(
+                    f"Rule for question '{q_data['identifier']}': section '{target_code}' not found in template"
+                )
+                continue
+
+            rule = ScopingRule(
+                question_id=question.id,
+                trigger_answer=rule_data["trigger_answer"],
+                target_type=rule_data["target_type"],
+                target_code=target_code,
+                applicability_status=rule_data["applicability_status"],
+            )
+            db.session.add(rule)
+    return errors
+
+
 def _increment_version(version_str):
     """Increment a version string, e.g. '1.0' → '2.0', '3' → '4'."""
     parts = version_str.split(".")
@@ -233,6 +329,27 @@ def _increment_version(version_str):
     except (ValueError, IndexError):
         return version_str + ".1"
     return ".".join(parts)
+
+
+def _valid_codes_from_sections(sections_data):
+    """Build a dict of valid criteria codes and section names from parsed sections data."""
+    criteria_codes = set()
+    section_names = set()
+    for sec in sections_data:
+        section_names.add(sec["name"])
+        for crit in sec.get("criteria", []):
+            criteria_codes.add(crit["code"])
+    return {"criteria": criteria_codes, "sections": section_names}
+
+
+def _save_scoping_questions(template, form, sections_data):
+    """Parse scoping questions from form and save them, returning any validation errors."""
+    scoping_data = _parse_scoping_from_form(form)
+    if not scoping_data:
+        return []
+    valid_codes = _valid_codes_from_sections(sections_data)
+    errors = _build_scoping_questions(template, scoping_data, valid_codes)
+    return errors
 
 
 # ---------------------------------------------------------------------------
@@ -261,6 +378,8 @@ def template_new():
     name = request.form.get("name", "").strip()
     version = request.form.get("version", "1.0").strip()
     description = request.form.get("description", "").strip() or None
+    domain_type = request.form.get("domain_type", "").strip() or None
+    compliance_framework = request.form.get("compliance_framework", "").strip() or None
 
     if not name:
         flash("Template name is required.", "error")
@@ -274,11 +393,20 @@ def template_new():
         description=description,
         is_active=True,
         is_builtin=False,
+        domain_type=domain_type,
+        compliance_framework=compliance_framework,
     )
     db.session.add(template)
     db.session.flush()
 
     _build_template_from_sections(template, sections_data)
+
+    # Parse and save scoping questions
+    scoping_errors = _save_scoping_questions(template, request.form, sections_data)
+    if scoping_errors:
+        for err in scoping_errors:
+            flash(err, "error")
+
     db.session.commit()
 
     flash(f"Template '{name}' created.", "success")
@@ -305,6 +433,8 @@ def template_edit(template_id):
     name = request.form.get("name", "").strip()
     version = request.form.get("version", "").strip()
     description = request.form.get("description", "").strip() or None
+    domain_type = request.form.get("domain_type", "").strip() or None
+    compliance_framework = request.form.get("compliance_framework", "").strip() or None
 
     if not name:
         flash("Template name is required.", "error")
@@ -325,11 +455,19 @@ def template_edit(template_id):
             description=description,
             is_active=True,
             is_builtin=template.is_builtin,
+            domain_type=domain_type,
+            compliance_framework=compliance_framework,
         )
         db.session.add(new_template)
         db.session.flush()
 
         _build_template_from_sections(new_template, sections_data)
+
+        # Parse and save scoping questions for the new version
+        scoping_errors = _save_scoping_questions(new_template, request.form, sections_data)
+        if scoping_errors:
+            for err in scoping_errors:
+                flash(err, "error")
 
         # Deactivate the old version so auditors use the new one
         template.is_active = False
@@ -345,13 +483,25 @@ def template_edit(template_id):
     template.name = name
     template.version = version or template.version
     template.description = description
+    template.domain_type = domain_type
+    template.compliance_framework = compliance_framework
 
     # Remove old sections (cascade deletes criteria, anchors, evidence)
     for section in template.sections.all():
         db.session.delete(section)
+    # Remove old scoping questions (cascade deletes rules)
+    for sq in ScopingQuestion.query.filter_by(template_id=template.id).all():
+        db.session.delete(sq)
     db.session.flush()
 
     _build_template_from_sections(template, sections_data)
+
+    # Parse and save scoping questions
+    scoping_errors = _save_scoping_questions(template, request.form, sections_data)
+    if scoping_errors:
+        for err in scoping_errors:
+            flash(err, "error")
+
     db.session.commit()
 
     flash(f"Template '{name}' updated.", "success")
@@ -436,11 +586,41 @@ def _template_to_dict(template):
                 "evidence": evidence,
             })
         sections.append({"name": section.name, "criteria": criteria})
+    # Serialize scoping questions and rules
+    scoping_questions = []
+    scoping_rules = []
+    for sq in template.scoping_questions.order_by(ScopingQuestion.sort_order):
+        options = None
+        if sq.options_json:
+            try:
+                options = json.loads(sq.options_json)
+            except (json.JSONDecodeError, TypeError):
+                options = None
+        scoping_questions.append({
+            "identifier": sq.identifier,
+            "question_text": sq.question_text,
+            "answer_type": sq.answer_type,
+            "options": options,
+            "sort_order": sq.sort_order,
+        })
+        for rule in sq.rules.all():
+            scoping_rules.append({
+                "question_identifier": sq.identifier,
+                "trigger_answer": rule.trigger_answer,
+                "target_type": rule.target_type,
+                "target_code": rule.target_code,
+                "applicability_status": rule.applicability_status,
+            })
+
     return {
         "name": template.name,
         "version": template.version,
         "description": template.description,
+        "domain_type": template.domain_type,
+        "compliance_framework": template.compliance_framework,
         "sections": sections,
+        "scoping_questions": scoping_questions,
+        "scoping_rules": scoping_rules,
     }
 
 
@@ -452,6 +632,8 @@ def template_sample_json():
         "name": "My Audit Template",
         "version": "1.0",
         "description": "Optional description of the template",
+        "domain_type": "IT Security",
+        "compliance_framework": "ISO 27001:2022",
         "sections": [
             {
                 "name": "Section 1 — Management & Leadership",
@@ -476,6 +658,24 @@ def template_sample_json():
                         ],
                     }
                 ],
+            }
+        ],
+        "scoping_questions": [
+            {
+                "identifier": "q1",
+                "question_text": "Does the organisation use cloud services?",
+                "answer_type": "yes_no",
+                "options": None,
+                "sort_order": 0,
+            }
+        ],
+        "scoping_rules": [
+            {
+                "question_identifier": "q1",
+                "trigger_answer": "Yes",
+                "target_type": "criterion",
+                "target_code": "C1",
+                "applicability_status": "applicable",
             }
         ],
     }
@@ -539,6 +739,8 @@ def template_import_json():
         description=description,
         is_active=True,
         is_builtin=False,
+        domain_type=(data.get("domain_type") or "").strip() or None,
+        compliance_framework=(data.get("compliance_framework") or "").strip() or None,
     )
     db.session.add(template)
     db.session.flush()
@@ -573,6 +775,88 @@ def template_import_json():
         return redirect(url_for("templates.template_list"))
 
     _build_template_from_sections(template, parsed_sections)
+
+    # Collect valid criteria codes and section names for validation
+    valid_criteria_codes = set()
+    valid_section_names = set()
+    for sec in parsed_sections:
+        valid_section_names.add(sec["name"])
+        for crit in sec.get("criteria", []):
+            valid_criteria_codes.add(crit["code"])
+
+    # Parse scoping questions
+    scoping_questions_data = data.get("scoping_questions", [])
+    scoping_rules_data = data.get("scoping_rules", [])
+
+    if scoping_questions_data and isinstance(scoping_questions_data, list):
+        # Build a map of question identifier -> ScopingQuestion for rule linking
+        question_map = {}
+        for idx, sq_data in enumerate(scoping_questions_data):
+            identifier = (sq_data.get("identifier") or "").strip()
+            question_text = (sq_data.get("question_text") or "").strip()
+            answer_type = (sq_data.get("answer_type") or "").strip()
+            if not identifier or not question_text or not answer_type:
+                continue
+            options = sq_data.get("options")
+            options_json = json.dumps(options) if options else None
+            sort_order = sq_data.get("sort_order", idx)
+
+            sq = ScopingQuestion(
+                template_id=template.id,
+                identifier=identifier,
+                question_text=question_text,
+                answer_type=answer_type,
+                options_json=options_json,
+                sort_order=sort_order,
+            )
+            db.session.add(sq)
+            question_map[identifier] = sq
+
+        db.session.flush()
+
+        # Validate scoping rules target_code references before creating them
+        if scoping_rules_data and isinstance(scoping_rules_data, list):
+            invalid_refs = []
+            for rule_data in scoping_rules_data:
+                target_type = (rule_data.get("target_type") or "").strip()
+                target_code = (rule_data.get("target_code") or "").strip()
+                if not target_code:
+                    continue
+                if target_type == "criterion" and target_code not in valid_criteria_codes:
+                    invalid_refs.append(f"criterion '{target_code}'")
+                elif target_type == "section" and target_code not in valid_section_names:
+                    invalid_refs.append(f"section '{target_code}'")
+
+            if invalid_refs:
+                db.session.rollback()
+                ref_list = ", ".join(invalid_refs)
+                flash(
+                    f"Import rejected: scoping rules reference invalid targets: {ref_list}",
+                    "error",
+                )
+                return redirect(url_for("templates.template_list"))
+
+            # Create scoping rules
+            for rule_data in scoping_rules_data:
+                q_identifier = (rule_data.get("question_identifier") or "").strip()
+                trigger_answer = (rule_data.get("trigger_answer") or "").strip()
+                target_type = (rule_data.get("target_type") or "").strip()
+                target_code = (rule_data.get("target_code") or "").strip()
+                applicability_status = (rule_data.get("applicability_status") or "").strip()
+                if not q_identifier or not trigger_answer or not target_type or not target_code or not applicability_status:
+                    continue
+                question = question_map.get(q_identifier)
+                if not question:
+                    continue
+                rule = ScopingRule(
+                    question_id=question.id,
+                    trigger_answer=trigger_answer,
+                    target_type=target_type,
+                    target_code=target_code,
+                    applicability_status=applicability_status,
+                )
+                db.session.add(rule)
+
     db.session.commit()
 
     flash(f"Template '{name}' v{version} imported successfully.", "success")

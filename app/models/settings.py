@@ -15,6 +15,11 @@ class BrandingSettings(db.Model):
     logo_filename = db.Column(db.String(255), nullable=True)
     primary_colour = db.Column(db.String(7), default="#f97316", nullable=False)
     accent_colour = db.Column(db.String(7), default="#fb923c", nullable=False)
+    header_bg_colour = db.Column(db.String(7), default="#0a0a23", nullable=False)
+    header_text_colour = db.Column(db.String(7), default="#ffffff", nullable=False)
+    footer_text = db.Column(db.String(500), default="", nullable=False)
+    footer_bg_colour = db.Column(db.String(7), default="#0a0a23", nullable=False)
+    footer_text_colour = db.Column(db.String(7), default="#94a3b8", nullable=False)
 
     def __repr__(self):
         return f"<BrandingSettings {self.company_name}>"

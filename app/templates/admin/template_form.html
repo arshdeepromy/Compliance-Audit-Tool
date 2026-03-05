@@ -52,6 +52,51 @@
   .btn-sm { padding: 0.35rem 0.75rem; font-size: 0.8rem; }
   .btn-xs { padding: 0.25rem 0.5rem; font-size: 0.75rem; }
 
+  /* Scoping questions tab styles */
+  .scoping-question-card {
+    background: #0f1629; border: 1px solid #2a2a4a;
+    border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem;
+  }
+  .scoping-question-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;
+  }
+  .scoping-question-label {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 600;
+    font-size: 0.9rem; color: #d1d5db;
+  }
+  .rule-card {
+    background: #16213e; border: 1px solid rgba(42, 42, 74, 0.5);
+    border-radius: 6px; padding: 0.75rem; margin-bottom: 0.5rem;
+  }
+  .rule-row { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr auto; gap: 0.5rem; align-items: end; }
+  .scoping-preview {
+    background: #0f1629; border: 1px solid #2a2a4a;
+    border-radius: 8px; padding: 1rem; margin-top: 1rem;
+  }
+  .preview-title {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 600;
+    font-size: 0.95rem; color: #fb923c; margin-bottom: 0.75rem;
+  }
+  .preview-item {
+    font-size: 0.8rem; color: #9ca3af; padding: 0.25rem 0;
+    border-bottom: 1px solid rgba(42, 42, 74, 0.3);
+  }
+  .preview-item:last-child { border-bottom: none; }
+  .preview-trigger { color: #60a5fa; }
+  .preview-target { color: #fbbf24; }
+  .preview-status-applicable { color: #22c55e; }
+  .preview-status-not_applicable { color: #ef4444; }
+  .tab-btn-fixed {
+    padding: 0.6rem 1.2rem; background: none; border: none;
+    border-bottom: 3px solid transparent; margin-bottom: -2px;
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 600;
+    font-size: 0.95rem; color: #9ca3af; cursor: pointer;
+    white-space: nowrap; transition: color 0.15s, border-color 0.15s;
+  }
+  .tab-btn-fixed:hover { color: #e0e0e0; }
+  .tab-btn-fixed.active { color: #f97316; border-bottom-color: #f97316; }
+  @media (max-width: 768px) { .rule-row { grid-template-columns: 1fr; } }
+
   /* Tabs navigation */
   .tabs-nav {
     display: flex; gap: 0; border-bottom: 2px solid #2a2a4a;
@@ -144,6 +189,21 @@
       <label for="description">Description</label>
       <textarea id="description" name="description" rows="2" placeholder="Brief description">{{ template.description if template and template.description else '' }}</textarea>
     </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="domain_type">Domain Type</label>
+        <select id="domain_type" name="domain_type">
+          <option value="">— Select —</option>
+          {% for dt in ["Health & Safety", "IT Security", "Management Systems", "Privacy", "Financial"] %}
+          <option value="{{ dt }}"{{ ' selected' if template and template.domain_type == dt else '' }}>{{ dt }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="compliance_framework">Compliance Framework</label>
+        <input type="text" id="compliance_framework" name="compliance_framework" value="{{ template.compliance_framework if template and template.compliance_framework else '' }}" placeholder="e.g. ISO 27001:2022, PCI DSS v4.0">
+      </div>
+    </div>
   </div>
 
   <!-- Sections as Tabs -->
@@ -151,10 +211,14 @@
     <div class="card-title">Sections &amp; Criteria</div>
     <div class="tabs-nav" id="tabsNav">
       <!-- Tab buttons injected by JS -->
+      <button type="button" class="tab-btn-fixed" id="scopingTabBtn" title="Scoping Questions">Scoping Questions</button>
       <button type="button" class="tab-add" id="addSectionTab" title="Add Section">+</button>
     </div>
     <div id="tabPanels">
       <!-- Tab panels injected by JS -->
+    </div>
+    <div id="scopingPanel" class="tab-panel">
+      <!-- Scoping questions panel injected by JS -->
     </div>
   </div>
 
@@ -168,9 +232,15 @@
 (function() {
   var sections = [];
   var activeTab = 0;
+  var scopingActive = false;
   var tabsNav = document.getElementById('tabsNav');
   var tabPanels = document.getElementById('tabPanels');
+  var scopingPanel = document.getElementById('scopingPanel');
+  var scopingTabBtn = document.getElementById('scopingTabBtn');
   var addBtn = document.getElementById('addSectionTab');
+
+  // Scoping questions data
+  var scopingQuestions = [];
 
   // Load existing sections from server data
   {% if template %}
@@ -202,17 +272,32 @@
     ]
   });
   {% endfor %}
+
+  // Load existing scoping questions
+  {% for q in template.scoping_questions.order_by(None).order_by('sort_order') %}
+  scopingQuestions.push({
+    identifier: {{ q.identifier | tojson }},
+    text: {{ q.question_text | tojson }},
+    answer_type: {{ q.answer_type | tojson }},
+    options: {{ (q.options_json or '[]') | safe }},
+    rules: [
+      {% for r in q.rules.all() %}
+      { trigger: {{ r.trigger_answer | tojson }}, target_type: {{ r.target_type | tojson }}, target_code: {{ r.target_code | tojson }}, status: {{ r.applicability_status | tojson }} },
+      {% endfor %}
+    ]
+  });
+  {% endfor %}
   {% endif %}
 
   function renderTabs() {
-    // Clear existing tab buttons (keep the + button)
+    // Clear existing tab buttons (keep the scoping tab and + button)
     var btns = tabsNav.querySelectorAll('.tab-btn');
     btns.forEach(function(b) { b.remove(); });
 
     sections.forEach(function(sec, idx) {
       var btn = document.createElement('button');
       btn.type = 'button';
-      btn.className = 'tab-btn' + (idx === activeTab ? ' active' : '');
+      btn.className = 'tab-btn' + (!scopingActive && idx === activeTab ? ' active' : '');
       btn.innerHTML = (sec.name || 'Section ' + (idx+1)) +
         ' <span class="tab-close" data-idx="' + idx + '" title="Remove section">&times;</span>';
       btn.setAttribute('data-idx', idx);
@@ -221,16 +306,27 @@
           removeSection(parseInt(e.target.getAttribute('data-idx')));
           return;
         }
+        scopingActive = false;
         switchTab(parseInt(this.getAttribute('data-idx')));
       });
-      tabsNav.insertBefore(btn, addBtn);
+      tabsNav.insertBefore(btn, scopingTabBtn);
     });
+
+    // Update scoping tab button state
+    scopingTabBtn.className = 'tab-btn-fixed' + (scopingActive ? ' active' : '');
   }
 
   function switchTab(idx) {
     // Save current panel data before switching
-    savePanelData(activeTab);
+    if (scopingActive) {
+      saveScopingPanelData();
+    } else {
+      savePanelData(activeTab);
+    }
+    scopingActive = false;
     activeTab = idx;
+    scopingPanel.style.display = 'none';
+    scopingPanel.classList.remove('active');
     renderTabs();
     renderPanel();
   }
@@ -274,6 +370,11 @@
 
   function renderPanel() {
     tabPanels.innerHTML = '';
+    if (scopingActive) {
+      tabPanels.style.display = 'none';
+      return;
+    }
+    tabPanels.style.display = '';
     if (sections.length === 0) {
       tabPanels.innerHTML = '<p style="color:#6b7280; padding:1rem;">No sections yet. Click + to add one.</p>';
       return;
@@ -381,17 +482,203 @@
     container.insertAdjacentHTML('beforeend', html);
   };
 
+  // ── Scoping Tab ──
+  scopingTabBtn.addEventListener('click', function() {
+    if (scopingActive) return;
+    savePanelData(activeTab);
+    scopingActive = true;
+    tabPanels.style.display = 'none';
+    renderTabs();
+    renderScopingPanel();
+  });
+
+  function saveScopingPanelData() {
+    var panel = scopingPanel;
+    if (!panel) return;
+    var cards = panel.querySelectorAll('.scoping-question-card');
+    cards.forEach(function(card, qIdx) {
+      if (qIdx >= scopingQuestions.length) return;
+      var q = scopingQuestions[qIdx];
+      q.identifier = (card.querySelector('.sq-identifier') || {}).value || q.identifier;
+      q.text = (card.querySelector('.sq-text') || {}).value || q.text;
+      q.answer_type = (card.querySelector('.sq-answer-type') || {}).value || q.answer_type;
+      var optInput = card.querySelector('.sq-options');
+      if (optInput) {
+        var optStr = optInput.value.trim();
+        q.options = optStr ? optStr.split(',').map(function(o) { return o.trim(); }).filter(Boolean) : [];
+      }
+      var rules = [];
+      card.querySelectorAll('.rule-card').forEach(function(rCard) {
+        rules.push({
+          trigger: (rCard.querySelector('.rule-trigger') || {}).value || '',
+          target_type: (rCard.querySelector('.rule-target-type') || {}).value || 'criterion',
+          target_code: (rCard.querySelector('.rule-target-code') || {}).value || '',
+          status: (rCard.querySelector('.rule-status') || {}).value || 'not_applicable'
+        });
+      });
+      q.rules = rules;
+    });
+  }
+
+  function renderScopingPanel() {
+    var html = '';
+    scopingQuestions.forEach(function(q, qIdx) {
+      html += buildScopingQuestionHtml(q, qIdx);
+    });
+    html += '<button type="button" class="btn btn-sm btn-secondary" onclick="window._tplAddScopingQuestion()">+ Add Question</button>';
+
+    // Scoping logic preview
+    html += buildScopingPreview();
+
+    scopingPanel.innerHTML = html;
+    scopingPanel.style.display = 'block';
+    scopingPanel.classList.add('active');
+
+    // Toggle options visibility based on answer type
+    scopingPanel.querySelectorAll('.sq-answer-type').forEach(function(sel) {
+      toggleOptionsVisibility(sel);
+    });
+  }
+
+  function buildScopingQuestionHtml(q, qIdx) {
+    var optionsStr = (q.options || []).join(', ');
+    var optionsDisplay = q.answer_type === 'single_select' ? '' : 'display:none;';
+
+    var rulesHtml = '';
+    (q.rules || []).forEach(function(r, rIdx) {
+      rulesHtml += buildRuleHtml(r, qIdx, rIdx);
+    });
+
+    return '<div class="scoping-question-card">' +
+      '<div class="scoping-question-header"><span class="scoping-question-label">Question ' + (qIdx+1) + '</span>' +
+      '<button type="button" class="btn btn-xs btn-danger" onclick="window._tplRemoveScopingQuestion(' + qIdx + ')">×</button></div>' +
+      '<div class="form-row">' +
+      '<div class="form-group"><label>Identifier</label>' +
+      '<input type="text" class="sq-identifier" value="' + escHtml(q.identifier) + '" placeholder="e.g. SQ1"></div>' +
+      '<div class="form-group"><label>Answer Type</label>' +
+      '<select class="sq-answer-type" onchange="window._tplToggleOptions(this)">' +
+      '<option value="yes_no"' + (q.answer_type === 'yes_no' ? ' selected' : '') + '>Yes / No</option>' +
+      '<option value="single_select"' + (q.answer_type === 'single_select' ? ' selected' : '') + '>Single Select</option>' +
+      '</select></div></div>' +
+      '<div class="form-group"><label>Question Text</label>' +
+      '<input type="text" class="sq-text" value="' + escHtml(q.text) + '" placeholder="Enter the scoping question"></div>' +
+      '<div class="form-group sq-options-group" style="' + optionsDisplay + '">' +
+      '<label>Options (comma-separated)</label>' +
+      '<input type="text" class="sq-options" value="' + escHtml(optionsStr) + '" placeholder="e.g. Option A, Option B, Option C"></div>' +
+      '<div class="sub-section"><div class="sub-title">Scoping Rules</div>' +
+      '<div class="rules-container">' + rulesHtml + '</div>' +
+      '<button type="button" class="btn btn-xs btn-secondary" onclick="window._tplAddRule(' + qIdx + ')">+ Add Rule</button></div></div>';
+  }
+
+  function buildRuleHtml(r, qIdx, rIdx) {
+    return '<div class="rule-card"><div class="rule-row">' +
+      '<div class="form-group"><label>Trigger Answer</label>' +
+      '<input type="text" class="rule-trigger" value="' + escHtml(r.trigger) + '" placeholder="e.g. Yes or No"></div>' +
+      '<div class="form-group"><label>Target Type</label>' +
+      '<select class="rule-target-type">' +
+      '<option value="criterion"' + (r.target_type === 'criterion' ? ' selected' : '') + '>Criterion</option>' +
+      '<option value="section"' + (r.target_type === 'section' ? ' selected' : '') + '>Section</option>' +
+      '</select></div>' +
+      '<div class="form-group"><label>Target Code</label>' +
+      '<input type="text" class="rule-target-code" value="' + escHtml(r.target_code) + '" placeholder="e.g. PCI-1.1"></div>' +
+      '<div class="form-group"><label>Status</label>' +
+      '<select class="rule-status">' +
+      '<option value="not_applicable"' + (r.status === 'not_applicable' ? ' selected' : '') + '>Not Applicable</option>' +
+      '<option value="applicable"' + (r.status === 'applicable' ? ' selected' : '') + '>Applicable</option>' +
+      '</select></div>' +
+      '<div class="form-group"><button type="button" class="btn btn-xs btn-danger" style="margin-top:1.5rem;" onclick="window._tplRemoveRule(' + qIdx + ',' + rIdx + ')">×</button></div>' +
+      '</div></div>';
+  }
+
+  function buildScopingPreview() {
+    var hasRules = false;
+    scopingQuestions.forEach(function(q) { if (q.rules && q.rules.length) hasRules = true; });
+    if (!hasRules) return '';
+
+    var html = '<div class="scoping-preview"><div class="preview-title">Scoping Logic Preview</div>';
+    scopingQuestions.forEach(function(q) {
+      (q.rules || []).forEach(function(r) {
+        if (!r.trigger || !r.target_code) return;
+        var statusClass = r.status === 'applicable' ? 'preview-status-applicable' : 'preview-status-not_applicable';
+        var statusLabel = r.status === 'applicable' ? 'Applicable' : 'Not Applicable';
+        html += '<div class="preview-item">' +
+          'When <strong>' + escHtml(q.identifier || '?') + '</strong> = ' +
+          '<span class="preview-trigger">' + escHtml(r.trigger) + '</span> → ' +
+          r.target_type + ' <span class="preview-target">' + escHtml(r.target_code) + '</span> becomes ' +
+          '<span class="' + statusClass + '">' + statusLabel + '</span></div>';
+      });
+    });
+    html += '</div>';
+    return html;
+  }
+
+  function toggleOptionsVisibility(sel) {
+    var group = sel.closest('.scoping-question-card').querySelector('.sq-options-group');
+    if (group) {
+      group.style.display = sel.value === 'single_select' ? '' : 'none';
+    }
+  }
+
+  window._tplToggleOptions = function(sel) {
+    toggleOptionsVisibility(sel);
+  };
+
+  window._tplAddScopingQuestion = function() {
+    saveScopingPanelData();
+    var nextIdx = scopingQuestions.length;
+    scopingQuestions.push({
+      identifier: 'SQ' + (nextIdx + 1),
+      text: '',
+      answer_type: 'yes_no',
+      options: [],
+      rules: []
+    });
+    renderScopingPanel();
+  };
+
+  window._tplRemoveScopingQuestion = function(qIdx) {
+    if (!confirm('Remove this scoping question and all its rules?')) return;
+    saveScopingPanelData();
+    scopingQuestions.splice(qIdx, 1);
+    renderScopingPanel();
+  };
+
+  window._tplAddRule = function(qIdx) {
+    saveScopingPanelData();
+    scopingQuestions[qIdx].rules.push({
+      trigger: '', target_type: 'criterion', target_code: '', status: 'not_applicable'
+    });
+    renderScopingPanel();
+  };
+
+  window._tplRemoveRule = function(qIdx, rIdx) {
+    saveScopingPanelData();
+    scopingQuestions[qIdx].rules.splice(rIdx, 1);
+    renderScopingPanel();
+  };
+
   addBtn.addEventListener('click', function() {
-    if (sections.length > 0) savePanelData(activeTab);
+    if (scopingActive) {
+      saveScopingPanelData();
+      scopingActive = false;
+      scopingPanel.style.display = 'none';
+      scopingPanel.classList.remove('active');
+    } else if (sections.length > 0) {
+      savePanelData(activeTab);
+    }
     sections.push({name: '', criteria: []});
     activeTab = sections.length - 1;
     renderTabs();
     renderPanel();
   });
 
-  // On form submit, serialize sections into hidden form fields
+  // On form submit, serialize sections and scoping questions into hidden form fields
   document.getElementById('templateForm').addEventListener('submit', function(e) {
-    savePanelData(activeTab);
+    if (scopingActive) {
+      saveScopingPanelData();
+    } else {
+      savePanelData(activeTab);
+    }
 
     // Remove any previously injected hidden fields
     this.querySelectorAll('.section-hidden').forEach(function(el) { el.remove(); });
@@ -413,6 +700,22 @@
           addHidden(prefix + 'evidence_' + eIdx + '_text', ev.text);
           if (ev.is_required) addHidden(prefix + 'evidence_' + eIdx + '_required', 'on');
         });
+      });
+    });
+
+    // Serialize scoping questions
+    scopingQuestions.forEach(function(q, qIdx) {
+      var qPrefix = 'scoping_question_' + qIdx + '_';
+      addHidden(qPrefix + 'identifier', q.identifier || '');
+      addHidden(qPrefix + 'text', q.text || '');
+      addHidden(qPrefix + 'answer_type', q.answer_type || 'yes_no');
+      addHidden(qPrefix + 'options', (q.options || []).join(', '));
+      (q.rules || []).forEach(function(r, rIdx) {
+        var rPrefix = qPrefix + 'rule_' + rIdx + '_';
+        addHidden(rPrefix + 'trigger', r.trigger || '');
+        addHidden(rPrefix + 'target_type', r.target_type || 'criterion');
+        addHidden(rPrefix + 'target_code', r.target_code || '');
+        addHidden(rPrefix + 'status', r.status || 'not_applicable');
       });
     });
 

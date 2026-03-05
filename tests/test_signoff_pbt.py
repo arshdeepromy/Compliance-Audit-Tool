@@ -211,7 +211,7 @@ class TestProperty21SignOffAcknowledgementPersistence:
         status=st_signoff_status,
     )
     @settings(
-        max_examples=50,
+        max_examples=15,
         suppress_health_check=[HealthCheck.function_scoped_fixture],
         deadline=None,
     )

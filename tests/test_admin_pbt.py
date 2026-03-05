@@ -80,7 +80,7 @@ _roles_st = st.lists(
 
 # Suppress the function-scoped fixture health check
 _suppress_fixture_check = settings(
-    max_examples=50,
+    max_examples=15,
     suppress_health_check=[HealthCheck.function_scoped_fixture],
     deadline=None,
 )

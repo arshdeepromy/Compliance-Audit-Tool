@@ -89,6 +89,11 @@ def validate_legacy_json(data: dict) -> list[str]:
                 date.fromisoformat(meta["nextReview"])
             except (ValueError, TypeError):
                 errors.append("Invalid date format for meta.nextReview: expected YYYY-MM-DD")
+        elif meta.get("next"):
+            try:
+                date.fromisoformat(meta["next"])
+            except (ValueError, TypeError):
+                errors.append("Invalid date format for meta.next: expected YYYY-MM-DD")
 
     # --- scores ---
     scores = data.get("scores")
@@ -118,18 +123,30 @@ def validate_legacy_json(data: dict) -> list[str]:
                 if not isinstance(item, dict):
                     errors.append(f"gapItems[{i}] must be an object")
                     continue
-                if not item.get("criterion_code"):
-                    errors.append(f"gapItems[{i}]: missing criterion_code")
-                if not item.get("description"):
-                    errors.append(f"gapItems[{i}]: missing description")
-                if item.get("priority") and item["priority"] not in VALID_PRIORITIES:
-                    errors.append(
-                        f"gapItems[{i}]: invalid priority '{item['priority']}'"
-                    )
-                if item.get("status") and item["status"] not in VALID_ACTION_STATUSES:
-                    errors.append(
-                        f"gapItems[{i}]: invalid status '{item['status']}'"
-                    )
+                # Accept either legacy "criterion_code" or rich "criteria" list
+                has_code = bool(item.get("criterion_code"))
+                has_criteria = isinstance(item.get("criteria"), list) and len(item.get("criteria", [])) > 0
+                if not has_code and not has_criteria:
+                    errors.append(f"gapItems[{i}]: missing criterion_code or criteria")
+                # Accept either "description" or "title"/"action"
+                has_desc = bool(item.get("description"))
+                has_title = bool(item.get("title"))
+                has_action = bool(item.get("action"))
+                if not has_desc and not has_title and not has_action:
+                    errors.append(f"gapItems[{i}]: missing description (or title/action)")
+                if item.get("priority"):
+                    norm_pri = item["priority"].lower() if isinstance(item["priority"], str) else ""
+                    if norm_pri not in VALID_PRIORITIES:
+                        errors.append(
+                            f"gapItems[{i}]: invalid priority '{item['priority']}'"
+                        )
+                if item.get("status"):
+                    norm_st = item["status"].lower() if isinstance(item["status"], str) else ""
+                    valid_lower = {s.lower() for s in VALID_ACTION_STATUSES}
+                    if norm_st not in valid_lower:
+                        errors.append(
+                            f"gapItems[{i}]: invalid status '{item['status']}'"
+                        )
                 if item.get("due_date"):
                     try:
                         date.fromisoformat(item["due_date"])
@@ -193,9 +210,10 @@ def import_legacy_json(
             pass
 
     next_review = None
-    if meta.get("nextReview"):
+    next_review_raw = meta.get("nextReview") or meta.get("next")
+    if next_review_raw:
         try:
-            next_review = date.fromisoformat(meta["nextReview"])
+            next_review = date.fromisoformat(next_review_raw)
         except (ValueError, TypeError):
             pass
 
@@ -237,6 +255,10 @@ def import_legacy_json(
         evidence_checks = (
             score_entry.get("evidence", {}) if isinstance(score_entry, dict) else {}
         )
+        # Also support "evidenceChecked" array format: [true, false, true, ...]
+        evidence_checked_arr = (
+            score_entry.get("evidenceChecked") if isinstance(score_entry, dict) else None
+        )
 
         is_na = False
         na_reason = None
@@ -259,9 +281,14 @@ def import_legacy_json(
 
         # Create EvidenceCheckState records
         ev_items = evidence_by_criterion.get(criterion.id, [])
-        for ev_item in ev_items:
+        # Sort by sort_order so array-based evidenceChecked aligns correctly
+        ev_items_sorted = sorted(ev_items, key=lambda e: e.sort_order)
+        for idx, ev_item in enumerate(ev_items_sorted):
             is_checked = False
-            if isinstance(evidence_checks, dict):
+            # Try array format first (evidenceChecked: [true, false, ...])
+            if isinstance(evidence_checked_arr, list) and idx < len(evidence_checked_arr):
+                is_checked = bool(evidence_checked_arr[idx])
+            elif isinstance(evidence_checks, dict):
                 # Legacy format uses string item IDs or evidence item text keys
                 # Try matching by evidence_item.id (as string) first
                 checked_val = evidence_checks.get(str(ev_item.id))
@@ -284,13 +311,55 @@ def import_legacy_json(
         audit.overall_score = sum(scored_values) / len(scored_values)
 
     # Create CorrectiveAction records from gapItems
+    # Supports both legacy format (criterion_code, description) and
+    # rich format (criteria[], title, action, UPPER-CASE priority/status).
     if gap_items and isinstance(gap_items, list):
         for item in gap_items:
             if not isinstance(item, dict):
                 continue
-            criterion_code = item.get("criterion_code", "")
-            if not criterion_code or not item.get("description"):
+
+            # Resolve criterion codes: rich format uses "criteria" (list),
+            # legacy uses "criterion_code" (string).
+            criterion_codes: list[str] = []
+            if item.get("criteria") and isinstance(item["criteria"], list):
+                criterion_codes = [c for c in item["criteria"] if isinstance(c, str)]
+            elif item.get("criterion_code"):
+                criterion_codes = [item["criterion_code"]]
+
+            if not criterion_codes:
                 continue
+
+            # Resolve description: rich format has title + action,
+            # legacy has description.
+            description = item.get("description", "")
+            if not description:
+                parts = []
+                if item.get("title"):
+                    parts.append(item["title"])
+                if item.get("action"):
+                    parts.append(item["action"])
+                description = " — ".join(parts) if parts else ""
+            if not description:
+                continue
+
+            # Normalise priority (CRITICAL → critical, HIGH → high, etc.)
+            raw_priority = item.get("priority", "high")
+            priority = raw_priority.lower() if isinstance(raw_priority, str) else "high"
+            if priority not in VALID_PRIORITIES:
+                priority = "high"
+
+            # Normalise status (OPEN → Open, IN_PROGRESS → In_Progress, etc.)
+            raw_status = item.get("status", "Open")
+            status_map = {
+                "open": "Open",
+                "in_progress": "In_Progress",
+                "completed": "Completed",
+                "overdue": "Overdue",
+            }
+            norm_status = status_map.get(
+                raw_status.lower() if isinstance(raw_status, str) else "",
+                "Open",
+            )
 
             due_date_val = None
             if item.get("due_date"):
@@ -299,15 +368,44 @@ def import_legacy_json(
                 except (ValueError, TypeError):
                     pass
 
-            action = CorrectiveAction(
-                audit_id=audit.id,
-                criterion_code=criterion_code,
-                description=item["description"],
-                priority=item.get("priority", "high"),
-                status=item.get("status", "Open"),
-                due_date=due_date_val,
-            )
-            db.session.add(action)
+            # Extract rich fields from gap item
+            gap_item_id = item.get("id", "")          # e.g. "G001"
+            title_text = item.get("title", "")
+            action_text = item.get("action", "")
+            form_or_doc = item.get("formOrDoc", "")
+            quantity_val = item.get("quantity", "")
+            max_age_val = item.get("maxAge", "")
+            max_age_months_val = item.get("maxAgeMonths")
+            signed_val = item.get("signed")
+            signed_by_val = item.get("signedBy", "")
+            category_val = item.get("category", "")
+            criteria_codes_str = ",".join(criterion_codes)
+
+            # Create one CorrectiveAction per criterion code so the gaps
+            # page can look them up by code.
+            for code in criterion_codes:
+                if code not in criteria_by_code:
+                    continue  # skip unknown codes
+                action = CorrectiveAction(
+                    audit_id=audit.id,
+                    criterion_code=code,
+                    description=description,
+                    priority=priority,
+                    status=norm_status,
+                    due_date=due_date_val,
+                    gap_item_id=gap_item_id or None,
+                    title=title_text or None,
+                    action_text=action_text or None,
+                    form_or_doc=form_or_doc or None,
+                    quantity=quantity_val or None,
+                    max_age=max_age_val or None,
+                    max_age_months=max_age_months_val if isinstance(max_age_months_val, int) else None,
+                    signed=signed_val if isinstance(signed_val, bool) else None,
+                    signed_by=signed_by_val or None,
+                    category=category_val or None,
+                    criteria_codes=criteria_codes_str or None,
+                )
+                db.session.add(action)
 
     db.session.commit()
     db.session.refresh(audit)
@@ -377,16 +475,37 @@ def export_to_legacy_json(audit_id: int) -> dict:
     gap_items: list[dict] = []
     actions = CorrectiveAction.query.filter_by(audit_id=audit.id).all()
     for action in actions:
-        gap_items.append(
-            {
-                "criterion_code": action.criterion_code,
-                "description": action.description,
-                "priority": action.priority,
-                "status": action.status,
-                "due_date": action.due_date.isoformat() if action.due_date else "",
-                "assigned_to": "",
-            }
-        )
+        gap_item = {
+            "criterion_code": action.criterion_code,
+            "description": action.description,
+            "priority": action.priority,
+            "status": action.status,
+            "due_date": action.due_date.isoformat() if action.due_date else "",
+            "assigned_to": "",
+        }
+        if action.gap_item_id:
+            gap_item["id"] = action.gap_item_id
+        if action.title:
+            gap_item["title"] = action.title
+        if action.action_text:
+            gap_item["action"] = action.action_text
+        if action.form_or_doc:
+            gap_item["formOrDoc"] = action.form_or_doc
+        if action.quantity:
+            gap_item["quantity"] = action.quantity
+        if action.max_age:
+            gap_item["maxAge"] = action.max_age
+        if action.max_age_months is not None:
+            gap_item["maxAgeMonths"] = action.max_age_months
+        if action.signed is not None:
+            gap_item["signed"] = action.signed
+        if action.signed_by:
+            gap_item["signedBy"] = action.signed_by
+        if action.category:
+            gap_item["category"] = action.category
+        if action.criteria_codes:
+            gap_item["criteria"] = action.criteria_codes.split(",")
+        gap_items.append(gap_item)
 
     return {
         "meta": meta,

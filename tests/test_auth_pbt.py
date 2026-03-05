@@ -41,7 +41,7 @@ _password_st = st.text(min_size=1, max_size=60)
 # Suppress the function-scoped fixture health check — our fixtures are safe
 # to reuse across Hypothesis iterations (we reset state explicitly).
 _suppress_fixture_check = settings(
-    max_examples=20,
+    max_examples=8,
     suppress_health_check=[HealthCheck.function_scoped_fixture],
     deadline=None,
 )

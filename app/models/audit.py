@@ -62,6 +62,7 @@ class AuditScore(db.Model):
     score = db.Column(db.Integer, nullable=True)
     is_na = db.Column(db.Boolean, default=False, nullable=False)
     na_reason = db.Column(db.Text, nullable=True)
+    info_answer = db.Column(db.Text, nullable=True)
     notes = db.Column(db.Text, nullable=True)
     updated_at = db.Column(
         db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow

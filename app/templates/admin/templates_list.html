@@ -75,6 +75,8 @@
     <thead>
       <tr>
         <th>Name</th>
+        <th>Domain Type</th>
+        <th>Compliance Framework</th>
         <th>Version</th>
         <th>Status</th>
         <th>Built-in</th>
@@ -86,6 +88,8 @@
       {% for t in templates %}
       <tr>
         <td><a href="{{ url_for('templates.template_edit', template_id=t.id) }}" class="link">{{ t.name }}</a></td>
+        <td>{{ t.domain_type or '—' }}</td>
+        <td>{{ t.compliance_framework or '—' }}</td>
         <td>{{ t.version }}</td>
         <td><span class="badge {{ 'badge-active' if t.is_active else 'badge-inactive' }}">{{ "Active" if t.is_active else "Inactive" }}</span></td>
         <td>{% if t.is_builtin %}<span class="badge badge-builtin">Built-in</span>{% else %}<span class="text-muted">Custom</span>{% endif %}</td>

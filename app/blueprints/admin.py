@@ -111,6 +111,23 @@ def branding():
     if accent_colour:
         branding_row.accent_colour = accent_colour
 
+    # Header & footer fields
+    header_bg = request.form.get("header_bg_colour", "").strip()
+    header_text = request.form.get("header_text_colour", "").strip()
+    footer_text = request.form.get("footer_text", "").strip()
+    footer_bg = request.form.get("footer_bg_colour", "").strip()
+    footer_text_colour = request.form.get("footer_text_colour", "").strip()
+
+    if header_bg:
+        branding_row.header_bg_colour = header_bg
+    if header_text:
+        branding_row.header_text_colour = header_text
+    branding_row.footer_text = footer_text
+    if footer_bg:
+        branding_row.footer_bg_colour = footer_bg
+    if footer_text_colour:
+        branding_row.footer_text_colour = footer_text_colour
+
     # Handle logo upload
     if "logo" in request.files:
         file = request.files["logo"]

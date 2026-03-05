@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+{% block title %}R{{ '%03d' % risk.id }} — {{ risk.title }} — {{ branding.company_name }}{% endblock %}
+
+{% block content %}
+<style>
+  .rd-page{width:100%;max-width:100%;padding:1rem 1.5rem;font-family:"Barlow",sans-serif;color:#e2e8f0;box-sizing:border-box}
+  .rd-page h2{font-family:"Barlow Condensed",sans-serif;font-size:26px;font-weight:800;color:#fff;margin-bottom:4px}
+  .rd-page .subtitle{color:#94a3b8;font-size:13px;margin-bottom:20px}
+  .back-link{display:inline-flex;align-items:center;gap:.4rem;color:#f97316;text-decoration:none;font-weight:600;font-size:13px;margin-bottom:8px}
+  .back-link:hover{color:#fb923c}
+
+  .card-box{background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:16px 20px;margin-bottom:20px}
+  .card-box .card-title{font-family:"Barlow Condensed",sans-serif;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #1e293b}
+
+  .meta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px}
+  .meta-item{display:flex;flex-direction:column;gap:2px}
+  .meta-item .label{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:#64748b;font-weight:700}
+  .meta-item .value{font-size:13px;color:#e2e8f0}
+
+  .score-cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+  .score-card{background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:20px;text-align:center}
+  .score-card h4{font-family:"Barlow Condensed",sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;margin-bottom:8px}
+  .score-card .big-score{font-family:"Barlow Condensed",sans-serif;font-size:3rem;font-weight:800;line-height:1}
+  .score-card .score-detail{font-size:12px;color:#94a3b8;margin-top:4px}
+
+  .level-badge{display:inline-block;padding:2px 9px;border-radius:3px;font-size:11px;font-weight:700;text-transform:uppercase}
+  .level-critical{background:rgba(239,68,68,.2);color:#f87171}
+  .level-high{background:rgba(249,115,22,.2);color:#fb923c}
+  .level-medium{background:rgba(234,179,8,.2);color:#eab308}
+  .level-low{background:rgba(34,197,94,.2);color:#22c55e}
+  .level-unrated{background:rgba(100,116,139,.2);color:#94a3b8}
+  .status-badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:3px;text-transform:uppercase}
+  .st-open{background:rgba(239,68,68,.15);color:#f87171}
+  .st-mitigating{background:rgba(249,115,22,.15);color:#fb923c}
+  .st-monitoring{background:rgba(59,130,246,.15);color:#60a5fa}
+  .st-closed{background:rgba(34,197,94,.15);color:#4ade80}
+  .st-accepted{background:rgba(168,85,247,.15);color:#a855f7}
+  .st-planned{background:rgba(100,116,139,.15);color:#94a3b8}
+  .st-in_progress,.st-in.progress{background:rgba(59,130,246,.15);color:#60a5fa}
+  .st-implemented{background:rgba(34,197,94,.15);color:#4ade80}
+
+  .mit-table,.review-table{width:100%;border-collapse:collapse;margin-bottom:12px}
+  .mit-table th,.review-table th{background:#16213e;padding:8px 10px;text-align:left;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#64748b;border-bottom:1px solid #1e293b}
+  .mit-table td,.review-table td{padding:8px 10px;border-bottom:1px solid #1e293b;font-size:13px}
+
+  .btn{display:inline-block;padding:6px 14px;border-radius:4px;font-size:13px;font-weight:600;text-decoration:none;border:none;cursor:pointer;font-family:"Barlow",sans-serif}
+  .btn-primary{background:#f97316;color:#fff}
+  .btn-primary:hover{background:#fb923c}
+  .btn-secondary{background:#1e293b;color:#94a3b8;border:1px solid #334155}
+  .btn-secondary:hover{color:#fff;border-color:#f97316}
+  .btn-danger{background:rgba(239,68,68,.2);color:#f87171;border:1px solid rgba(239,68,68,.3)}
+  .btn-danger:hover{background:rgba(239,68,68,.3)}
+  .btn-sm{padding:4px 10px;font-size:12px}
+  .action-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+
+  .add-form{background:#1e293b;border-radius:6px;padding:14px;margin-top:10px}
+  .add-form .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px}
+  .add-form .form-row.full{grid-template-columns:1fr}
+  .add-form label{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:#64748b;font-weight:700;display:block;margin-bottom:3px}
+  .add-form input,.add-form select,.add-form textarea{background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:6px 8px;border-radius:4px;font-size:13px;font-family:"Barlow",sans-serif;width:100%;box-sizing:border-box}
+  .add-form textarea{min-height:60px;resize:vertical}
+  .add-form input:focus,.add-form select:focus,.add-form textarea:focus{border-color:#f97316;outline:none}
+
+  .toggle-btn{background:none;border:1px dashed #334155;color:#94a3b8;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:12px;font-family:"Barlow",sans-serif}
+  .toggle-btn:hover{border-color:#f97316;color:#f97316}
+  .hidden{display:none}
+</style>
+
+<div class="rd-page">
+  <a href="{{ url_for('risks.risk_register') }}" class="back-link">&#8592; Back to Risk Register</a>
+  <h2>R{{ '%03d' % risk.id }} — {{ risk.title }}</h2>
+  <p class="subtitle">{{ risk.category.icon }} {{ risk.category.name }} · Created {{ risk.created_at.strftime('%d %b %Y') }} by {{ risk.created_by.display_name }}</p>
+
+  {# ── Action Bar ── #}
+  <div class="action-bar">
+    <a href="{{ url_for('risks.edit_risk', risk_id=risk.id) }}" class="btn btn-primary btn-sm">Edit Risk</a>
+    <a href="{{ url_for('risks.risk_matrix') }}" class="btn btn-secondary btn-sm">View Matrix</a>
+    <form method="post" action="{{ url_for('risks.delete_risk', risk_id=risk.id) }}" style="display:inline" onsubmit="return confirm('Delete this risk and all related data?')">
+      <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+    </form>
+  </div>
+
+  {# ── Score Cards ── #}
+  <div class="score-cards">
+    <div class="score-card">
+      <h4>Inherent Risk</h4>
+      {% if risk.inherent_score %}
+      <div class="big-score" style="color:{{ risk_level_colour(risk.inherent_score) }}">{{ risk.inherent_score }}</div>
+      <div class="score-detail">{{ likelihood_labels[risk.inherent_likelihood] }} × {{ impact_labels[risk.inherent_impact] }}</div>
+      <span class="level-badge level-{{ risk.inherent_level|lower }}" style="margin-top:6px">{{ risk.inherent_level }}</span>
+      {% else %}
+      <div class="big-score" style="color:#64748b">—</div>
+      <div class="score-detail">Not assessed</div>
+      {% endif %}
+    </div>
+    <div class="score-card">
+      <h4>Residual Risk</h4>
+      {% if risk.residual_score %}
+      <div class="big-score" style="color:{{ risk_level_colour(risk.residual_score) }}">{{ risk.residual_score }}</div>
+      <div class="score-detail">{{ likelihood_labels[risk.residual_likelihood] }} × {{ impact_labels[risk.residual_impact] }}</div>
+      <span class="level-badge level-{{ risk.residual_level|lower }}" style="margin-top:6px">{{ risk.residual_level }}</span>
+      {% else %}
+      <div class="big-score" style="color:#64748b">—</div>
+      <div class="score-detail">Not assessed</div>
+      {% endif %}
+    </div>
+  </div>
+
+  {# ── Details Card ── #}
+  <div class="card-box">
+    <div class="card-title">Risk Details</div>
+    <div class="meta-grid">
+      <div class="meta-item"><span class="label">Status</span><span class="value"><span class="status-badge st-{{ risk.status|lower }}">{{ risk.status }}</span></span></div>
+      <div class="meta-item"><span class="label">Treatment</span><span class="value">{{ risk.treatment_type or '—' }}</span></div>
+      <div class="meta-item"><span class="label">Owner</span><span class="value">{{ risk.owner.display_name if risk.owner else 'Unassigned' }}</span></div>
+      <div class="meta-item"><span class="label">Due Date</span><span class="value">{{ risk.due_date.strftime('%d %b %Y') if risk.due_date else '—' }}</span></div>
+      <div class="meta-item"><span class="label">Review Frequency</span><span class="value">Every {{ risk.review_frequency_days or 90 }} days</span></div>
+      <div class="meta-item"><span class="label">Next Review</span><span class="value">{{ risk.next_review_date.strftime('%d %b %Y') if risk.next_review_date else '—' }}{% if risk.next_review_date and risk.next_review_date < today %} <span style="color:#f87171;font-weight:700;font-size:11px">OVERDUE</span>{% endif %}</span></div>
+      <div class="meta-item"><span class="label">Risk Source</span><span class="value">{{ risk.risk_source or '—' }}</span></div>
+    </div>
+    {% if risk.description %}
+    <div style="margin-top:14px;padding-top:10px;border-top:1px solid #1e293b">
+      <span class="label" style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:#64748b;font-weight:700">Description</span>
+      <p style="font-size:13px;color:#cbd5e1;margin-top:4px;line-height:1.5">{{ risk.description }}</p>
+    </div>
+    {% endif %}
+  </div>
+
+  {# ── Mitigations ── #}
+  <div class="card-box">
+    <div class="card-title">Mitigations & Controls ({{ mitigations|length }})</div>
+    {% if mitigations %}
+    <table class="mit-table">
+      <thead><tr><th>#</th><th>Description</th><th>Type</th><th>Status</th><th>Assigned To</th><th>Due</th><th>Action</th></tr></thead>
+      <tbody>
+        {% for m in mitigations %}
+        <tr>
+          <td style="color:#64748b">{{ loop.index }}</td>
+          <td>{{ m.description }}</td>
+          <td>{{ m.control_type or '—' }}</td>
+          <td><span class="status-badge st-{{ m.status|lower|replace(' ','_') }}">{{ m.status }}</span></td>
+          <td>{{ m.assigned_to.display_name if m.assigned_to else '—' }}</td>
+          <td>{{ m.due_date.strftime('%d %b %Y') if m.due_date else '—' }}</td>
+          <td>
+            {% if m.status != 'Implemented' %}
+            <form method="post" action="{{ url_for('risks.update_mitigation_status', mid=m.id) }}" style="display:inline">
+              {% if m.status == 'Planned' %}
+              <input type="hidden" name="status" value="In Progress">
+              <button type="submit" class="btn btn-secondary btn-sm">Start</button>
+              {% elif m.status == 'In Progress' %}
+              <input type="hidden" name="status" value="Implemented">
+              <button type="submit" class="btn btn-secondary btn-sm">Complete</button>
+              {% endif %}
+            </form>
+            {% else %}
+            <span style="color:#4ade80;font-size:11px">✓ Done</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p style="color:#64748b;font-size:13px">No mitigations added yet.</p>
+    {% endif %}
+
+    <button class="toggle-btn" onclick="document.getElementById('mit-form').classList.toggle('hidden')">+ Add Mitigation</button>
+    <form id="mit-form" class="add-form hidden" method="post" action="{{ url_for('risks.add_mitigation', risk_id=risk.id) }}">
+      <div class="form-row full"><div><label>Description *</label><textarea name="description" required placeholder="Describe the control or mitigation action"></textarea></div></div>
+      <div class="form-row">
+        <div><label>Control Type</label><select name="control_type"><option value="">Select…</option><option>Preventive</option><option>Detective</option><option>Corrective</option></select></div>
+        <div><label>Status</label><select name="mit_status"><option>Planned</option><option>In Progress</option><option>Implemented</option></select></div>
+      </div>
+      <div class="form-row">
+        <div><label>Assigned To</label><select name="assigned_to_id"><option value="">Unassigned</option>{% for u in users %}<option value="{{ u.id }}">{{ u.display_name }}</option>{% endfor %}</select></div>
+        <div><label>Due Date</label><input type="date" name="due_date"></div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-sm" style="margin-top:8px">Add Mitigation</button>
+    </form>
+  </div>
+
+  {# ── Review History ── #}
+  <div class="card-box">
+    <div class="card-title">Review History ({{ reviews|length }})</div>
+    {% if reviews %}
+    <table class="review-table">
+      <thead><tr><th>Date</th><th>Reviewed By</th><th>Status Change</th><th>Notes</th></tr></thead>
+      <tbody>
+        {% for rv in reviews %}
+        <tr>
+          <td>{{ rv.review_date.strftime('%d %b %Y %H:%M') }}</td>
+          <td>{{ rv.reviewed_by.display_name }}</td>
+          <td>
+            {% if rv.previous_status != rv.new_status %}
+            <span class="status-badge st-{{ rv.previous_status|lower }}">{{ rv.previous_status }}</span>
+            → <span class="status-badge st-{{ rv.new_status|lower }}">{{ rv.new_status }}</span>
+            {% else %}
+            <span style="color:#64748b">No change</span>
+            {% endif %}
+          </td>
+          <td>{{ rv.notes or '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p style="color:#64748b;font-size:13px">No reviews logged yet.</p>
+    {% endif %}
+
+    <button class="toggle-btn" onclick="document.getElementById('review-form').classList.toggle('hidden')">+ Log Review</button>
+    <form id="review-form" class="add-form hidden" method="post" action="{{ url_for('risks.log_review', risk_id=risk.id) }}">
+      <div class="form-row">
+        <div><label>Update Status To</label><select name="new_status">{% for s in statuses %}<option value="{{ s }}" {% if risk.status == s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select></div>
+        <div></div>
+      </div>
+      <div class="form-row full"><div><label>Review Notes</label><textarea name="notes" placeholder="Observations, changes, recommendations…"></textarea></div></div>
+      <button type="submit" class="btn btn-primary btn-sm" style="margin-top:8px">Log Review</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

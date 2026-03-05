@@ -1,237 +1,299 @@
 {% extends "base.html" %}
 
-{% block title %}Audit #{{ audit.id }} — {{ branding.company_name if branding else 'Tōtika Audit Tool' }}{% endblock %}
-
-{% block extra_head %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
-{% endblock %}
+{% block title %}{{ audit.template.name if audit.template else 'Audit' }} — {{ branding.company_name if branding else 'Tōtika Audit Tool' }}{% endblock %}
 
 {% block content %}
-<div class="container detail-container">
-  <div class="page-header">
-    <h1>Audit #{{ audit.id }}</h1>
-    <a href="{{ url_for('audits.audit_list') }}" class="back-link">← Back to Audits</a>
-  </div>
+<style>
+  .ao-page{width:100%;max-width:100%;padding:1rem 1.5rem;font-family:"Barlow",sans-serif;color:#e2e8f0;box-sizing:border-box}
+  .ao-page h2{font-family:"Barlow Condensed",sans-serif;font-size:26px;font-weight:800;margin-bottom:4px;color:#fff}
+  .ao-page .subtitle{color:#94a3b8;font-size:13px;margin-bottom:20px}
 
-  {# ── 1. Status & Transition Actions ── #}
-  <div class="card">
-    <div class="status-row">
-      <div>
-        <span class="label">Status</span>
-        {% set status_class = {
-          'Draft': 'badge-draft',
-          'In_Progress': 'badge-progress',
-          'Review': 'badge-review',
-          'Completed': 'badge-completed',
-          'Archived': 'badge-archived'
-        } %}
-        <span class="badge badge-lg {{ status_class.get(audit.status, 'badge-draft') }}">
-          {{ audit.status | replace('_', ' ') }}
-        </span>
-      </div>
-      <div class="status-actions">
-        {% if audit.status == 'In_Progress' %}
-        <form method="post" action="{{ url_for('audits.audit_review', audit_id=audit.id) }}" class="inline-form">
-          <button type="submit" class="btn btn-review">Submit for Review</button>
-        </form>
-        {% endif %}
-        {% if audit.status == 'Review' %}
-        <form method="post" action="{{ url_for('audits.audit_finalise', audit_id=audit.id) }}" class="inline-form">
-          <button type="submit" class="btn btn-complete">Finalise</button>
-        </form>
-        {% endif %}
-        {% if audit.status == 'Completed' %}
-        <form method="post" action="{{ url_for('audits.audit_archive', audit_id=audit.id) }}" class="inline-form">
-          <button type="submit" class="btn btn-archive">Archive</button>
-        </form>
-        {% endif %}
-      </div>
+  /* Audit info bar */
+  .audit-info{background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:16px 20px;margin-bottom:20px;display:flex;gap:24px;flex-wrap:wrap;align-items:center}
+  .audit-info-field{display:flex;flex-direction:column;gap:3px}
+  .audit-info-field label{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:#64748b;font-weight:700}
+  .audit-info-field .val{font-size:13px;color:#e2e8f0;padding:6px 10px;background:#1e293b;border:1px solid #334155;border-radius:4px;min-width:160px}
+
+  /* Stat cards grid */
+  .dash-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px}
+  .stat-card{background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:16px;text-align:center;transition:border-color .15s}
+  .stat-card:hover{border-color:#334155}
+  .stat-card .stat-num{font-family:"Barlow Condensed",sans-serif;font-size:2rem;font-weight:800;line-height:1.1}
+  .stat-card .stat-label{font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
+  .stat-card.s-total .stat-num{color:#e2e8f0}
+  .stat-card.s-complete .stat-num{color:#22c55e}
+  .stat-card.s-partial .stat-num{color:#f59e0b}
+  .stat-card.s-gap .stat-num{color:#ef4444}
+  .stat-card.s-na .stat-num{color:#a855f7}
+  .stat-card.s-score .stat-num{color:#f97316}
+
+  /* Score distribution bar */
+  .progress-wrap{margin-bottom:28px}
+  .progress-title{font-family:"Barlow Condensed",sans-serif;font-size:16px;font-weight:700;margin-bottom:12px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px}
+  .progress-bar-outer{background:#1e293b;border-radius:4px;height:28px;overflow:hidden;display:flex}
+  .progress-seg{height:100%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:rgba(0,0,0,.7);transition:width .4s}
+  .dist-legend{display:flex;gap:16px;margin-top:8px;flex-wrap:wrap}
+  .legend-item{font-size:11px;color:#94a3b8;display:flex;align-items:center;gap:5px}
+  .legend-dot{width:10px;height:10px;border-radius:2px;display:inline-block}
+
+  /* Section table */
+  .section-heading{font-family:"Barlow Condensed",sans-serif;font-size:16px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#94a3b8;margin-bottom:12px}
+  .section-table{width:100%;border-collapse:collapse;margin-bottom:28px}
+  .section-table th{background:#16213e;padding:10px 12px;text-align:left;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:#64748b;border-bottom:1px solid #1e293b}
+  .section-table td{padding:9px 12px;border-bottom:1px solid #1e293b;vertical-align:middle;font-size:13px}
+  .section-table tr:hover td{background:#0f172a;cursor:pointer}
+  .sec-name{font-weight:600;color:#e2e8f0}
+
+  /* Score badges */
+  .score-badge{display:inline-block;padding:2px 9px;border-radius:3px;font-size:11px;font-weight:700;text-transform:uppercase}
+  .badge-0{background:rgba(239,68,68,.2);color:#f87171}
+  .badge-1{background:rgba(255,107,53,.2);color:#ff6b35}
+  .badge-2{background:rgba(234,179,8,.2);color:#eab308}
+  .badge-3{background:rgba(34,197,94,.2);color:#22c55e}
+  .badge-4{background:rgba(59,130,246,.2);color:#3b82f6}
+  .badge-unset{background:rgba(42,52,65,.5);color:#64748b}
+  .badge-na{background:rgba(168,85,247,.2);color:#a855f7}
+  .badge-incomplete{background:rgba(249,115,22,.2);color:#fb923c}
+  .badge-assessed{background:rgba(34,197,94,.2);color:#22c55e}
+  .badge-hasgaps{background:rgba(239,68,68,.2);color:#f87171}
+
+  /* Status row */
+  .status-row{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:20px}
+  .status-badge{font-family:"Barlow Condensed",sans-serif;font-size:14px;font-weight:700;padding:4px 12px;border-radius:4px;text-transform:uppercase;letter-spacing:.5px}
+  .status-draft{background:rgba(148,163,184,.2);color:#94a3b8}
+  .status-in_progress{background:rgba(59,130,246,.2);color:#60a5fa}
+  .status-review{background:rgba(250,204,21,.2);color:#fbbf24}
+  .status-completed{background:rgba(74,222,128,.2);color:#4ade80}
+  .status-archived{background:rgba(148,163,184,.15);color:#64748b}
+  .status-actions{display:flex;gap:.5rem;margin-left:auto}
+  .status-actions form{display:inline}
+
+  /* Buttons */
+  .btn{display:inline-block;padding:6px 14px;border-radius:4px;font-size:13px;font-weight:600;text-decoration:none;border:none;cursor:pointer;font-family:"Barlow",sans-serif;transition:all .15s}
+  .btn-primary{background:#f97316;color:#fff}
+  .btn-primary:hover{background:#fb923c}
+  .btn-secondary{background:#1e293b;color:#94a3b8;border:1px solid #334155}
+  .btn-secondary:hover{color:#fff;border-color:#f97316}
+  .btn-review{background:#eab308;color:#000}
+  .btn-review:hover{background:#fbbf24}
+  .btn-complete{background:#22c55e;color:#fff}
+  .btn-complete:hover{background:#16a34a}
+  .btn-archive{background:#64748b;color:#fff}
+  .btn-archive:hover{background:#94a3b8}
+  .btn-sm{padding:4px 10px;font-size:12px}
+
+  /* Action buttons bar */
+  .action-bar{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:24px;padding:12px 16px;background:#0f172a;border:1px solid #1e293b;border-radius:8px}
+
+  /* Performing status */
+  .gap-alert{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:12px 20px;margin-bottom:24px;font-size:13px;color:#f87171}
+  .performing-banner{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:8px;padding:12px 20px;margin-bottom:24px;font-size:13px;color:#4ade80;display:flex;align-items:center;gap:10px}
+  .info-banner{background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:12px 20px;margin-bottom:24px;font-size:13px;color:#94a3b8}
+
+  /* Sign-off card */
+  .card-box{background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:16px 20px;margin-bottom:20px}
+  .card-box .card-title{font-family:"Barlow Condensed",sans-serif;font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;margin-bottom:10px}
+  .meta-grid{display:flex;flex-wrap:wrap;gap:20px}
+  .meta-item{display:flex;flex-direction:column;gap:2px}
+  .meta-item .label{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:#64748b;font-weight:700}
+  .meta-item .value{font-size:13px;color:#e2e8f0}
+  .text-muted{color:#64748b}
+
+  .back-link{display:inline-flex;align-items:center;gap:.4rem;color:#f97316;text-decoration:none;font-weight:600;font-size:13px;margin-bottom:8px}
+  .back-link:hover{color:#fb923c}
+
+  .btn-import{display:inline-flex;align-items:center;gap:4px}
+</style>
+
+<div class="ao-page">
+  <a href="{{ url_for('audits.audit_list') }}" class="back-link">&#8592; Back to Audits</a>
+  <h2>Assessment Overview</h2>
+  <p class="subtitle">{{ audit.template.name if audit.template else 'Audit' }}{% if audit.auditee %} — {{ audit.auditee.display_name }}{% endif %}</p>
+
+  {# ── Audit Info Bar ── #}
+  <div class="audit-info">
+    <div class="audit-info-field">
+      <label>Assessor Name</label>
+      <div class="val">{{ audit.auditor.display_name if audit.auditor else '—' }}</div>
+    </div>
+    <div class="audit-info-field">
+      <label>Audit Date</label>
+      <div class="val">{{ audit.audit_date.strftime('%d/%m/%Y') if audit.audit_date else '—' }}</div>
+    </div>
+    <div class="audit-info-field">
+      <label>Assessment Period</label>
+      <div class="val">{{ audit.assessment_period or '—' }}</div>
+    </div>
+    <div class="audit-info-field">
+      <label>Next Review Due</label>
+      <div class="val">{{ audit.next_review_due.strftime('%d/%m/%Y') if audit.next_review_due else '—' }}</div>
     </div>
   </div>
 
-  {# ── 2. Audit Metadata Header ── #}
-  <div class="card">
-    <div class="card-title">Audit Details</div>
-    <div class="meta-grid">
-      <div class="meta-item">
-        <span class="label">Template</span>
-        <span class="value">{{ audit.template.name if audit.template else 'N/A' }}</span>
-      </div>
-      <div class="meta-item">
-        <span class="label">Assessor</span>
-        <span class="value">{{ audit.auditor.display_name if audit.auditor else '—' }}</span>
-      </div>
-      <div class="meta-item">
-        <span class="label">Auditee</span>
-        <span class="value">{{ audit.auditee.display_name if audit.auditee else '—' }}</span>
-      </div>
-      <div class="meta-item">
-        <span class="label">Audit Date</span>
-        <span class="value">{{ audit.audit_date.strftime('%d %b %Y') if audit.audit_date else '—' }}</span>
-      </div>
-      <div class="meta-item">
-        <span class="label">Assessment Period</span>
-        <span class="value">{{ audit.assessment_period or '—' }}</span>
-      </div>
-      <div class="meta-item">
-        <span class="label">Next Review Due</span>
-        <span class="value">{{ audit.next_review_due.strftime('%d %b %Y') if audit.next_review_due else '—' }}</span>
-      </div>
+  {# ── Status & Actions ── #}
+  <div class="status-row">
+    {% set sc = audit.status|lower|replace(' ','_') %}
+    <span class="status-badge status-{{ sc }}">{{ audit.status|replace('_', ' ') }}</span>
+    <div class="status-actions">
+      {% if audit.status == 'In_Progress' %}
+      <form method="post" action="{{ url_for('audits.audit_review', audit_id=audit.id) }}">
+        <button type="submit" class="btn btn-review">Submit for Review</button>
+      </form>
+      {% endif %}
+      {% if audit.status == 'Review' %}
+      <form method="post" action="{{ url_for('audits.audit_finalise', audit_id=audit.id) }}">
+        <button type="submit" class="btn btn-complete">Finalise</button>
+      </form>
+      {% endif %}
+      {% if audit.status == 'Completed' %}
+      <form method="post" action="{{ url_for('audits.audit_archive', audit_id=audit.id) }}">
+        <button type="submit" class="btn btn-archive">Archive</button>
+      </form>
+      {% endif %}
     </div>
   </div>
 
-  {# ── 3. Statistics Cards Row (Req 6.1, 6.2) ── #}
-  <div class="card">
-    <div class="card-title">Statistics</div>
-    <div class="stats-grid">
-      <div class="stat-card">
-        <span class="stat-value">{{ stats.total }}</span>
-        <span class="stat-label">Total Criteria</span>
-      </div>
-      <div class="stat-card">
-        <span class="stat-value">{{ stats.completed }}</span>
-        <span class="stat-label">Completed</span>
-      </div>
-      <div class="stat-card stat-card--red">
-        <span class="stat-value">{{ stats.gap_count }}</span>
-        <span class="stat-label">Gaps (Score 0)</span>
-      </div>
-      <div class="stat-card stat-card--amber">
-        <span class="stat-value">{{ stats.partial_count }}</span>
-        <span class="stat-label">Partial (1–2)</span>
-      </div>
-      <div class="stat-card stat-card--grey">
-        <span class="stat-value">{{ stats.na_count }}</span>
-        <span class="stat-label">N/A</span>
-      </div>
-      <div class="stat-card stat-card--orange">
-        <span class="stat-value">
-          {% if stats.average_score is not none %}
-            {{ '%.1f' | format(stats.average_score) }}
-          {% else %}
-            —
-          {% endif %}
-        </span>
-        <span class="stat-label">Average Score</span>
-      </div>
-    </div>
+  {# ── Stat Cards ── #}
+  <div class="dash-grid">
+    <div class="stat-card s-total"><div class="stat-num">{{ stats.scorable }}</div><div class="stat-label">Scorable Criteria</div></div>
+    <div class="stat-card s-complete"><div class="stat-num">{{ stats.meeting_standard }}</div><div class="stat-label">Meeting Standard</div></div>
+    <div class="stat-card s-partial"><div class="stat-num">{{ stats.partial_count }}</div><div class="stat-label">Partial / Developing</div></div>
+    <div class="stat-card s-gap"><div class="stat-num">{{ stats.gap_count }}</div><div class="stat-label">Critical Gaps (Score 0)</div></div>
+    <div class="stat-card s-na"><div class="stat-num">{{ stats.na_count }}</div><div class="stat-label">Not Applicable</div></div>
+    {% if stats.info_only_count > 0 %}
+    <div class="stat-card" style="border-color:#334155"><div class="stat-num" style="color:#818cf8">{{ stats.info_only_count }}</div><div class="stat-label">Info Only</div></div>
+    {% endif %}
+    <div class="stat-card s-score"><div class="stat-num">{% if stats.average_score is not none %}{{ '%.1f'|format(stats.average_score) }}{% else %}—{% endif %}</div><div class="stat-label">Avg Score (0–4)</div></div>
   </div>
 
-  {# ── 4. Score Distribution Progress Bar (Req 6.2) ── #}
-  <div class="card">
-    <div class="card-title">Score Distribution</div>
-    {% set total_scored = score_distribution.values() | sum %}
+  {# ── Score Distribution Bar ── #}
+  <div class="progress-wrap">
+    <div class="progress-title">Score Distribution</div>
+    {% set total_scored = score_distribution.values()|sum %}
     {% if total_scored > 0 %}
-    <div class="score-distribution-bar" role="img" aria-label="Score distribution bar chart">
-      {% for level in [0, 1, 2, 3, 4] %}
+    <div class="progress-bar-outer">
+      {% set seg_colors = {4: '#3b82f6', 3: '#22c55e', 2: '#eab308', 1: '#ff6b35', 0: '#ef4444'} %}
+      {% set seg_labels = {4: 'Score 4 (Leading)', 3: 'Score 3 (Performing)', 2: 'Score 2 (Developing)', 1: 'Score 1 (Developing)', 0: 'Score 0 (Gap)'} %}
+      {% for level in [4, 3, 2, 1, 0] %}
         {% set count = score_distribution.get(level, 0) %}
         {% if count > 0 %}
-          {% set pct = (count / total_scored * 100) | round(1) %}
-          {% set colours = {0: '#ef4444', 1: '#ef4444', 2: '#f59e0b', 3: '#22c55e', 4: '#22c55e'} %}
-          <div class="dist-segment" style="width: {{ pct }}%; background: {{ colours[level] }};" title="Score {{ level }}: {{ count }} ({{ pct }}%)">
-            <span class="dist-label">{{ level }}</span>
-          </div>
+          {% set pct = (count / total_scored * 100)|round(1) %}
+          <div class="progress-seg" style="width:{{ pct }}%;background:{{ seg_colors[level] }};" title="{{ seg_labels[level] }}: {{ count }}">{% if count > 1 %}{{ count }}{% endif %}</div>
         {% endif %}
       {% endfor %}
     </div>
     <div class="dist-legend">
-      {% for level in [0, 1, 2, 3, 4] %}
+      {% for level in [4, 3, 2, 1, 0] %}
         {% set count = score_distribution.get(level, 0) %}
-        {% set colours = {0: '#ef4444', 1: '#ef4444', 2: '#f59e0b', 3: '#22c55e', 4: '#22c55e'} %}
-        <span class="legend-item">
-          <span class="legend-dot" style="background: {{ colours[level] }};"></span>
-          Score {{ level }}: {{ count }}
-        </span>
+        {% if count > 0 %}
+        <span class="legend-item"><span class="legend-dot" style="background:{{ seg_colors[level] }};"></span>{{ seg_labels[level] }}: <strong style="color:{{ seg_colors[level] }}">{{ count }}</strong></span>
+        {% endif %}
       {% endfor %}
     </div>
     {% else %}
-    <p class="text-muted">No scores recorded yet.</p>
+    <div class="progress-bar-outer"></div>
+    <p class="text-muted" style="margin-top:8px;font-size:13px;">No scores recorded yet.</p>
     {% endif %}
   </div>
 
-  {# ── 5. Section Summary Table (Req 6.3, 6.5) ── #}
-  <div class="card">
-    <div class="card-title">Section Summary</div>
-    {% if section_summary %}
-    <div class="table-wrap">
-      <table class="section-table">
-        <thead>
-          <tr>
-            <th>Section</th>
-            <th>Criteria</th>
-            <th>Avg Score</th>
-            <th>Gaps</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for sec in section_summary %}
-          <tr class="section-row" onclick="window.location='{{ url_for('audits.audit_score', audit_id=audit.id, code=sec.first_code) }}';" style="cursor: pointer;" title="Go to {{ sec.first_code }}">
-            <td>{{ sec.name }}</td>
-            <td>{{ sec.criteria_count }}</td>
-            <td>
-              {% if sec.average_score is not none %}
-                {% if sec.average_score >= 3 %}
-                  <span class="score-pill score-green">{{ '%.1f' | format(sec.average_score) }}</span>
-                {% elif sec.average_score >= 2 %}
-                  <span class="score-pill score-amber">{{ '%.1f' | format(sec.average_score) }}</span>
-                {% else %}
-                  <span class="score-pill score-red">{{ '%.1f' | format(sec.average_score) }}</span>
-                {% endif %}
-              {% else %}
-                <span class="score-pill score-grey">—</span>
-              {% endif %}
-            </td>
-            <td>
-              {% if sec.gap_count > 0 %}
-                <span class="score-pill score-red">{{ sec.gap_count }}</span>
-              {% else %}
-                <span class="text-muted">0</span>
-              {% endif %}
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+  {# ── Performing Status Banner ── #}
+  {% if stats.completed > 0 %}
+    {% if stats.gap_count > 0 %}
+    <div class="gap-alert">&#9888;&#65039; <strong>Developing grading likely:</strong> Suppliers must meet every element of the applicable core requirements to be graded as Performing. {{ stats.gap_count }} criteria currently score 0 — these must be resolved before a Performing grade is achievable.</div>
+    {% elif stats.completed == stats.scorable - stats.na_count and stats.gap_count == 0 %}
+    <div class="performing-banner">&#9989; <strong>Performing grade pathway clear:</strong> No criteria scoring 0 detected. Ensure all evidence is assembled and current before formal assessment.</div>
     {% else %}
-    <p class="text-muted">No sections available.</p>
+    <div class="info-banner">&#8505;&#65039; {{ stats.scorable - stats.completed - stats.na_count }} scorable criteria not yet assessed. Complete all criteria to determine Performing grade eligibility.</div>
     {% endif %}
-  </div>
-
-  {# ── 6. Compliance Trend Chart (Req 6.4) ── #}
-  <div class="card">
-    <div class="card-title">Compliance Trend</div>
-    {% if compliance_trend and compliance_trend | length > 0 %}
-    <div class="chart-container">
-      <canvas id="complianceTrendChart" aria-label="Compliance trend line chart" role="img"></canvas>
-    </div>
-    {% else %}
-    <p class="text-muted">No completed audits to display trend data.</p>
-    {% endif %}
-  </div>
-
-  {# ── 7. Upcoming Reminders (Req 14.2, 14.4) ── #}
-  {% if upcoming_reminders %}
-  <div class="card">
-    <div class="card-title">Upcoming Reminders</div>
-    <ul class="reminder-list">
-      {% for reminder in upcoming_reminders %}
-      <li class="reminder-item">
-        <a href="{{ url_for('audits.audit_detail', audit_id=reminder.id) }}">
-          Audit #{{ reminder.id }}
-        </a>
-        <span class="reminder-date">
-          Due: {{ reminder.next_review_due.strftime('%d %b %Y') if reminder.next_review_due else '—' }}
-        </span>
-      </li>
-      {% endfor %}
-    </ul>
-  </div>
   {% endif %}
 
-  {# ── 8. Sign-off Status ── #}
+  {# ── Results by Section ── #}
+  <h3 class="section-heading">Results by Section</h3>
+  {% if section_summary %}
+  <table class="section-table">
+    <thead>
+      <tr>
+        <th>Section</th>
+        <th>Criteria</th>
+        <th>Avg Score</th>
+        <th>Status</th>
+        <th>Gaps</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for sec in section_summary %}
+      {% if not scoping_summary or sec.has_applicable is not defined or sec.has_applicable %}
+      <tr onclick="window.location='{{ url_for('audits.audit_score', audit_id=audit.id, code=sec.first_code) }}';">
+        <td class="sec-name">{{ sec.name }}</td>
+        <td style="color:#94a3b8">{{ sec.criteria_count }}</td>
+        <td>
+          {% if sec.average_score is not none %}
+            {% set avg_rounded = sec.average_score|round|int %}
+            <span class="score-badge badge-{{ avg_rounded }}">{{ '%.1f'|format(sec.average_score) }}</span>
+          {% else %}
+            <span class="score-badge badge-unset">—</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if sec.status == 'Has Gaps' %}
+            <span class="score-badge badge-hasgaps">Has Gaps</span>
+          {% elif sec.status == 'Incomplete' %}
+            <span class="score-badge badge-incomplete">Incomplete</span>
+          {% else %}
+            <span class="score-badge badge-assessed">Assessed</span>
+          {% endif %}
+        </td>
+        <td style="color:{% if sec.gap_count > 0 %}#ef4444{% else %}#94a3b8{% endif %}"><strong>{{ sec.gap_count }}</strong></td>
+      </tr>
+      {% endif %}
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
+  {# ── All Criteria at a Glance ── #}
+  <h3 class="section-heading">All Criteria at a Glance</h3>
+  <table class="section-table">
+    <thead>
+      <tr>
+        <th style="width:70px">Code</th>
+        <th>Criteria</th>
+        <th style="width:100px">Score</th>
+        <th style="width:160px">Evidence Ready</th>
+        <th style="width:100px">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in all_criteria_glance %}
+      <tr onclick="window.location='{{ url_for('audits.audit_score', audit_id=audit.id, code=c.code) }}';">
+        <td><strong style="color:#f97316">{{ c.code }}</strong></td>
+        <td style="font-size:13px">{{ c.title }}</td>
+        <td>
+          {% if c.info_only %}
+            <span class="score-badge" style="background:rgba(129,140,248,.2);color:#818cf8">Info Only</span>
+          {% elif c.score is none %}
+            <span class="score-badge badge-unset">Unscored</span>
+          {% else %}
+            <span class="score-badge badge-{{ c.score }}">Score {{ c.score }}</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if c.evidence_total > 0 %}
+            {% set ev_color = '#22c55e' if c.evidence_checked == c.evidence_total else ('#eab308' if c.evidence_checked > 0 else '#94a3b8') %}
+            <span style="color:{{ ev_color }};font-size:13px">{{ c.evidence_checked }}/{{ c.evidence_total }} evidence</span>
+          {% else %}
+            <span style="color:#94a3b8;font-size:13px">—</span>
+          {% endif %}
+        </td>
+        <td><a href="{{ url_for('audits.audit_score', audit_id=audit.id, code=c.code) }}" class="btn btn-secondary btn-sm" onclick="event.stopPropagation();">Audit &#8594;</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {# ── Sign-off Status ── #}
   {% if audit.sign_off %}
-  <div class="card">
+  <div class="card-box">
     <div class="card-title">Sign-off Status</div>
     <div class="meta-grid">
       <div class="meta-item">
@@ -257,13 +319,13 @@
       </div>
     </div>
     {% if audit.status in ('Review', 'Completed') and not audit.sign_off.auditee_acknowledged_at %}
-    <div style="margin-top: 1rem;">
+    <div style="margin-top:1rem;">
       <a href="{{ url_for('audits.audit_signoff', audit_id=audit.id) }}" class="btn btn-review">Acknowledge Audit</a>
     </div>
     {% endif %}
   </div>
   {% elif audit.status in ('Review', 'Completed') %}
-  <div class="card">
+  <div class="card-box">
     <div class="card-title">Sign-off Status</div>
     <div class="meta-grid">
       <div class="meta-item">
@@ -275,14 +337,14 @@
         <span class="value"><span class="text-muted">Pending</span></span>
       </div>
     </div>
-    <div style="margin-top: 1rem;">
+    <div style="margin-top:1rem;">
       <a href="{{ url_for('audits.audit_signoff', audit_id=audit.id) }}" class="btn btn-review">Acknowledge Audit</a>
     </div>
   </div>
   {% endif %}
 
-  {# ── 9. Action Buttons ── #}
-  <div class="card action-buttons">
+  {# ── Action Buttons Bar ── #}
+  <div class="action-bar">
     {% if audit.status not in ('Completed', 'Archived') %}
     <a href="{{ url_for('audits.audit_score', audit_id=audit.id, code=section_summary[0].first_code) if section_summary else '#' }}" class="btn btn-primary">Score Criteria</a>
     <label class="btn btn-secondary btn-import" for="import-scores-file" style="cursor:pointer;">

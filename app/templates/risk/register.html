@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block title %}Risk Register — {{ branding.company_name }}{% endblock %}
+
+{% block content %}
+<style>
+  .rr-page{width:100%;max-width:100%;padding:1rem 1.5rem;font-family:"Barlow",sans-serif;color:#e2e8f0;box-sizing:border-box}
+  .rr-page h2{font-family:"Barlow Condensed",sans-serif;font-size:26px;font-weight:800;color:#fff;margin-bottom:4px}
+  .rr-page .subtitle{color:#94a3b8;font-size:13px;margin-bottom:20px}
+
+  /* Stat cards */
+  .dash-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:24px}
+  .stat-card{background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:16px;text-align:center}
+  .stat-card .stat-num{font-family:"Barlow Condensed",sans-serif;font-size:2rem;font-weight:800;line-height:1.1}
+  .stat-card .stat-label{font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
+
+  /* Filter bar */
+  .filter-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;align-items:center}
+  .filter-bar select,.filter-bar input{background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:6px 10px;border-radius:4px;font-size:13px;font-family:"Barlow",sans-serif}
+  .filter-bar select:focus,.filter-bar input:focus{border-color:#f97316;outline:none}
+
+  /* Table */
+  .risk-table{width:100%;border-collapse:collapse;margin-bottom:24px}
+  .risk-table th{background:#16213e;padding:10px 12px;text-align:left;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:#64748b;border-bottom:1px solid #1e293b}
+  .risk-table td{padding:9px 12px;border-bottom:1px solid #1e293b;font-size:13px;vertical-align:middle}
+  .risk-table tr:hover td{background:#0f172a;cursor:pointer}
+  .risk-title-link{color:#e2e8f0;text-decoration:none;font-weight:600}
+  .risk-title-link:hover{color:#f97316}
+
+  /* Badges */
+  .level-badge{display:inline-block;padding:2px 9px;border-radius:3px;font-size:11px;font-weight:700;text-transform:uppercase}
+  .level-critical{background:rgba(239,68,68,.2);color:#f87171}
+  .level-high{background:rgba(249,115,22,.2);color:#fb923c}
+  .level-medium{background:rgba(234,179,8,.2);color:#eab308}
+  .level-low{background:rgba(34,197,94,.2);color:#22c55e}
+  .level-unrated{background:rgba(100,116,139,.2);color:#94a3b8}
+  .status-badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:3px;text-transform:uppercase}
+  .st-open{background:rgba(239,68,68,.15);color:#f87171}
+  .st-mitigating{background:rgba(249,115,22,.15);color:#fb923c}
+  .st-monitoring{background:rgba(59,130,246,.15);color:#60a5fa}
+  .st-closed{background:rgba(34,197,94,.15);color:#4ade80}
+  .st-accepted{background:rgba(168,85,247,.15);color:#a855f7}
+
+  .btn{display:inline-block;padding:6px 14px;border-radius:4px;font-size:13px;font-weight:600;text-decoration:none;border:none;cursor:pointer;font-family:"Barlow",sans-serif}
+  .btn-primary{background:#f97316;color:#fff}
+  .btn-primary:hover{background:#fb923c}
+  .btn-secondary{background:#1e293b;color:#94a3b8;border:1px solid #334155}
+  .btn-secondary:hover{color:#fff;border-color:#f97316}
+  .top-actions{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+  .overdue-tag{color:#f87171;font-size:11px;font-weight:700}
+  .cat-tag{font-size:11px;color:#94a3b8;background:#1e293b;padding:1px 6px;border-radius:3px}
+</style>
+
+<div class="rr-page">
+  <h2>Enterprise Risk Register</h2>
+  <p class="subtitle">ISO 31000 aligned risk management — track, assess, and mitigate organisational risks</p>
+
+  {# ── Stat Cards ── #}
+  <div class="dash-grid">
+    <div class="stat-card"><div class="stat-num" style="color:#e2e8f0">{{ total }}</div><div class="stat-label">Total Risks</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:#ef4444">{{ critical }}</div><div class="stat-label">Critical</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:#f97316">{{ high }}</div><div class="stat-label">High</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:#eab308">{{ medium }}</div><div class="stat-label">Medium</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:#22c55e">{{ low }}</div><div class="stat-label">Low</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:#60a5fa">{{ open_count }}</div><div class="stat-label">Open</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:#f87171">{{ overdue_reviews }}</div><div class="stat-label">Overdue Reviews</div></div>
+  </div>
+
+  {# ── Actions ── #}
+  <div class="top-actions">
+    <a href="{{ url_for('risks.add_risk') }}" class="btn btn-primary">+ Add Risk</a>
+    <a href="{{ url_for('risks.risk_matrix') }}" class="btn btn-secondary">View Risk Matrix</a>
+  </div>
+
+  {# ── Filters ── #}
+  <form class="filter-bar" method="get">
+    <select name="category">
+      <option value="">All Categories</option>
+      {% for cat in categories %}
+      <option value="{{ cat.id }}" {% if filter_category == cat.id %}selected{% endif %}>{{ cat.icon }} {{ cat.name }}</option>
+      {% endfor %}
+    </select>
+    <select name="status">
+      <option value="">All Statuses</option>
+      {% for s in statuses %}
+      <option value="{{ s }}" {% if filter_status == s %}selected{% endif %}>{{ s }}</option>
+      {% endfor %}
+    </select>
+    <select name="level">
+      <option value="">All Levels</option>
+      <option value="Critical" {% if filter_level == 'Critical' %}selected{% endif %}>Critical</option>
+      <option value="High" {% if filter_level == 'High' %}selected{% endif %}>High</option>
+      <option value="Medium" {% if filter_level == 'Medium' %}selected{% endif %}>Medium</option>
+      <option value="Low" {% if filter_level == 'Low' %}selected{% endif %}>Low</option>
+    </select>
+    <button type="submit" class="btn btn-secondary">Filter</button>
+    {% if filter_category or filter_status or filter_level %}
+    <a href="{{ url_for('risks.risk_register') }}" class="btn btn-secondary">Clear</a>
+    {% endif %}
+  </form>
+
+  {# ── Risk Table ── #}
+  {% if risks %}
+  <table class="risk-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Risk</th>
+        <th>Category</th>
+        <th>Inherent</th>
+        <th>Residual</th>
+        <th>Status</th>
+        <th>Owner</th>
+        <th>Treatment</th>
+        <th>Next Review</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in risks %}
+      <tr onclick="window.location='{{ url_for('risks.risk_detail', risk_id=r.id) }}'">
+        <td style="color:#64748b;font-weight:600">R{{ '%03d' % r.id }}</td>
+        <td><a href="{{ url_for('risks.risk_detail', risk_id=r.id) }}" class="risk-title-link">{{ r.title }}</a></td>
+        <td><span class="cat-tag">{{ r.category.icon }} {{ r.category.name }}</span></td>
+        <td>
+          {% if r.inherent_score %}
+          <span class="level-badge level-{{ r.inherent_level|lower }}">{{ r.inherent_score }} — {{ r.inherent_level }}</span>
+          {% else %}
+          <span class="level-badge level-unrated">Unrated</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if r.residual_score %}
+          <span class="level-badge level-{{ r.residual_level|lower }}">{{ r.residual_score }} — {{ r.residual_level }}</span>
+          {% else %}
+          <span class="level-badge level-unrated">—</span>
+          {% endif %}
+        </td>
+        <td><span class="status-badge st-{{ r.status|lower }}">{{ r.status }}</span></td>
+        <td>{{ r.owner.display_name if r.owner else '—' }}</td>
+        <td>{{ r.treatment_type or '—' }}</td>
+        <td>
+          {% if r.next_review_date %}
+            {{ r.next_review_date.strftime('%d %b %Y') }}
+            {% if r.next_review_date < today %}
+            <span class="overdue-tag">OVERDUE</span>
+            {% endif %}
+          {% else %}—{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div style="text-align:center;padding:40px;color:#64748b;font-size:14px">
+    No risks found. <a href="{{ url_for('risks.add_risk') }}" style="color:#f97316">Add your first risk</a>.
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

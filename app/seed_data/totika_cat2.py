@@ -8,6 +8,11 @@ Extracted from the existing single-file audit tool.
 TEMPLATE_NAME = "T\u014dtika Category 2 \u2014 Health & Safety"
 TEMPLATE_VERSION = "1.0"
 
+TEMPLATE_METADATA = {
+    "domain_type": "Health & Safety",
+    "compliance_framework": "Tōtika Category 2",
+}
+
 # Sections in display order
 SECTIONS = [
     {
@@ -1677,6 +1682,7 @@ CRITERIA = {
         "guidance": "Organisation provides details of any prosecution/conviction relating to H&S in the last 5 years.",
         "question": "Have you been convicted of a H&S offence within the last 5 years?",
         "na_allowed": False,
+        "info_only": True,
         "tip": "This is information-only — no score awarded. Must disclose any convictions. Court Base search may be conducted by assessors.",
         "scoring": [
             {"score": 0, "description": "N/A — Information provision only. No score given."},
@@ -1695,6 +1701,7 @@ CRITERIA = {
         "guidance": "Organisation provides details of enforcement action by any H&S regulator in the last 5 years.",
         "question": "Have you had any enforcement action taken against you by an H&S Regulator in the last 5 years?",
         "na_allowed": False,
+        "info_only": True,
         "tip": "Improvement and prohibition notices must be disclosed. Provide status and any corrective actions taken.",
         "scoring": [
             {"score": 0, "description": "N/A — Information provision only. No score given."},
@@ -1713,6 +1720,7 @@ CRITERIA = {
         "guidance": "Organisation provides details of any investigation by an H&S Regulator in the last 5 years.",
         "question": "Have you ever been investigated by an H&S Regulator in the last 5 years?",
         "na_allowed": False,
+        "info_only": True,
         "tip": "Information provision only.",
         "scoring": [
             {"score": 0, "description": "N/A — Information provision only. No score given."},
@@ -1731,6 +1739,7 @@ CRITERIA = {
         "guidance": "Organisation provides details of any environmental prosecutions or convictions in the last 5 years.",
         "question": "Have you been convicted of an Environmental offence within the last 5 years?",
         "na_allowed": False,
+        "info_only": True,
         "tip": "Environmental offences include Resource Management Act or Environmental Protection Authority convictions.",
         "scoring": [
             {"score": 0, "description": "N/A — Information provision only. No score given."},
@@ -1749,6 +1758,7 @@ CRITERIA = {
         "guidance": "Organisation provides details of awards and recognitions relating to H&S in the last 5 years.",
         "question": "Have you been recognised by clients or other external bodies for H&S excellence, innovation, or problem solving in the last 5 years?",
         "na_allowed": False,
+        "info_only": True,
         "tip": "Information provision only — positive recognition. Attach certificate if available.",
         "scoring": [
             {"score": 0, "description": "N/A — Information provision only. No score given."},

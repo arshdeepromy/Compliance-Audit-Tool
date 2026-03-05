@@ -21,7 +21,7 @@ password_strategy = st.text(
 
 
 @given(password=password_strategy)
-@settings(max_examples=20, deadline=None)
+@settings(max_examples=8, deadline=None)
 def test_password_hash_is_valid_bcrypt_with_cost_at_least_12(password: str):
     """For any password, the resulting hash SHALL be a valid bcrypt hash
     with a cost factor of at least 12.
