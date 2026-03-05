@@ -223,6 +223,7 @@
       {% endwith %}
 
       <form method="post" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="form-group">
           <label for="username">Username</label>
           <input id="username" name="username" type="text" placeholder="Enter your username" autocomplete="username" required>

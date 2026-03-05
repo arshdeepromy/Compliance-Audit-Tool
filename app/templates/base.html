@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   {% block extra_head %}{% endblock %}
 </head>
 <body class="{% if sidebar_sections is defined and sidebar_sections %}has-sidebar{% endif %}">
@@ -39,6 +40,7 @@
         {% endif %}
         <a href="{{ url_for('auth.change_password') }}" style="color: {{ branding.header_text_colour if branding.header_text_colour else '#ffffff' }};font-size:0.85rem;" title="Change Password">🔒</a>
         <form method="post" action="{{ url_for('auth.logout') }}" style="display:inline;margin:0;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <button type="submit" class="logout-btn" style="color: {{ branding.header_text_colour if branding.header_text_colour else '#ffffff' }};">Logout</button>
         </form>
       {% endif %}
@@ -96,6 +98,34 @@
   </div>
 
   <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  <script>
+    // Auto-inject CSRF token into all forms and AJAX requests
+    (function() {
+      var token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+      // Inject hidden input into every form that doesn't already have one
+      document.querySelectorAll('form').forEach(function(form) {
+        if (!form.querySelector('input[name="csrf_token"]')) {
+          var input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = 'csrf_token';
+          input.value = token;
+          form.appendChild(input);
+        }
+      });
+      // Set default header for fetch/XMLHttpRequest
+      var origFetch = window.fetch;
+      window.fetch = function(url, opts) {
+        opts = opts || {};
+        opts.headers = opts.headers || {};
+        if (opts.headers instanceof Headers) {
+          if (!opts.headers.has('X-CSRFToken')) opts.headers.set('X-CSRFToken', token);
+        } else {
+          if (!opts.headers['X-CSRFToken']) opts.headers['X-CSRFToken'] = token;
+        }
+        return origFetch(url, opts);
+      };
+    })();
+  </script>
   {% block extra_js %}{% endblock %}
 
   {% if branding.footer_text %}

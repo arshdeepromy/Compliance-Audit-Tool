@@ -68,6 +68,7 @@
       {% endwith %}
 
       <form method="post" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="form-group">
           <label for="code">Verification Code</label>
           <input id="code" name="code" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="000000" autocomplete="one-time-code" required autofocus>
@@ -79,6 +80,7 @@
       <div class="switch-method">
         <p>Having trouble?</p>
         <form method="post" action="{{ url_for('auth.switch_mfa_method') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <button type="submit" class="btn-switch">
             {% if other_method == 'totp' %}
             🔐 Use Authenticator App Instead

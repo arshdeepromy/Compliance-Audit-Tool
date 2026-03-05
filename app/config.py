@@ -66,5 +66,6 @@ class TestConfig(Config):
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
     SECRET_KEY = "test-secret-key"
     WTF_CSRF_ENABLED = False
+    RATELIMIT_ENABLED = False
     UPLOAD_FOLDER = os.path.join(basedir, "test_uploads")
     SEED_DATA_DIR = os.path.join(basedir, "test_seed_data")
