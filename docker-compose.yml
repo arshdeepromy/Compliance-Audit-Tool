@@ -2,7 +2,7 @@ services:
   web:
     build: .
     ports:
-      - "5000:5000"
+      - "0.0.0.0:5000:5000"
     volumes:
       # Mount source code for hot reload
       - ./app:/app/app
