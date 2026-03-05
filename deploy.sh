@@ -69,7 +69,7 @@ do_update() {
 
     # Wait for container to be healthy
     log "Waiting for app to start..."
-    sleep 15
+    sleep 30
 
     # Check if container is running (retry up to 3 times)
     RETRIES=3
