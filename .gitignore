@@ -36,3 +36,4 @@ uploads/
 # Deploy backups
 backups/
 .last_good_commit
+.pre_update_db_size

@@ -66,46 +66,17 @@ backup_db() {
 }
 
 # ---------------------------------------------------------------------------
-# UPDATE — pull latest code, backup DB, rebuild container
+# Rebuild and verify container
 # ---------------------------------------------------------------------------
-do_update() {
-    log "Starting update..."
-    ensure_dirs
-
-    # Save current commit hash for rollback
-    PREV_COMMIT=$(git rev-parse HEAD)
-    echo "$PREV_COMMIT" > "$APP_DIR/.last_good_commit"
-    log "Current commit: $(git rev-parse --short HEAD)"
-
-    # Backup database and uploads FIRST
-    backup_db
-
-    # Record DB size before anything changes
-    PRE_UPDATE_DB_SIZE=0
-    if [ -f "$DB_PATH" ]; then
-        PRE_UPDATE_DB_SIZE=$(stat -c%s "$DB_PATH" 2>/dev/null || echo "0")
-        log "Database size before update: $PRE_UPDATE_DB_SIZE bytes"
-    fi
-
-    # Pull latest code
-    log "Pulling latest from GitHub..."
-    git stash --quiet 2>/dev/null || true
-    git pull origin main
-    git stash pop --quiet 2>/dev/null || true
-
-    NEW_COMMIT=$(git rev-parse --short HEAD)
-    log "Updated to commit: $NEW_COMMIT"
-
-    # Ensure data directories still exist after git operations
+_rebuild_and_verify() {
     ensure_dirs
 
     # NEVER use 'docker compose down' — it can cause data loss
-    # Use --build --force-recreate to rebuild in-place
-    log "Rebuilding container (in-place, no downtime)..."
+    log "Rebuilding container (in-place)..."
     $COMPOSE up -d --build --force-recreate
 
-    # Wait for container to be healthy
-    log "Waiting for app to start..."
+    # Wait for container to start (Pi is slow)
+    log "Waiting 30s for app to start..."
     sleep 30
 
     # Check if container is running (retry up to 3 times)
@@ -120,7 +91,86 @@ do_update() {
         sleep 10
     done
 
-    if $RUNNING; then
+    echo "$RUNNING"
+}
+
+# ---------------------------------------------------------------------------
+# Restore latest backup (helper)
+# ---------------------------------------------------------------------------
+_restore_latest_backup() {
+    LATEST_BACKUP=$(ls -t "$BACKUP_DIR"/totika_*.db 2>/dev/null | head -1)
+    if [ -n "$LATEST_BACKUP" ]; then
+        ensure_dirs
+        $COMPOSE stop web 2>/dev/null || true
+        cp "$LATEST_BACKUP" "$DB_PATH"
+        $COMPOSE start web
+        sleep 10
+        log "Database restored from: $(basename $LATEST_BACKUP)"
+    else
+        err "No backup available to restore!"
+    fi
+}
+
+# ---------------------------------------------------------------------------
+# UPDATE — pull latest code, backup DB, rebuild container
+# Phase 2 flag: --phase2 means git pull already done, just rebuild
+# ---------------------------------------------------------------------------
+do_update() {
+    log "Starting update..."
+    ensure_dirs
+
+    PHASE2="${1:-}"
+
+    if [ "$PHASE2" != "--phase2" ]; then
+        # === PHASE 1: backup, git pull, then re-exec with updated script ===
+
+        # Save current commit hash for rollback
+        PREV_COMMIT=$(git rev-parse HEAD)
+        echo "$PREV_COMMIT" > "$APP_DIR/.last_good_commit"
+        log "Current commit: $(git rev-parse --short HEAD)"
+
+        # Backup database and uploads FIRST
+        backup_db
+
+        # Record DB size before anything changes
+        PRE_UPDATE_DB_SIZE=0
+        if [ -f "$DB_PATH" ]; then
+            PRE_UPDATE_DB_SIZE=$(stat -c%s "$DB_PATH" 2>/dev/null || echo "0")
+            log "Database size before update: $PRE_UPDATE_DB_SIZE bytes"
+            echo "$PRE_UPDATE_DB_SIZE" > "$APP_DIR/.pre_update_db_size"
+        fi
+
+        # Pull latest code
+        log "Pulling latest from GitHub..."
+        git stash --quiet 2>/dev/null || true
+        git pull origin main
+        git stash pop --quiet 2>/dev/null || true
+
+        NEW_COMMIT=$(git rev-parse --short HEAD)
+        log "Updated to commit: $NEW_COMMIT"
+
+        # Re-exec the updated deploy script for phase 2
+        # This ensures we run the LATEST version of the script
+        log "Re-launching updated deploy script..."
+        exec bash "$APP_DIR/deploy.sh" update --phase2
+    fi
+
+    # === PHASE 2: rebuild container with new code ===
+    log "Phase 2: rebuilding with updated code..."
+
+    # Read saved DB size from phase 1
+    PRE_UPDATE_DB_SIZE=0
+    if [ -f "$APP_DIR/.pre_update_db_size" ]; then
+        PRE_UPDATE_DB_SIZE=$(cat "$APP_DIR/.pre_update_db_size")
+        rm -f "$APP_DIR/.pre_update_db_size"
+    fi
+
+    NEW_COMMIT=$(git rev-parse --short HEAD)
+    ensure_dirs
+
+    RUNNING=$(_rebuild_and_verify)
+
+    if [ "$RUNNING" = "true" ]; then
         # Verify database survived the update
         if [ -f "$DB_PATH" ]; then
             POST_UPDATE_DB_SIZE=$(stat -c%s "$DB_PATH" 2>/dev/null || echo "0")
@@ -140,25 +190,10 @@ do_update() {
         log "Update successful! App is running on commit $NEW_COMMIT"
         log "Access at: http://$(hostname -I | awk '{print $1}'):5000"
     else
-        err "Container failed to start after $RETRIES attempts! Rolling back..."
-        do_rollback
-    fi
-}
-
-# ---------------------------------------------------------------------------
-# Restore latest backup (helper)
-# ---------------------------------------------------------------------------
-_restore_latest_backup() {
-    LATEST_BACKUP=$(ls -t "$BACKUP_DIR"/totika_*.db 2>/dev/null | head -1)
-    if [ -n "$LATEST_BACKUP" ]; then
-        ensure_dirs
-        $COMPOSE stop web 2>/dev/null || true
-        cp "$LATEST_BACKUP" "$DB_PATH"
-        $COMPOSE start web
-        sleep 10
-        log "Database restored from: $(basename $LATEST_BACKUP)"
-    else
-        err "No backup available to restore!"
+        err "Container failed to start! Check logs:"
+        err "  docker logs compliance-audit-tool-web-1 --tail 30"
+        warn "Your database backup is safe in $BACKUP_DIR/"
+        warn "To rollback: bash deploy.sh rollback"
     fi
 }
 
@@ -202,18 +237,15 @@ do_rollback() {
     log "Code reverted to: $(git rev-parse --short HEAD)"
 
     # Rebuild and restart
-    $COMPOSE up -d --build --force-recreate
+    RUNNING=$(_rebuild_and_verify)
 
-    sleep 15
-
-    if $COMPOSE ps | grep -q "running"; then
+    if [ "$RUNNING" = "true" ]; then
         log "Rollback successful! App is running."
         log "Access at: http://$(hostname -I | awk '{print $1}'):5000"
-        warn "You are in detached HEAD state. To stay here permanently:"
-        warn "  git checkout -b stable-rollback"
-        warn "Or to go back to main: git checkout main"
+        warn "You are in detached HEAD state. To go back to main:"
+        warn "  git checkout main"
     else
-        err "Rollback also failed. Check: docker logs totika-audit-app-web-1"
+        err "Rollback also failed. Check: docker logs compliance-audit-tool-web-1 --tail 30"
     fi
 }
 
@@ -254,7 +286,7 @@ do_status() {
 # LOGS — tail container logs
 # ---------------------------------------------------------------------------
 do_logs() {
-    docker logs totika-audit-app-web-1 --tail 50 -f
+    docker logs compliance-audit-tool-web-1 --tail 50 -f
 }
 
 # ---------------------------------------------------------------------------
@@ -266,7 +298,7 @@ cd "$APP_DIR"
 ensure_dirs
 
 case "${1:-update}" in
-    update)   do_update ;;
+    update)   do_update "$2" ;;
     rollback) do_rollback ;;
     status)   do_status ;;
     logs)     do_logs ;;
