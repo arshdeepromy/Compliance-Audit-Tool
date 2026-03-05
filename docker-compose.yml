@@ -20,4 +20,5 @@ services:
       - FLASK_RUN_IN_DOCKER=1
       - SECRET_KEY=dev-secret-key-change-in-production
       - DEFAULT_ADMIN_PASSWORD=admin
+      - BEHIND_PROXY=true
     restart: unless-stopped
