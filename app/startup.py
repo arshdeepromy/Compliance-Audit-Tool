@@ -21,23 +21,45 @@ logger = logging.getLogger(__name__)
 
 
 def run_migrations(app):
-    """Apply any pending Alembic migrations."""
+    """Apply any pending Alembic migrations.
+
+    Safety: logs the DB file size before and after to detect data loss.
+    """
     import os
+
+    # Log DB state before migrations
+    db_path = app.config.get("SQLALCHEMY_DATABASE_URI", "").replace("sqlite:///", "")
+    pre_size = 0
+    if db_path and os.path.isfile(db_path):
+        pre_size = os.path.getsize(db_path)
+        logger.info("Database before migration: %s (%d bytes)", db_path, pre_size)
+    else:
+        logger.info("No existing database found — fresh install at %s", db_path)
 
     alembic_ini = os.path.join(os.path.dirname(app.root_path), "alembic.ini")
     alembic_cfg = AlembicConfig(alembic_ini)
-    # Point script_location to the migrations directory next to alembic.ini
     alembic_cfg.set_main_option(
         "script_location",
         os.path.join(os.path.dirname(app.root_path), "migrations"),
     )
-    # Override the sqlalchemy.url with the app's configured URI
     alembic_cfg.set_main_option(
         "sqlalchemy.url", app.config["SQLALCHEMY_DATABASE_URI"]
     )
 
     with app.app_context():
         command.upgrade(alembic_cfg, "head")
+
+    # Verify DB wasn't wiped by migration
+    if db_path and os.path.isfile(db_path):
+        post_size = os.path.getsize(db_path)
+        logger.info("Database after migration: %d bytes", post_size)
+        if pre_size > 10000 and post_size < (pre_size // 2):
+            logger.error(
+                "DATABASE SIZE DROPPED from %d to %d bytes after migration! "
+                "Possible data loss detected.",
+                pre_size,
+                post_size,
+            )
     logger.info("Database migrations applied.")
 
 

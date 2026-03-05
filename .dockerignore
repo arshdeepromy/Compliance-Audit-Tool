@@ -1,10 +1,32 @@
-__pycache__
-*.pyc
-.pytest_cache
-.hypothesis
+# Never copy user data into the Docker image
 instance/
 uploads/
-test_uploads/
+backups/
+
+# Git and IDE
+.git/
+.gitignore
+.vscode/
+.idea/
+.kiro/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.hypothesis/
+
+# Docker
+.docker/
+docker-compose.yml
+
+# Misc
+.DS_Store
+Thumbs.db
+*.md
+*.env
+*.env.local
+.last_good_commit
 tests/
-*.db
-.git

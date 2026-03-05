@@ -1,7 +1,7 @@
 #!/bin/bash
 # =============================================================================
 # Tōtika Audit Tool — Deploy / Update / Rollback Script
-# Run on Raspberry Pi: ./deploy.sh [update|rollback|status|logs]
+# Run on Raspberry Pi: bash deploy.sh [update|rollback|status|logs]
 # =============================================================================
 
 set -e
@@ -9,6 +9,8 @@ set -e
 APP_DIR="$(cd "$(dirname "$0")" && pwd)"
 BACKUP_DIR="$APP_DIR/backups"
 DB_PATH="$APP_DIR/instance/totika.db"
+UPLOADS_DIR="$APP_DIR/uploads"
+INSTANCE_DIR="$APP_DIR/instance"
 COMPOSE="docker compose"
 
 # Colours
@@ -22,18 +24,42 @@ warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
 err()  { echo -e "${RED}[ERROR]${NC} $1"; }
 
 # ---------------------------------------------------------------------------
-# Backup database before any update
+# Ensure persistent directories exist on host BEFORE Docker touches them
+# ---------------------------------------------------------------------------
+ensure_dirs() {
+    mkdir -p "$INSTANCE_DIR"
+    mkdir -p "$UPLOADS_DIR"
+    mkdir -p "$BACKUP_DIR"
+}
+
+# ---------------------------------------------------------------------------
+# Backup database + uploads before any update
 # ---------------------------------------------------------------------------
 backup_db() {
-    mkdir -p "$BACKUP_DIR"
+    ensure_dirs
     if [ -f "$DB_PATH" ]; then
         TIMESTAMP=$(date +%Y%m%d_%H%M%S)
         COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
         BACKUP_FILE="$BACKUP_DIR/totika_${TIMESTAMP}_${COMMIT}.db"
-        cp "$DB_PATH" "$BACKUP_FILE"
+        # Use sqlite3 .backup if available (safe even while DB is in use)
+        if command -v sqlite3 &>/dev/null; then
+            sqlite3 "$DB_PATH" ".backup '$BACKUP_FILE'"
+        else
+            cp "$DB_PATH" "$BACKUP_FILE"
+        fi
         log "Database backed up to: $BACKUP_FILE"
-        # Keep only last 10 backups
+
+        # Backup uploads directory if it has files
+        if [ -d "$UPLOADS_DIR" ] && [ "$(ls -A "$UPLOADS_DIR" 2>/dev/null)" ]; then
+            UPLOADS_BACKUP="$BACKUP_DIR/uploads_${TIMESTAMP}_${COMMIT}.tar.gz"
+            tar -czf "$UPLOADS_BACKUP" -C "$APP_DIR" uploads/
+            log "Uploads backed up to: $UPLOADS_BACKUP"
+        fi
+
+        # Keep only last 10 DB backups
         ls -t "$BACKUP_DIR"/totika_*.db 2>/dev/null | tail -n +11 | xargs -r rm
+        # Keep only last 5 upload backups
+        ls -t "$BACKUP_DIR"/uploads_*.tar.gz 2>/dev/null | tail -n +6 | xargs -r rm
     else
         warn "No database found at $DB_PATH — fresh install"
     fi
@@ -44,14 +70,22 @@ backup_db() {
 # ---------------------------------------------------------------------------
 do_update() {
     log "Starting update..."
+    ensure_dirs
 
     # Save current commit hash for rollback
     PREV_COMMIT=$(git rev-parse HEAD)
     echo "$PREV_COMMIT" > "$APP_DIR/.last_good_commit"
     log "Current commit: $(git rev-parse --short HEAD)"
 
-    # Backup database
+    # Backup database and uploads FIRST
     backup_db
+
+    # Record DB size before anything changes
+    PRE_UPDATE_DB_SIZE=0
+    if [ -f "$DB_PATH" ]; then
+        PRE_UPDATE_DB_SIZE=$(stat -c%s "$DB_PATH" 2>/dev/null || echo "0")
+        log "Database size before update: $PRE_UPDATE_DB_SIZE bytes"
+    fi
 
     # Pull latest code
     log "Pulling latest from GitHub..."
@@ -62,15 +96,12 @@ do_update() {
     NEW_COMMIT=$(git rev-parse --short HEAD)
     log "Updated to commit: $NEW_COMMIT"
 
-    # Record DB size before rebuild for comparison
-    PRE_BUILD_DB_SIZE=0
-    if [ -f "$DB_PATH" ]; then
-        PRE_BUILD_DB_SIZE=$(stat -c%s "$DB_PATH" 2>/dev/null || echo "0")
-        log "Database size before rebuild: $PRE_BUILD_DB_SIZE bytes"
-    fi
+    # Ensure data directories still exist after git operations
+    ensure_dirs
 
-    # Rebuild and restart (no 'down' — avoids any risk of volume/data loss)
-    log "Rebuilding container..."
+    # NEVER use 'docker compose down' — it can cause data loss
+    # Use --build --force-recreate to rebuild in-place
+    log "Rebuilding container (in-place, no downtime)..."
     $COMPOSE up -d --build --force-recreate
 
     # Wait for container to be healthy
@@ -90,35 +121,21 @@ do_update() {
     done
 
     if $RUNNING; then
-        # Verify database file still exists and hasn't shrunk significantly
+        # Verify database survived the update
         if [ -f "$DB_PATH" ]; then
-            DB_SIZE=$(stat -c%s "$DB_PATH" 2>/dev/null || echo "0")
-            if [ "$PRE_BUILD_DB_SIZE" -gt 10000 ] && [ "$DB_SIZE" -lt "$((PRE_BUILD_DB_SIZE / 2))" ]; then
-                err "Database shrunk from $PRE_BUILD_DB_SIZE to $DB_SIZE bytes after update!"
-                err "Restoring from backup..."
-                LATEST_BACKUP=$(ls -t "$BACKUP_DIR"/totika_*.db 2>/dev/null | head -1)
-                if [ -n "$LATEST_BACKUP" ]; then
-                    $COMPOSE stop web
-                    cp "$LATEST_BACKUP" "$DB_PATH"
-                    $COMPOSE start web
-                    sleep 10
-                    log "Database restored from backup: $(basename $LATEST_BACKUP)"
-                fi
+            POST_UPDATE_DB_SIZE=$(stat -c%s "$DB_PATH" 2>/dev/null || echo "0")
+            if [ "$PRE_UPDATE_DB_SIZE" -gt 10000 ] && [ "$POST_UPDATE_DB_SIZE" -lt "$((PRE_UPDATE_DB_SIZE / 2))" ]; then
+                err "DATABASE INTEGRITY CHECK FAILED!"
+                err "DB shrunk from $PRE_UPDATE_DB_SIZE to $POST_UPDATE_DB_SIZE bytes"
+                err "Auto-restoring from backup..."
+                _restore_latest_backup
             else
-                log "Database OK ($DB_SIZE bytes)"
+                log "Database OK ($POST_UPDATE_DB_SIZE bytes)"
             fi
         else
-            err "Database file missing after update! Restoring from backup..."
-            LATEST_BACKUP=$(ls -t "$BACKUP_DIR"/totika_*.db 2>/dev/null | head -1)
-            if [ -n "$LATEST_BACKUP" ]; then
-                mkdir -p "$(dirname "$DB_PATH")"
-                cp "$LATEST_BACKUP" "$DB_PATH"
-                $COMPOSE restart web
-                sleep 10
-                log "Database restored from backup: $(basename $LATEST_BACKUP)"
-            else
-                err "No backup available! Database is lost."
-            fi
+            err "Database file MISSING after update!"
+            err "Auto-restoring from backup..."
+            _restore_latest_backup
         fi
         log "Update successful! App is running on commit $NEW_COMMIT"
         log "Access at: http://$(hostname -I | awk '{print $1}'):5000"
@@ -129,23 +146,40 @@ do_update() {
 }
 
 # ---------------------------------------------------------------------------
+# Restore latest backup (helper)
+# ---------------------------------------------------------------------------
+_restore_latest_backup() {
+    LATEST_BACKUP=$(ls -t "$BACKUP_DIR"/totika_*.db 2>/dev/null | head -1)
+    if [ -n "$LATEST_BACKUP" ]; then
+        ensure_dirs
+        $COMPOSE stop web 2>/dev/null || true
+        cp "$LATEST_BACKUP" "$DB_PATH"
+        $COMPOSE start web
+        sleep 10
+        log "Database restored from: $(basename $LATEST_BACKUP)"
+    else
+        err "No backup available to restore!"
+    fi
+}
+
+# ---------------------------------------------------------------------------
 # ROLLBACK — revert to previous commit, restore DB backup
 # ---------------------------------------------------------------------------
 do_rollback() {
     log "Starting rollback..."
+    ensure_dirs
 
     # Find the commit to roll back to
     if [ -f "$APP_DIR/.last_good_commit" ]; then
         ROLLBACK_COMMIT=$(cat "$APP_DIR/.last_good_commit")
         log "Rolling back to commit: $(echo $ROLLBACK_COMMIT | cut -c1-7)"
     else
-        # Fall back to previous commit
         ROLLBACK_COMMIT=$(git rev-parse HEAD~1)
         warn "No saved commit found, rolling back to HEAD~1: $(echo $ROLLBACK_COMMIT | cut -c1-7)"
     fi
 
-    # Stop containers
-    $COMPOSE down
+    # Stop container (NOT down — preserve everything)
+    $COMPOSE stop web 2>/dev/null || true
 
     # Restore database from most recent backup
     LATEST_BACKUP=$(ls -t "$BACKUP_DIR"/totika_*.db 2>/dev/null | head -1)
@@ -156,14 +190,21 @@ do_rollback() {
         warn "No database backup found — keeping current database"
     fi
 
+    # Restore uploads if backup exists
+    LATEST_UPLOADS=$(ls -t "$BACKUP_DIR"/uploads_*.tar.gz 2>/dev/null | head -1)
+    if [ -n "$LATEST_UPLOADS" ]; then
+        tar -xzf "$LATEST_UPLOADS" -C "$APP_DIR"
+        log "Uploads restored from: $(basename $LATEST_UPLOADS)"
+    fi
+
     # Reset code to previous commit
     git checkout "$ROLLBACK_COMMIT"
     log "Code reverted to: $(git rev-parse --short HEAD)"
 
     # Rebuild and restart
-    $COMPOSE up -d --build
+    $COMPOSE up -d --build --force-recreate
 
-    sleep 5
+    sleep 15
 
     if $COMPOSE ps | grep -q "running"; then
         log "Rollback successful! App is running."
@@ -196,6 +237,11 @@ do_status() {
         echo "  Database:    not found"
     fi
     echo ""
+    if [ -d "$UPLOADS_DIR" ]; then
+        UPLOAD_COUNT=$(find "$UPLOADS_DIR" -type f 2>/dev/null | wc -l)
+        echo "  Uploads:     $UPLOAD_COUNT files in $UPLOADS_DIR/"
+    fi
+    echo ""
     BACKUP_COUNT=$(ls "$BACKUP_DIR"/totika_*.db 2>/dev/null | wc -l)
     echo "  Backups:     $BACKUP_COUNT saved in $BACKUP_DIR/"
     if [ "$BACKUP_COUNT" -gt 0 ]; then
@@ -216,13 +262,16 @@ do_logs() {
 # ---------------------------------------------------------------------------
 cd "$APP_DIR"
 
+# Always ensure data directories exist
+ensure_dirs
+
 case "${1:-update}" in
     update)   do_update ;;
     rollback) do_rollback ;;
     status)   do_status ;;
     logs)     do_logs ;;
     *)
-        echo "Usage: ./deploy.sh [update|rollback|status|logs]"
+        echo "Usage: bash deploy.sh [update|rollback|status|logs]"
         echo ""
         echo "  update    Pull latest code, backup DB, rebuild (default)"
         echo "  rollback  Revert to previous version + restore DB"

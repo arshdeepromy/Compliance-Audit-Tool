@@ -11,9 +11,11 @@ services:
       - ./migrations:/app/migrations
       - ./seed_data:/app/seed_data
       - ./run.py:/app/run.py
-      # Persist data between restarts
+      - ./alembic.ini:/app/alembic.ini
+      # Persist user data (SQLite DB, uploads, backups) — bind mounts to host
       - ./instance:/app/instance
       - ./uploads:/app/uploads
+      - ./backups:/app/backups
     environment:
       - FLASK_DEBUG=1
       - FLASK_ENV=development

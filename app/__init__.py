@@ -30,9 +30,11 @@ def create_app(config_class=None, run_startup=True):
     if base_path and base_path != "/":
         app.config["APPLICATION_ROOT"] = base_path
 
-    # Ensure instance and upload folders exist
-    os.makedirs(os.path.join(app.root_path, "..", "instance"), exist_ok=True)
+    # Ensure instance and upload folders exist on the host
+    instance_dir = os.path.join(app.root_path, "..", "instance")
+    os.makedirs(instance_dir, exist_ok=True)
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+    os.makedirs(os.path.join(app.root_path, "..", "backups"), exist_ok=True)
 
     # Initialise database with WAL mode
     init_db(app)
