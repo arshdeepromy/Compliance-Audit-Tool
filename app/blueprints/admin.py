@@ -12,10 +12,8 @@ Routes:
 
 import os
 import secrets
-import smtplib
 import string
 import uuid
-from email.mime.text import MIMEText
 
 from flask import (
     Blueprint,
@@ -34,7 +32,7 @@ from app.models.log import ActivityLog
 from app.models.settings import BrandingSettings, SMTPSettings
 from app.models.user import User
 from app.utils.auth import hash_password, invalidate_all_sessions
-from app.utils.encryption import decrypt_value, encrypt_value
+from app.utils.encryption import encrypt_value
 from app.utils.logging import log_activity
 from app.utils.rbac import roles_required
 
@@ -253,39 +251,19 @@ def smtp_test():
     recipient = (request.form.get("test_recipient", "").strip()
                  or smtp_row.sender_address)
 
-    # Decrypt password if set
-    password = None
-    if smtp_row.password_encrypted:
-        password = decrypt_value(smtp_row.password_encrypted)
-        if password is None:
-            flash(
-                "Failed to decrypt SMTP password. Please re-enter it.",
-                "error",
-            )
-            return redirect(url_for("admin.smtp"))
-
     try:
-        msg = MIMEText(
-            "This is a test email from the Tōtika Audit Tool.\n\n"
-            "If you received this message, your SMTP settings are working correctly."
+        from app.services.mailer import send_email
+
+        success = send_email(
+            recipient,
+            "SMTP Test",
+            "This is a test email.\n\n"
+            "If you received this message, your SMTP settings are working correctly.",
         )
-        msg["Subject"] = "Tōtika Audit Tool — SMTP Test"
-        msg["From"] = smtp_row.sender_address
-        msg["To"] = recipient
-
-        if smtp_row.use_tls:
-            server = smtplib.SMTP(smtp_row.host, smtp_row.port, timeout=10)
-            server.starttls()
+        if success:
+            flash(f"Test email sent successfully to {recipient}.", "success")
         else:
-            server = smtplib.SMTP(smtp_row.host, smtp_row.port, timeout=10)
-
-        if smtp_row.username and password:
-            server.login(smtp_row.username, password)
-
-        server.sendmail(smtp_row.sender_address, [recipient], msg.as_string())
-        server.quit()
-
-        flash(f"Test email sent successfully to {recipient}.", "success")
+            flash("Failed to send test email. Check SMTP settings.", "error")
     except Exception as exc:
         flash(f"Failed to send test email: {exc}", "error")
 
@@ -398,6 +376,9 @@ def user_create():
 
     log_activity("user_create", {"username": user.username, "roles": user.roles})
     db.session.commit()
+
+    # Send welcome email with login details
+    _send_welcome_email(user, cleaned["password"])
 
     flash(f"User '{user.username}' created successfully.", "success")
     return redirect(url_for("admin.users_list"))
@@ -547,38 +528,45 @@ def user_edit(id):
 
 def _try_email_temp_password(user: User, temp_password: str) -> bool:
     """Attempt to email a temporary password to the user. Returns True on success."""
-    smtp_row = _get_smtp_settings()
-    if not smtp_is_configured(smtp_row):
+    try:
+        from app.services.mailer import send_email, _get_branding_name
+        from app.utils.proxy import get_app_base_url
+
+        company = _get_branding_name()
+        login_url = f"{get_app_base_url()}/login"
+
+        body = (
+            f"Hello {user.display_name},\n\n"
+            f"Your password for {company} has been reset by an administrator.\n\n"
+            f"Username: {user.username}\n"
+            f"Temporary password: {temp_password}\n\n"
+            f"Please log in and change your password as soon as possible:\n"
+            f"{login_url}\n"
+        )
+        return send_email(user.email, "Password Reset", body)
+    except Exception:
         return False
 
-    password = None
-    if smtp_row.password_encrypted:
-        password = decrypt_value(smtp_row.password_encrypted)
-        if password is None:
-            return False
 
+def _send_welcome_email(user: User, password: str) -> bool:
+    """Send a welcome email to a newly created user with their login details."""
     try:
-        msg = MIMEText(
-            f"Your password has been reset.\n\n"
-            f"Temporary password: {temp_password}\n\n"
-            f"Please log in and change your password as soon as possible."
+        from app.services.mailer import send_email, _get_branding_name
+        from app.utils.proxy import get_app_base_url
+
+        company = _get_branding_name()
+        login_url = f"{get_app_base_url()}/login"
+
+        body = (
+            f"Hello {user.display_name},\n\n"
+            f"Welcome to {company}! An account has been created for you.\n\n"
+            f"Username: {user.username}\n"
+            f"Password: {password}\n\n"
+            f"You can log in here:\n"
+            f"{login_url}\n\n"
+            f"Please change your password after your first login.\n"
         )
-        msg["Subject"] = "Tōtika Audit Tool — Password Reset"
-        msg["From"] = smtp_row.sender_address
-        msg["To"] = user.email
-
-        if smtp_row.use_tls:
-            server = smtplib.SMTP(smtp_row.host, smtp_row.port, timeout=10)
-            server.starttls()
-        else:
-            server = smtplib.SMTP(smtp_row.host, smtp_row.port, timeout=10)
-
-        if smtp_row.username and password:
-            server.login(smtp_row.username, password)
-
-        server.sendmail(smtp_row.sender_address, [user.email], msg.as_string())
-        server.quit()
-        return True
+        return send_email(user.email, "Welcome — Your Account is Ready", body)
     except Exception:
         return False
 
@@ -621,7 +609,9 @@ def send_email_verification(id):
         send_email(
             user.email,
             "Email Verification Code",
-            f"Your verification code is: {code}\n\nThis code expires in 10 minutes.",
+            f"Hello {user.display_name},\n\n"
+            f"Your email verification code is: {code}\n\n"
+            f"This code expires in 10 minutes.",
         )
         flash(f"Verification code sent to {user.email}.", "success")
     except Exception as exc:

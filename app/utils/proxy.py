@@ -49,3 +49,22 @@ def get_base_path() -> str:
     Defaults to ``/`` when not configured.
     """
     return current_app.config.get("BASE_PATH", "/")
+
+
+def get_app_base_url() -> str:
+    """Return the full base URL of the app (e.g. ``https://audit.example.com``).
+
+    Detection order:
+    1. APP_BASE_URL env/config (explicit override)
+    2. Request headers (X-Forwarded-Host + X-Forwarded-Proto) — works behind reverse proxy
+    3. request.host_url — direct access fallback
+    """
+    # 1. Explicit config
+    configured = current_app.config.get("APP_BASE_URL", "").strip().rstrip("/")
+    if configured:
+        return configured
+
+    # 2. Detect from request headers (reverse proxy)
+    host = request.headers.get("X-Forwarded-Host") or request.host
+    proto = "https" if is_https() else "http"
+    return f"{proto}://{host}"

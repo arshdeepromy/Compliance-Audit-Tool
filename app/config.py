@@ -42,6 +42,9 @@ class Config:
     # Reverse proxy
     BEHIND_PROXY = os.environ.get("BEHIND_PROXY", "false").lower() == "true"
 
+    # Explicit app base URL (e.g. https://audit.example.com) — auto-detected if not set
+    APP_BASE_URL = os.environ.get("APP_BASE_URL", "")
+
     # Default branding
     DEFAULT_COMPANY_NAME = "Tōtika Audit Tool"
 

@@ -37,6 +37,7 @@
         {% if 'admin' in user_roles %}
         <a href="{{ url_for('admin.branding') }}" style="color: {{ branding.header_text_colour if branding.header_text_colour else '#ffffff' }};">Admin</a>
         {% endif %}
+        <a href="{{ url_for('auth.change_password') }}" style="color: {{ branding.header_text_colour if branding.header_text_colour else '#ffffff' }};font-size:0.85rem;" title="Change Password">🔒</a>
         <form method="post" action="{{ url_for('auth.logout') }}" style="display:inline;margin:0;">
           <button type="submit" class="logout-btn" style="color: {{ branding.header_text_colour if branding.header_text_colour else '#ffffff' }};">Logout</button>
         </form>

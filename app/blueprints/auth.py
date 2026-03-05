@@ -83,9 +83,13 @@ def _send_email_mfa_code(user: User, code: str) -> bool:
     try:
         from app.services.mailer import send_email
 
-        subject = "Your verification code"
-        body = f"Your verification code is: {code}\n\nThis code expires in 5 minutes."
-        return send_email(user.email, subject, body)
+        body = (
+            f"Hello {user.display_name},\n\n"
+            f"Your verification code is: {code}\n\n"
+            f"This code expires in 5 minutes.\n"
+            f"If you did not request this, please ignore this email."
+        )
+        return send_email(user.email, "Verification Code", body)
     except (ImportError, Exception) as exc:
         logger.warning("Could not send email MFA code to %s: %s", user.email, exc)
         return False
@@ -96,16 +100,15 @@ def _send_password_reset_email(user: User, reset_url: str) -> bool:
     try:
         from app.services.mailer import send_email
 
-        subject = "Password Reset Request"
         body = (
             f"Hello {user.display_name},\n\n"
-            f"A password reset was requested for your account.\n"
-            f"Click the link below to reset your password:\n\n"
+            f"A password reset was requested for your account.\n\n"
+            f"Click the link below to reset your password:\n"
             f"{reset_url}\n\n"
             f"This link expires in 1 hour.\n"
             f"If you did not request this, please ignore this email."
         )
-        return send_email(user.email, subject, body)
+        return send_email(user.email, "Password Reset Request", body)
     except (ImportError, Exception) as exc:
         logger.warning("Could not send password reset email to %s: %s", user.email, exc)
         return False
@@ -398,7 +401,11 @@ def password_reset_request():
     user = User.query.filter_by(email=email).first()
     if user is not None and user.is_active:
         token = _generate_password_reset_token(user)
-        reset_url = url_for("auth.password_reset_confirm", token=token, _external=True)
+        # Use detected app base URL for correct domain behind reverse proxy
+        from app.utils.proxy import get_app_base_url
+        base = get_app_base_url()
+        reset_path = url_for("auth.password_reset_confirm", token=token)
+        reset_url = f"{base}{reset_path}"
         _send_password_reset_email(user, reset_url)
 
     flash(success_msg, "info")
@@ -450,3 +457,51 @@ def password_reset_confirm(token):
 
     flash("Your password has been reset. Please log in.", "success")
     return redirect(url_for("auth.login"))
+
+
+# ---------------------------------------------------------------------------
+# Self-service password change (logged-in users)
+# ---------------------------------------------------------------------------
+
+
+@auth_bp.route("/password/change", methods=["GET", "POST"])
+def change_password():
+    """Allow logged-in users to change their own password."""
+    from app.utils.auth import hash_password
+    from app.utils.rbac import login_required as _login_required
+
+    # Manual login check (can't use decorator easily here)
+    if not hasattr(g, "current_user") or g.current_user is None:
+        return redirect(url_for("auth.login"))
+
+    user = g.current_user
+
+    if request.method == "GET":
+        return render_template("auth/change_password.html")
+
+    current_password = request.form.get("current_password", "")
+    new_password = request.form.get("new_password", "")
+    confirm_password = request.form.get("confirm_password", "")
+
+    if not verify_password(user, current_password):
+        flash("Current password is incorrect.", "error")
+        return render_template("auth/change_password.html"), 400
+
+    if not new_password:
+        flash("New password is required.", "error")
+        return render_template("auth/change_password.html"), 400
+
+    if len(new_password) < 8:
+        flash("New password must be at least 8 characters.", "error")
+        return render_template("auth/change_password.html"), 400
+
+    if new_password != confirm_password:
+        flash("Passwords do not match.", "error")
+        return render_template("auth/change_password.html"), 400
+
+    user.password_hash = hash_password(new_password)
+    user.updated_at = datetime.utcnow()
+    db.session.commit()
+
+    flash("Password changed successfully.", "success")
+    return redirect(url_for("audits.audit_list"))
