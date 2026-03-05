@@ -55,7 +55,9 @@ do_update() {
 
     # Pull latest code
     log "Pulling latest from GitHub..."
+    git stash --quiet 2>/dev/null
     git pull origin main
+    git stash pop --quiet 2>/dev/null || true
 
     NEW_COMMIT=$(git rev-parse --short HEAD)
     log "Updated to commit: $NEW_COMMIT"
