@@ -55,17 +55,23 @@ do_update() {
 
     # Pull latest code
     log "Pulling latest from GitHub..."
-    git stash --quiet 2>/dev/null
+    git stash --quiet 2>/dev/null || true
     git pull origin main
     git stash pop --quiet 2>/dev/null || true
 
     NEW_COMMIT=$(git rev-parse --short HEAD)
     log "Updated to commit: $NEW_COMMIT"
 
-    # Rebuild and restart
+    # Record DB size before rebuild for comparison
+    PRE_BUILD_DB_SIZE=0
+    if [ -f "$DB_PATH" ]; then
+        PRE_BUILD_DB_SIZE=$(stat -c%s "$DB_PATH" 2>/dev/null || echo "0")
+        log "Database size before rebuild: $PRE_BUILD_DB_SIZE bytes"
+    fi
+
+    # Rebuild and restart (no 'down' — avoids any risk of volume/data loss)
     log "Rebuilding container..."
-    $COMPOSE down
-    $COMPOSE up -d --build
+    $COMPOSE up -d --build --force-recreate
 
     # Wait for container to be healthy
     log "Waiting for app to start..."
@@ -84,6 +90,36 @@ do_update() {
     done
 
     if $RUNNING; then
+        # Verify database file still exists and hasn't shrunk significantly
+        if [ -f "$DB_PATH" ]; then
+            DB_SIZE=$(stat -c%s "$DB_PATH" 2>/dev/null || echo "0")
+            if [ "$PRE_BUILD_DB_SIZE" -gt 10000 ] && [ "$DB_SIZE" -lt "$((PRE_BUILD_DB_SIZE / 2))" ]; then
+                err "Database shrunk from $PRE_BUILD_DB_SIZE to $DB_SIZE bytes after update!"
+                err "Restoring from backup..."
+                LATEST_BACKUP=$(ls -t "$BACKUP_DIR"/totika_*.db 2>/dev/null | head -1)
+                if [ -n "$LATEST_BACKUP" ]; then
+                    $COMPOSE stop web
+                    cp "$LATEST_BACKUP" "$DB_PATH"
+                    $COMPOSE start web
+                    sleep 10
+                    log "Database restored from backup: $(basename $LATEST_BACKUP)"
+                fi
+            else
+                log "Database OK ($DB_SIZE bytes)"
+            fi
+        else
+            err "Database file missing after update! Restoring from backup..."
+            LATEST_BACKUP=$(ls -t "$BACKUP_DIR"/totika_*.db 2>/dev/null | head -1)
+            if [ -n "$LATEST_BACKUP" ]; then
+                mkdir -p "$(dirname "$DB_PATH")"
+                cp "$LATEST_BACKUP" "$DB_PATH"
+                $COMPOSE restart web
+                sleep 10
+                log "Database restored from backup: $(basename $LATEST_BACKUP)"
+            else
+                err "No backup available! Database is lost."
+            fi
+        fi
         log "Update successful! App is running on commit $NEW_COMMIT"
         log "Access at: http://$(hostname -I | awk '{print $1}'):5000"
     else
