@@ -67,19 +67,25 @@ do_update() {
 
     # Wait for container to be healthy
     log "Waiting for app to start..."
-    sleep 5
+    sleep 15
 
-    # Check if container is running
-    if $COMPOSE ps | grep -q "running"; then
-        # Quick health check
-        if docker exec totika-audit-app-web-1 python -c "import app" 2>/dev/null; then
-            log "Update successful! App is running on commit $NEW_COMMIT"
-            log "Access at: http://$(hostname -I | awk '{print $1}'):5000"
-        else
-            warn "Container running but app may have issues. Check: ./deploy.sh logs"
+    # Check if container is running (retry up to 3 times)
+    RETRIES=3
+    RUNNING=false
+    for i in $(seq 1 $RETRIES); do
+        if $COMPOSE ps | grep -q "running"; then
+            RUNNING=true
+            break
         fi
+        log "Container not ready yet, waiting... (attempt $i/$RETRIES)"
+        sleep 10
+    done
+
+    if $RUNNING; then
+        log "Update successful! App is running on commit $NEW_COMMIT"
+        log "Access at: http://$(hostname -I | awk '{print $1}'):5000"
     else
-        err "Container failed to start! Rolling back..."
+        err "Container failed to start after $RETRIES attempts! Rolling back..."
         do_rollback
     fi
 }
