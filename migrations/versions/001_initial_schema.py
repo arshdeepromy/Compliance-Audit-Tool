@@ -24,7 +24,7 @@ def upgrade():
         sa.Column("display_name", sa.String(120), nullable=False),
         sa.Column("password_hash", sa.String(255), nullable=False),
         sa.Column("roles", sa.String(100), nullable=False),
-        sa.Column("is_active", sa.Boolean(), nullable=False, server_default="1"),
+        sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.true()),
         sa.Column("mfa_type", sa.String(20), nullable=True),
         sa.Column("totp_secret", sa.String(64), nullable=True),
         sa.Column("failed_login_count", sa.Integer(), nullable=False, server_default="0"),
@@ -51,8 +51,8 @@ def upgrade():
         sa.Column("name", sa.String(200), nullable=False),
         sa.Column("version", sa.String(20), nullable=False),
         sa.Column("description", sa.Text(), nullable=True),
-        sa.Column("is_active", sa.Boolean(), nullable=False, server_default="1"),
-        sa.Column("is_builtin", sa.Boolean(), nullable=False, server_default="0"),
+        sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.true()),
+        sa.Column("is_builtin", sa.Boolean(), nullable=False, server_default=sa.false()),
         sa.Column("created_at", sa.DateTime(), nullable=False),
     )
 
@@ -82,7 +82,7 @@ def upgrade():
         sa.Column("title", sa.String(200), nullable=False),
         sa.Column("guidance", sa.Text(), nullable=True),
         sa.Column("question", sa.Text(), nullable=True),
-        sa.Column("na_allowed", sa.Boolean(), nullable=False, server_default="0"),
+        sa.Column("na_allowed", sa.Boolean(), nullable=False, server_default=sa.false()),
         sa.Column("tip", sa.Text(), nullable=True),
         sa.Column("sort_order", sa.Integer(), nullable=False),
     )
@@ -112,7 +112,7 @@ def upgrade():
         sa.Column("text", sa.Text(), nullable=False),
         sa.Column("age_label", sa.String(50), nullable=True),
         sa.Column("age_class", sa.String(20), nullable=True),
-        sa.Column("is_required", sa.Boolean(), nullable=False, server_default="0"),
+        sa.Column("is_required", sa.Boolean(), nullable=False, server_default=sa.false()),
         sa.Column("sort_order", sa.Integer(), nullable=False),
     )
 
@@ -155,7 +155,7 @@ def upgrade():
             nullable=False,
         ),
         sa.Column("score", sa.Integer(), nullable=True),
-        sa.Column("is_na", sa.Boolean(), nullable=False, server_default="0"),
+        sa.Column("is_na", sa.Boolean(), nullable=False, server_default=sa.false()),
         sa.Column("na_reason", sa.Text(), nullable=True),
         sa.Column("notes", sa.Text(), nullable=True),
         sa.Column("updated_at", sa.DateTime(), nullable=False),
@@ -176,7 +176,7 @@ def upgrade():
             sa.ForeignKey("criterion_evidence_item.id"),
             nullable=False,
         ),
-        sa.Column("is_checked", sa.Boolean(), nullable=False, server_default="0"),
+        sa.Column("is_checked", sa.Boolean(), nullable=False, server_default=sa.false()),
     )
 
     op.create_table(
@@ -260,7 +260,7 @@ def upgrade():
         sa.Column("username", sa.String(255), nullable=True),
         sa.Column("password_encrypted", sa.Text(), nullable=True),
         sa.Column("sender_address", sa.String(255), nullable=True),
-        sa.Column("use_tls", sa.Boolean(), nullable=False, server_default="1"),
+        sa.Column("use_tls", sa.Boolean(), nullable=False, server_default=sa.true()),
     )
 
     # --- Activity log ---

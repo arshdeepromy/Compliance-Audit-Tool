@@ -1,6 +1,6 @@
 FROM python:3.12-slim
 
-# System deps for WeasyPrint (pango, cairo, gdk-pixbuf, etc.)
+# System deps for WeasyPrint (pango, cairo, gdk-pixbuf, etc.) and PostgreSQL
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpango-1.0-0 \
     libpangocairo-1.0-0 \
@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libffi-dev \
     shared-mime-info \
     fonts-liberation \
+    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

@@ -5,6 +5,7 @@ import os
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config, pool
+import sqlalchemy as sa
 from alembic import context
 
 # Add the project root to sys.path so we can import the app
@@ -50,6 +51,21 @@ def run_migrations_online():
         connectable = db.engine
 
         with connectable.connect() as connection:
+            # Pre-create alembic_version with a wider version_num column
+            # Our descriptive revision IDs exceed the default 32-char limit
+            # which PostgreSQL enforces (SQLite does not)
+            from sqlalchemy import inspect as sa_inspect
+            inspector = sa_inspect(connection)
+            if "alembic_version" not in inspector.get_table_names():
+                connection.execute(
+                    sa.text(
+                        "CREATE TABLE alembic_version ("
+                        "version_num VARCHAR(128) NOT NULL"
+                        ")"
+                    )
+                )
+                connection.commit()
+
             context.configure(
                 connection=connection,
                 target_metadata=target_metadata,

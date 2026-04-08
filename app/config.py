@@ -10,10 +10,11 @@ class Config:
 
     SECRET_KEY = os.environ.get("SECRET_KEY", "change-me-in-production")
 
-    # Database — store in instance/ so Docker volume mount persists it
+    # Database — PostgreSQL by default, falls back to SQLite for local dev
     INSTANCE_DIR = os.path.join(basedir, "instance")
     DATABASE_URL = os.environ.get(
-        "DATABASE_URL", f"sqlite:///{os.path.join(INSTANCE_DIR, 'totika.db')}"
+        "DATABASE_URL",
+        f"sqlite:///{os.path.join(INSTANCE_DIR, 'totika.db')}",
     )
     SQLALCHEMY_DATABASE_URI = DATABASE_URL
     SQLALCHEMY_TRACK_MODIFICATIONS = False

@@ -7,13 +7,15 @@ db = SQLAlchemy()
 
 
 def init_db(app):
-    """Initialise the database with WAL mode enabled on every SQLite connection."""
+    """Initialise the database. Enables WAL mode for SQLite connections."""
     db.init_app(app)
 
     with app.app_context():
+        db_uri = app.config.get("SQLALCHEMY_DATABASE_URI", "")
+        if db_uri.startswith("sqlite"):
 
-        @event.listens_for(db.engine, "connect")
-        def set_sqlite_pragma(dbapi_connection, connection_record):
-            cursor = dbapi_connection.cursor()
-            cursor.execute("PRAGMA journal_mode=WAL")
-            cursor.close()
+            @event.listens_for(db.engine, "connect")
+            def set_sqlite_pragma(dbapi_connection, connection_record):
+                cursor = dbapi_connection.cursor()
+                cursor.execute("PRAGMA journal_mode=WAL")
+                cursor.close()

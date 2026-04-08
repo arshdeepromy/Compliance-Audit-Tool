@@ -20,7 +20,7 @@ def upgrade():
         sa.Column("description", sa.Text(), nullable=True),
         sa.Column("icon", sa.String(10), nullable=True),
         sa.Column("sort_order", sa.Integer(), nullable=False, server_default="0"),
-        sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text("1")),
+        sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.true()),
     )
 
     op.create_table(
@@ -41,8 +41,8 @@ def upgrade():
         sa.Column("review_frequency_days", sa.Integer(), nullable=True, server_default="90"),
         sa.Column("next_review_date", sa.Date(), nullable=True),
         sa.Column("created_by_id", sa.Integer(), sa.ForeignKey("user.id"), nullable=False),
-        sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.text("CURRENT_TIMESTAMP")),
-        sa.Column("updated_at", sa.DateTime(), nullable=False, server_default=sa.text("CURRENT_TIMESTAMP")),
+        sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
+        sa.Column("updated_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
     )
 
     op.create_table(
@@ -55,7 +55,7 @@ def upgrade():
         sa.Column("assigned_to_id", sa.Integer(), sa.ForeignKey("user.id"), nullable=True),
         sa.Column("due_date", sa.Date(), nullable=True),
         sa.Column("completed_at", sa.DateTime(), nullable=True),
-        sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.text("CURRENT_TIMESTAMP")),
+        sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()),
     )
 
     op.create_table(
@@ -63,7 +63,7 @@ def upgrade():
         sa.Column("id", sa.Integer(), primary_key=True),
         sa.Column("risk_id", sa.Integer(), sa.ForeignKey("risk.id"), nullable=False),
         sa.Column("reviewed_by_id", sa.Integer(), sa.ForeignKey("user.id"), nullable=False),
-        sa.Column("review_date", sa.DateTime(), nullable=False, server_default=sa.text("CURRENT_TIMESTAMP")),
+        sa.Column("review_date", sa.DateTime(), nullable=False, server_default=sa.func.now()),
         sa.Column("notes", sa.Text(), nullable=True),
         sa.Column("previous_status", sa.String(20), nullable=True),
         sa.Column("new_status", sa.String(20), nullable=True),

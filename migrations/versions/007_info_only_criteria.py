@@ -15,19 +15,28 @@ depends_on = None
 def upgrade():
     with op.batch_alter_table("template_criterion") as batch_op:
         batch_op.add_column(
-            sa.Column("info_only", sa.Boolean(), nullable=False, server_default=sa.text("0"))
+            sa.Column("info_only", sa.Boolean(), nullable=False, server_default=sa.false())
         )
 
     with op.batch_alter_table("audit_score") as batch_op:
         batch_op.add_column(sa.Column("info_answer", sa.Text(), nullable=True))
 
     # Backfill: mark MB50-MB54 as info_only in existing Tōtika template
-    op.execute(
-        sa.text(
-            "UPDATE template_criterion SET info_only = 1 "
-            "WHERE code IN ('MB50', 'MB51', 'MB52', 'MB53', 'MB54')"
+    conn = op.get_bind()
+    if conn.dialect.name == "sqlite":
+        op.execute(
+            sa.text(
+                "UPDATE template_criterion SET info_only = 1 "
+                "WHERE code IN ('MB50', 'MB51', 'MB52', 'MB53', 'MB54')"
+            )
         )
-    )
+    else:
+        op.execute(
+            sa.text(
+                "UPDATE template_criterion SET info_only = true "
+                "WHERE code IN ('MB50', 'MB51', 'MB52', 'MB53', 'MB54')"
+            )
+        )
 
 
 def downgrade():
