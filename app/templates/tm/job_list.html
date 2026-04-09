@@ -48,7 +48,7 @@
         <td>{{ j.risk_count }}</td>
         <td><span class="pct-bar"><span class="pct-fill" style="width:{{ pct }}%"></span></span>{{ pct }}%</td>
         <td style="color:#94a3b8">{{ j.start_date.strftime('%d %b %Y') if j.start_date else '—' }}</td>
-        <td><a href="{{ url_for('tm_jobs.job_detail', job_id=j.id) }}" class="btn btn-secondary">View</a></td>
+        <td><a href="{{ url_for('tm_jobs.job_detail', job_id=j.id) }}" class="btn btn-secondary">View</a> <a href="{{ url_for('tm_jobs.job_edit', job_id=j.id) }}" class="btn btn-secondary">Edit</a></td>
       </tr>
       {% endfor %}
     </tbody>

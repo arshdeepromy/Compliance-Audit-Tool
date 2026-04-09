@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}New Job Site — {{ branding.company_name }}{% endblock %}
+{% block title %}{{ 'Edit' if mode == 'edit' else 'New' }} Job Site — {{ branding.company_name }}{% endblock %}
 
 {% block content %}
 <style>
@@ -14,30 +14,83 @@
   .btn{display:inline-block;padding:8px 20px;border-radius:4px;font-size:14px;font-weight:600;text-decoration:none;border:none;cursor:pointer;font-family:"Barlow",sans-serif}
   .btn-primary{background:#f97316;color:#fff}.btn-primary:hover{background:#fb923c}
   .btn-secondary{background:#1e293b;color:#94a3b8;border:1px solid #334155}
-  .form-actions{margin-top:20px;display:flex;gap:10px}
+  .btn-danger{background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.3)}.btn-danger:hover{background:rgba(239,68,68,.25)}
+  .btn-success{background:rgba(34,197,94,.15);color:#4ade80;border:1px solid rgba(34,197,94,.3)}.btn-success:hover{background:rgba(34,197,94,.25)}
+  .form-actions{margin-top:20px;display:flex;gap:10px;flex-wrap:wrap}
+  .status-badge{font-size:12px;font-weight:700;padding:3px 10px;border-radius:3px;text-transform:uppercase;vertical-align:middle}
+  .st-draft{background:rgba(100,116,139,.15);color:#94a3b8}
+  .st-active{background:rgba(34,197,94,.15);color:#4ade80}
+  .st-completed{background:rgba(59,130,246,.15);color:#60a5fa}
+  .st-cancelled{background:rgba(239,68,68,.15);color:#f87171}
+  .close-section{margin-top:24px;padding-top:20px;border-top:1px solid #1e293b}
+  .close-section h3{font-family:"Barlow Condensed",sans-serif;font-size:16px;color:#94a3b8;margin-bottom:10px}
 </style>
 
 <div class="tm-form">
+  {% if mode == 'edit' %}
+  <h2>Edit Job Site <span class="status-badge st-{{ job.status|lower }}">{{ job.status }}</span></h2>
+  <form method="post" action="{{ url_for('tm_jobs.job_edit_save', job_id=job.id) }}">
+  {% else %}
   <h2>Create New Job Site</h2>
   <form method="post" action="{{ url_for('tm_jobs.job_create') }}">
+  {% endif %}
     <div class="form-grid">
-      <div class="form-group"><label>Job Number</label><input name="job_number" placeholder="e.g. TS-2026-0042"></div>
-      <div class="form-group"><label>STMS Name</label><input name="stms_name" placeholder="Site Traffic Management Supervisor"></div>
-      <div class="form-group full"><label>Site Name *</label><input name="site_name" required placeholder="e.g. SH1 Northbound — Otahuhu"></div>
-      <div class="form-group full"><label>Address</label><input name="address" placeholder="Full street address"></div>
-      <div class="form-group"><label>Suburb</label><input name="suburb"></div>
-      <div class="form-group"><label>City</label><input name="city"></div>
-      <div class="form-group"><label>Client</label><input name="client_name" placeholder="Who commissioned the works"></div>
-      <div class="form-group"><label>RCA</label><input name="rca_name" placeholder="Road Controlling Authority"></div>
-      <div class="form-group"><label>Start Date</label><input type="date" name="start_date"></div>
-      <div class="form-group"><label>End Date</label><input type="date" name="end_date"></div>
-      <div class="form-group"><label>Speed Limit (km/h)</label><input type="number" name="speed_limit_kmh" placeholder="e.g. 100"></div>
-      <div class="form-group"><label>Work Zone Speed (km/h)</label><input type="number" name="work_zone_speed_kmh" placeholder="e.g. 30"></div>
+      <div class="form-group"><label>Job Number</label><input name="job_number" value="{{ job.job_number or '' if job else '' }}" placeholder="e.g. TS-2026-0042"></div>
+      <div class="form-group"><label>STMS Name</label><input name="stms_name" value="{{ job.stms_name or '' if job else '' }}" placeholder="Site Traffic Management Supervisor"></div>
+      <div class="form-group full"><label>Site Name *</label><input name="site_name" required value="{{ job.site_name if job else '' }}" placeholder="e.g. SH1 Northbound — Otahuhu"></div>
+      <div class="form-group full"><label>Address</label><input name="address" value="{{ job.address or '' if job else '' }}" placeholder="Full street address"></div>
+      <div class="form-group"><label>Suburb</label><input name="suburb" value="{{ job.suburb or '' if job else '' }}"></div>
+      <div class="form-group"><label>City</label><input name="city" value="{{ job.city or '' if job else '' }}"></div>
+      <div class="form-group"><label>Client</label><input name="client_name" value="{{ job.client_name or '' if job else '' }}" placeholder="Who commissioned the works"></div>
+      <div class="form-group"><label>RCA</label><input name="rca_name" value="{{ job.rca_name or '' if job else '' }}" placeholder="Road Controlling Authority"></div>
+      <div class="form-group"><label>Start Date</label><input type="date" name="start_date" value="{{ job.start_date.strftime('%Y-%m-%d') if job and job.start_date else '' }}"></div>
+      <div class="form-group"><label>End Date</label><input type="date" name="end_date" value="{{ job.end_date.strftime('%Y-%m-%d') if job and job.end_date else '' }}"></div>
+      <div class="form-group"><label>Speed Limit (km/h)</label><input type="number" name="speed_limit_kmh" value="{{ job.speed_limit_kmh or '' if job else '' }}" placeholder="e.g. 100"></div>
+      <div class="form-group"><label>Work Zone Speed (km/h)</label><input type="number" name="work_zone_speed_kmh" value="{{ job.work_zone_speed_kmh or '' if job else '' }}" placeholder="e.g. 30"></div>
     </div>
     <div class="form-actions">
-      <button type="submit" class="btn btn-primary">Create Job Site →</button>
+      <button type="submit" class="btn btn-primary">{{ 'Save Changes' if mode == 'edit' else 'Create Job Site →' }}</button>
+      {% if mode == 'edit' %}
+      <a href="{{ url_for('tm_jobs.job_detail', job_id=job.id) }}" class="btn btn-secondary">Cancel</a>
+      {% else %}
       <a href="{{ url_for('tm_jobs.job_list') }}" class="btn btn-secondary">Cancel</a>
+      {% endif %}
     </div>
   </form>
+
+  {% if mode == 'edit' and job.status in ('Draft', 'Active') %}
+  <div class="close-section">
+    <h3>Job Status Actions</h3>
+    <div class="form-actions">
+      {% if job.status == 'Draft' %}
+      <form method="post" action="{{ url_for('tm_jobs.job_status', job_id=job.id) }}">
+        <input type="hidden" name="new_status" value="Active">
+        <button type="submit" class="btn btn-success">✓ Activate Job</button>
+      </form>
+      {% endif %}
+      {% if job.status in ('Draft', 'Active') %}
+      <form method="post" action="{{ url_for('tm_jobs.job_status', job_id=job.id) }}" onsubmit="return confirm('Complete this job? The risk register will be locked for record keeping.')">
+        <input type="hidden" name="new_status" value="Completed">
+        <button type="submit" class="btn btn-success">✓ Complete Job</button>
+      </form>
+      <form method="post" action="{{ url_for('tm_jobs.job_status', job_id=job.id) }}" onsubmit="return confirm('Cancel this job?')">
+        <input type="hidden" name="new_status" value="Cancelled">
+        <button type="submit" class="btn btn-danger">✕ Cancel Job</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if mode == 'edit' and job.status in ('Completed', 'Cancelled') %}
+  <div class="close-section">
+    <h3>This job is {{ job.status|lower }}</h3>
+    <p style="color:#94a3b8;font-size:13px">The risk register is locked for record keeping. To make changes, reopen the job first.</p>
+    <form method="post" action="{{ url_for('tm_jobs.job_status', job_id=job.id) }}" onsubmit="return confirm('Reopen this job? It will be set back to Active.')">
+      <input type="hidden" name="new_status" value="Active">
+      <button type="submit" class="btn btn-secondary">Reopen Job</button>
+    </form>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}

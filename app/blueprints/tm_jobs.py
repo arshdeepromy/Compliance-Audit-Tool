@@ -102,6 +102,72 @@ def job_create():
 
 
 # ---------------------------------------------------------------------------
+# Edit Job Site
+# ---------------------------------------------------------------------------
+
+@tm_bp.route("/tm/jobs/<int:job_id>/edit", methods=["GET"])
+@roles_required("admin", "auditor")
+def job_edit(job_id):
+    job = db.session.get(TMJobSite, job_id)
+    if not job:
+        abort(404)
+    return render_template("tm/job_form.html", job=job, mode="edit", **_tm_context())
+
+
+@tm_bp.route("/tm/jobs/<int:job_id>/edit", methods=["POST"])
+@roles_required("admin", "auditor")
+def job_edit_save(job_id):
+    job = db.session.get(TMJobSite, job_id)
+    if not job:
+        abort(404)
+    job.job_number = request.form.get("job_number", "").strip() or None
+    job.site_name = request.form.get("site_name", "").strip() or job.site_name
+    job.address = request.form.get("address", "").strip() or None
+    job.suburb = request.form.get("suburb", "").strip() or None
+    job.city = request.form.get("city", "").strip() or None
+    job.client_name = request.form.get("client_name", "").strip() or None
+    job.rca_name = request.form.get("rca_name", "").strip() or None
+    job.start_date = _parse_date(request.form.get("start_date"))
+    job.end_date = _parse_date(request.form.get("end_date"))
+    job.speed_limit_kmh = request.form.get("speed_limit_kmh", type=int)
+    job.work_zone_speed_kmh = request.form.get("work_zone_speed_kmh", type=int)
+    job.stms_name = request.form.get("stms_name", "").strip() or None
+    job.updated_at = datetime.utcnow()
+    db.session.commit()
+    flash("Job site updated.", "success")
+    return redirect(url_for("tm_jobs.job_detail", job_id=job.id))
+
+
+# ---------------------------------------------------------------------------
+# Change Job Status (Activate / Complete / Cancel / Reopen)
+# ---------------------------------------------------------------------------
+
+@tm_bp.route("/tm/jobs/<int:job_id>/status", methods=["POST"])
+@roles_required("admin", "auditor")
+def job_status(job_id):
+    job = db.session.get(TMJobSite, job_id)
+    if not job:
+        abort(404)
+    new_status = request.form.get("new_status", "").strip()
+    if new_status not in JOB_STATUSES:
+        flash("Invalid status.", "error")
+        return redirect(url_for("tm_jobs.job_edit", job_id=job.id))
+
+    old_status = job.status
+    job.status = new_status
+    job.updated_at = datetime.utcnow()
+
+    if new_status == "Completed":
+        # Set end date to today if not already set
+        if not job.end_date:
+            job.end_date = date.today()
+
+    db.session.commit()
+    flash(f"Job status changed from {old_status} to {new_status}.", "success")
+    return redirect(url_for("tm_jobs.job_detail", job_id=job.id))
+
+
+# ---------------------------------------------------------------------------
 # Job Dashboard
 # ---------------------------------------------------------------------------
 
@@ -149,6 +215,9 @@ def job_subjects_save(job_id):
     job = db.session.get(TMJobSite, job_id)
     if not job:
         abort(404)
+    if job.status in ("Completed", "Cancelled"):
+        flash("This job is closed. Reopen it to make changes.", "error")
+        return redirect(url_for("tm_jobs.job_detail", job_id=job.id))
 
     import logging
     logger = logging.getLogger(__name__)
@@ -280,6 +349,9 @@ def risk_save(job_id, risk_id):
     risk = db.session.get(TMJobSiteRisk, risk_id)
     if not job or not risk or risk.job_site_id != job.id:
         abort(404)
+    if job.status in ("Completed", "Cancelled"):
+        flash("This job is closed. Reopen it to make changes.", "error")
+        return redirect(url_for("tm_jobs.job_detail", job_id=job.id))
 
     risk.title = request.form.get("title", "").strip()
     risk.description = request.form.get("description", "").strip() or None

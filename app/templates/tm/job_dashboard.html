@@ -41,6 +41,7 @@
   </div>
 
   <div class="top-actions">
+    <a href="{{ url_for('tm_jobs.job_edit', job_id=job.id) }}" class="btn btn-secondary">✏ Edit Job</a>
     <a href="{{ url_for('tm_jobs.job_subjects', job_id=job.id) }}" class="btn btn-primary">Edit Subjects</a>
     <a href="{{ url_for('tm_jobs.job_risks', job_id=job.id) }}" class="btn btn-primary">View Risk Register</a>
     <a href="{{ url_for('tm_jobs.job_report', job_id=job.id) }}" class="btn btn-secondary">Print Report</a>
