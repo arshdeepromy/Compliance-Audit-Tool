@@ -62,6 +62,13 @@ def run_migrations_online():
                     )
                 )
                 connection.commit()
+            else:
+                # Fix any duplicate rows (can happen from data imports)
+                connection.execute(sa.text(
+                    "DELETE FROM alembic_version WHERE ctid NOT IN "
+                    "(SELECT MIN(ctid) FROM alembic_version GROUP BY version_num)"
+                ))
+                connection.commit()
 
             context.configure(
                 connection=connection,
