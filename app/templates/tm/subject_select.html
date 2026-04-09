@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Select Risk Subjects — {{ job.site_name }}{% endblock %}
+
+{% block content %}
+<style>
+  .tm-page{width:100%;max-width:1100px;margin:0 auto;padding:1.5rem;font-family:"Barlow",sans-serif;color:#e2e8f0}
+  .tm-page h2{font-family:"Barlow Condensed",sans-serif;font-size:26px;font-weight:800;color:#fff;margin-bottom:4px}
+  .tm-page .subtitle{color:#94a3b8;font-size:13px;margin-bottom:20px}
+  .subject-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-bottom:24px}
+  .subject-card{background:#0f172a;border:2px solid #1e293b;border-radius:8px;padding:16px;cursor:pointer;transition:all .15s}
+  .subject-card:hover{border-color:#334155}
+  .subject-card.selected{border-color:#f97316;background:#0f172a}
+  .subject-card input[type=checkbox]{display:none}
+  .sc-header{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .sc-icon{font-size:28px}
+  .sc-name{font-family:"Barlow Condensed",sans-serif;font-size:16px;font-weight:700;color:#fff}
+  .sc-desc{font-size:12px;color:#94a3b8;line-height:1.4;margin-bottom:8px}
+  .sc-count{font-size:11px;color:#64748b;font-weight:600}
+  .sc-check{width:20px;height:20px;border:2px solid #334155;border-radius:4px;display:flex;align-items:center;justify-content:center;margin-left:auto;flex-shrink:0}
+  .subject-card.selected .sc-check{background:#f97316;border-color:#f97316;color:#fff}
+  .btn{display:inline-block;padding:10px 24px;border-radius:4px;font-size:15px;font-weight:700;text-decoration:none;border:none;cursor:pointer;font-family:"Barlow Condensed",sans-serif}
+  .btn-primary{background:#f97316;color:#fff;font-size:16px}.btn-primary:hover{background:#fb923c}
+  .btn-secondary{background:#1e293b;color:#94a3b8;border:1px solid #334155;font-size:13px}
+  .form-actions{display:flex;gap:12px;align-items:center}
+  .sel-count{color:#94a3b8;font-size:13px}
+</style>
+
+<div class="tm-page">
+  <h2>Select Risk Subjects</h2>
+  <p class="subtitle">{{ job.site_name }} — Choose which hazard categories apply to this job site. Risks will be auto-populated from templates.</p>
+
+  <form method="post" id="subject-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="subject-grid">
+      {% for s in subjects %}
+      <div class="subject-card{% if s.id in selected_ids %} selected{% endif %}" data-id="{{ s.id }}">
+        <input type="checkbox" name="subject_ids" value="{{ s.id }}" {% if s.id in selected_ids %}checked{% endif %}>
+        <div class="sc-header">
+          <span class="sc-icon">{{ s.icon }}</span>
+          <span class="sc-name">{{ s.name }}</span>
+          <span class="sc-check">{% if s.id in selected_ids %}✓{% endif %}</span>
+        </div>
+        <div class="sc-desc">{{ s.description }}</div>
+        <div class="sc-count">{{ s.active_template_count }} default risks</div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Generate Risk Register →</button>
+      <a href="{{ url_for('tm_jobs.job_detail', job_id=job.id) }}" class="btn btn-secondary">Back to Job</a>
+      <span class="sel-count" id="sel-count"></span>
+    </div>
+  </form>
+</div>
+
+<script>
+document.querySelectorAll('.subject-card').forEach(function(card) {
+  card.addEventListener('click', function(e) {
+    if (e.target.tagName === 'INPUT') return;
+    var cb = card.querySelector('input[type=checkbox]');
+    cb.checked = !cb.checked;
+    card.classList.toggle('selected', cb.checked);
+    card.querySelector('.sc-check').textContent = cb.checked ? '✓' : '';
+    updateCount();
+  });
+});
+function updateCount() {
+  var n = document.querySelectorAll('.subject-card.selected').length;
+  document.getElementById('sel-count').textContent = n + ' subject' + (n !== 1 ? 's' : '') + ' selected';
+}
+updateCount();
+</script>
+{% endblock %}

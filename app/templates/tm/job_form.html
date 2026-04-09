@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}New Job Site — {{ branding.company_name }}{% endblock %}
+
+{% block content %}
+<style>
+  .tm-form{max-width:700px;margin:0 auto;padding:1.5rem;font-family:"Barlow",sans-serif;color:#e2e8f0}
+  .tm-form h2{font-family:"Barlow Condensed",sans-serif;font-size:26px;font-weight:800;color:#fff;margin-bottom:20px}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .form-group{display:flex;flex-direction:column;gap:4px}
+  .form-group.full{grid-column:1/-1}
+  .form-group label{font-size:12px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.3px}
+  .form-group input,.form-group select,.form-group textarea{background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:8px 10px;border-radius:4px;font-size:13px;font-family:"Barlow",sans-serif}
+  .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:#f97316;outline:none}
+  .btn{display:inline-block;padding:8px 20px;border-radius:4px;font-size:14px;font-weight:600;text-decoration:none;border:none;cursor:pointer;font-family:"Barlow",sans-serif}
+  .btn-primary{background:#f97316;color:#fff}.btn-primary:hover{background:#fb923c}
+  .btn-secondary{background:#1e293b;color:#94a3b8;border:1px solid #334155}
+  .form-actions{margin-top:20px;display:flex;gap:10px}
+</style>
+
+<div class="tm-form">
+  <h2>Create New Job Site</h2>
+  <form method="post" action="{{ url_for('tm_jobs.job_create') }}">
+    <div class="form-grid">
+      <div class="form-group"><label>Job Number</label><input name="job_number" placeholder="e.g. TS-2026-0042"></div>
+      <div class="form-group"><label>STMS Name</label><input name="stms_name" placeholder="Site Traffic Management Supervisor"></div>
+      <div class="form-group full"><label>Site Name *</label><input name="site_name" required placeholder="e.g. SH1 Northbound — Otahuhu"></div>
+      <div class="form-group full"><label>Address</label><input name="address" placeholder="Full street address"></div>
+      <div class="form-group"><label>Suburb</label><input name="suburb"></div>
+      <div class="form-group"><label>City</label><input name="city"></div>
+      <div class="form-group"><label>Client</label><input name="client_name" placeholder="Who commissioned the works"></div>
+      <div class="form-group"><label>RCA</label><input name="rca_name" placeholder="Road Controlling Authority"></div>
+      <div class="form-group"><label>Start Date</label><input type="date" name="start_date"></div>
+      <div class="form-group"><label>End Date</label><input type="date" name="end_date"></div>
+      <div class="form-group"><label>Speed Limit (km/h)</label><input type="number" name="speed_limit_kmh" placeholder="e.g. 100"></div>
+      <div class="form-group"><label>Work Zone Speed (km/h)</label><input type="number" name="work_zone_speed_kmh" placeholder="e.g. 30"></div>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Create Job Site →</button>
+      <a href="{{ url_for('tm_jobs.job_list') }}" class="btn btn-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

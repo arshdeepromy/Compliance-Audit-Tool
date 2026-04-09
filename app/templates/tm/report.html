@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Risk Report — {{ job.site_name }}{% endblock %}
+
+{% block content %}
+<style>
+  .report{max-width:1000px;margin:0 auto;padding:2rem;font-family:"Barlow",sans-serif;color:#e2e8f0}
+  .report h1{font-family:"Barlow Condensed",sans-serif;font-size:28px;font-weight:800;color:#fff;margin-bottom:4px}
+  .report h2{font-family:"Barlow Condensed",sans-serif;font-size:20px;font-weight:700;color:#f97316;margin:24px 0 8px;border-bottom:1px solid #334155;padding-bottom:6px}
+  .report .meta{color:#94a3b8;font-size:13px;margin-bottom:20px}
+  .report table{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:12px}
+  .report th{background:#16213e;padding:6px 8px;text-align:left;font-size:11px;text-transform:uppercase;color:#64748b;border:1px solid #1e293b}
+  .report td{padding:6px 8px;border:1px solid #1e293b;vertical-align:top}
+  .level-badge{display:inline-block;padding:1px 6px;border-radius:2px;font-size:10px;font-weight:700;text-transform:uppercase}
+  .level-critical{background:rgba(239,68,68,.2);color:#f87171}
+  .level-high{background:rgba(249,115,22,.2);color:#fb923c}
+  .level-medium{background:rgba(234,179,8,.2);color:#eab308}
+  .level-low{background:rgba(34,197,94,.2);color:#22c55e}
+  .ctrl-line{font-size:11px;margin:2px 0;color:#94a3b8}
+  .ctrl-line.done{color:#4ade80}
+  .print-btn{margin-bottom:16px}
+  @media print{.print-btn,.app-header,.app-sidebar,footer{display:none!important}.report{padding:0;color:#000}.report h1,.report h2{color:#000}.report td,.report th{border-color:#ccc;color:#000}.level-badge{border:1px solid #999}}
+</style>
+
+<div class="report">
+  <div class="print-btn"><button class="btn btn-secondary" onclick="window.print()">🖨 Print</button> <a href="{{ url_for('tm_jobs.job_risks', job_id=job.id) }}" class="btn btn-secondary">← Back</a></div>
+  <h1>Job Site Risk Register</h1>
+  <div class="meta">
+    <strong>{{ job.site_name }}</strong> — {{ job.job_number or '' }}<br>
+    {{ job.address or '' }} {{ job.suburb or '' }} {{ job.city or '' }}<br>
+    Client: {{ job.client_name or '—' }} | RCA: {{ job.rca_name or '—' }} | STMS: {{ job.stms_name or '—' }}<br>
+    {{ job.start_date.strftime('%d %b %Y') if job.start_date else '' }} — {{ job.end_date.strftime('%d %b %Y') if job.end_date else '' }}
+  </div>
+
+  {% for group in groups %}
+  <h2>{{ group.subject.icon }} {{ group.subject.name }}</h2>
+  <table>
+    <thead><tr><th style="width:25%">Risk</th><th>Inherent</th><th>Residual</th><th style="width:40%">Controls</th><th>Status</th></tr></thead>
+    <tbody>
+      {% for r in group.risks %}
+      {% set inh_level = calc_risk_level(r.inherent_score) %}
+      {% set res_level = calc_risk_level(r.residual_score) if r.residual_score else 'Unrated' %}
+      <tr>
+        <td><strong>{{ r.title }}</strong>{% if r.description %}<br><span style="color:#94a3b8;font-size:11px">{{ r.description[:120] }}</span>{% endif %}</td>
+        <td><span class="level-badge level-{{ inh_level|lower }}">{{ r.inherent_score }} {{ inh_level }}</span></td>
+        <td>{% if r.residual_score %}<span class="level-badge level-{{ res_level|lower }}">{{ r.residual_score }} {{ res_level }}</span>{% else %}—{% endif %}</td>
+        <td>
+          {% for c in r.controls %}
+          <div class="ctrl-line{% if c.is_implemented %} done{% endif %}">{% if c.is_implemented %}✓{% else %}☐{% endif %} [{{ c.hierarchy }}] {{ c.control }}</div>
+          {% endfor %}
+        </td>
+        <td>{{ r.status }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endfor %}
+</div>
+{% endblock %}

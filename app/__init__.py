@@ -128,6 +128,7 @@ def create_app(config_class=None, run_startup=True):
     from .blueprints.api import api_bp
     from .blueprints.admin import admin_bp
     from .blueprints.risks import risks_bp
+    from .blueprints.tm_jobs import tm_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(audits_bp)
@@ -135,6 +136,7 @@ def create_app(config_class=None, run_startup=True):
     app.register_blueprint(api_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(risks_bp)
+    app.register_blueprint(tm_bp)
 
     # ── Apply rate limits to sensitive endpoints ─────────────────────
     # Auth blueprint: 10 requests/minute per IP (login, MFA, password reset)

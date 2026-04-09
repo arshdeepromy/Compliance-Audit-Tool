@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Job Sites — {{ branding.company_name }}{% endblock %}
+
+{% block content %}
+<style>
+  .tm-page{width:100%;max-width:100%;padding:1rem 1.5rem;font-family:"Barlow",sans-serif;color:#e2e8f0}
+  .tm-page h2{font-family:"Barlow Condensed",sans-serif;font-size:26px;font-weight:800;color:#fff;margin-bottom:4px}
+  .tm-page .subtitle{color:#94a3b8;font-size:13px;margin-bottom:20px}
+  .top-actions{display:flex;gap:10px;margin-bottom:16px}
+  .btn{display:inline-block;padding:6px 14px;border-radius:4px;font-size:13px;font-weight:600;text-decoration:none;border:none;cursor:pointer;font-family:"Barlow",sans-serif}
+  .btn-primary{background:#f97316;color:#fff}.btn-primary:hover{background:#fb923c}
+  .btn-secondary{background:#1e293b;color:#94a3b8;border:1px solid #334155}.btn-secondary:hover{color:#fff;border-color:#f97316}
+  .job-table{width:100%;border-collapse:collapse}
+  .job-table th{background:#16213e;padding:10px 12px;text-align:left;font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:#64748b;border-bottom:1px solid #1e293b}
+  .job-table td{padding:9px 12px;border-bottom:1px solid #1e293b;font-size:13px;vertical-align:middle}
+  .job-table tr:hover td{background:#0f172a;cursor:pointer}
+  .job-link{color:#e2e8f0;text-decoration:none;font-weight:600}.job-link:hover{color:#f97316}
+  .status-badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:3px;text-transform:uppercase}
+  .st-draft{background:rgba(100,116,139,.15);color:#94a3b8}
+  .st-active{background:rgba(34,197,94,.15);color:#4ade80}
+  .st-completed{background:rgba(59,130,246,.15);color:#60a5fa}
+  .st-cancelled{background:rgba(239,68,68,.15);color:#f87171}
+  .pct-bar{width:80px;height:6px;background:#1e293b;border-radius:3px;display:inline-block;vertical-align:middle;margin-right:6px}
+  .pct-fill{height:100%;border-radius:3px;background:#f97316}
+</style>
+
+<div class="tm-page">
+  <h2>Job Sites</h2>
+  <p class="subtitle">Traffic management job site risk registers</p>
+
+  <div class="top-actions">
+    <a href="{{ url_for('tm_jobs.job_new') }}" class="btn btn-primary">+ New Job Site</a>
+  </div>
+
+  {% if jobs %}
+  <table class="job-table">
+    <thead>
+      <tr><th>Job #</th><th>Site Name</th><th>Address</th><th>Status</th><th>Risks</th><th>Controls Done</th><th>Start Date</th><th>Actions</th></tr>
+    </thead>
+    <tbody>
+      {% for j in jobs %}
+      {% set pct = j.control_completion_pct %}
+      <tr onclick="window.location='{{ url_for('tm_jobs.job_detail', job_id=j.id) }}'">
+        <td style="color:#64748b;font-weight:600">{{ j.job_number or '—' }}</td>
+        <td><a href="{{ url_for('tm_jobs.job_detail', job_id=j.id) }}" class="job-link">{{ j.site_name }}</a></td>
+        <td style="color:#94a3b8">{{ j.address or '—' }}</td>
+        <td><span class="status-badge st-{{ j.status|lower }}">{{ j.status }}</span></td>
+        <td>{{ j.risk_count }}</td>
+        <td><span class="pct-bar"><span class="pct-fill" style="width:{{ pct }}%"></span></span>{{ pct }}%</td>
+        <td style="color:#94a3b8">{{ j.start_date.strftime('%d %b %Y') if j.start_date else '—' }}</td>
+        <td><a href="{{ url_for('tm_jobs.job_detail', job_id=j.id) }}" class="btn btn-secondary">View</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div style="text-align:center;padding:40px;color:#64748b;font-size:14px">
+    No job sites yet. <a href="{{ url_for('tm_jobs.job_new') }}" style="color:#f97316">Create your first job site</a>.
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

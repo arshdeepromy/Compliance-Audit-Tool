@@ -435,6 +435,72 @@ def seed_risk_categories(app):
         logger.info("Seeded %d default risk categories.", len(DEFAULT_CATEGORIES))
 
 
+def seed_tm_risk_subjects(app):
+    """Seed TM risk subjects, templates, and controls. Idempotent via ON CONFLICT DO NOTHING."""
+    from app.models.tm_risk import TMRiskSubject, TMRiskTemplate, TMRiskTemplateControl, calc_risk_level
+    from app.models.log import SeedFileTracker
+
+    SEED_FILE = "seed_tm_risks_v1.py"
+
+    with app.app_context():
+        # Check if already seeded
+        existing = SeedFileTracker.query.filter_by(filename=SEED_FILE).first()
+        if existing is not None:
+            return
+
+        from app.seed_data.tm_risks_v1 import RISK_SUBJECTS
+
+        sort_idx = 0
+        for subj_data in RISK_SUBJECTS:
+            # Insert subject if not exists
+            subj = TMRiskSubject.query.filter_by(code=subj_data["code"]).first()
+            if subj is None:
+                subj = TMRiskSubject(
+                    code=subj_data["code"],
+                    name=subj_data["name"],
+                    icon=subj_data.get("icon", ""),
+                    description=subj_data.get("description", ""),
+                    sort_order=subj_data.get("sort_order", 0),
+                )
+                db.session.add(subj)
+                db.session.flush()
+
+            for risk_data in subj_data.get("risks", []):
+                tmpl = TMRiskTemplate.query.filter_by(code=risk_data["code"]).first()
+                if tmpl is None:
+                    sort_idx += 1
+                    tmpl = TMRiskTemplate(
+                        subject_id=subj.id,
+                        code=risk_data["code"],
+                        title=risk_data["title"],
+                        description=risk_data.get("description", ""),
+                        likelihood=risk_data["likelihood"],
+                        severity=risk_data["severity"],
+                        risk_level=calc_risk_level(risk_data["likelihood"] * risk_data["severity"]),
+                        causes=risk_data.get("causes", []),
+                        consequences=risk_data.get("consequences", []),
+                        legislation=risk_data.get("legislation", []),
+                        emergency_action=risk_data.get("emergency_action", ""),
+                        copttm_ref=risk_data.get("copttm_ref", ""),
+                        sort_order=sort_idx,
+                    )
+                    db.session.add(tmpl)
+                    db.session.flush()
+
+                    for ci, ctrl_data in enumerate(risk_data.get("controls", [])):
+                        db.session.add(TMRiskTemplateControl(
+                            template_id=tmpl.id,
+                            hierarchy=ctrl_data["hierarchy"],
+                            control=ctrl_data["control"],
+                            sort_order=ci,
+                        ))
+
+        # Track the seed
+        db.session.add(SeedFileTracker(filename=SEED_FILE))
+        db.session.commit()
+        logger.info("Seeded TM risk subjects, templates, and controls.")
+
+
 def run_startup_tasks(app):
     """Execute all startup tasks in order: migrations → seeding → scheduler."""
     run_migrations(app)
@@ -444,6 +510,11 @@ def run_startup_tasks(app):
     seed_totika_template(app)
     seed_all_framework_templates(app)
     seed_risk_categories(app)
+
+    try:
+        seed_tm_risk_subjects(app)
+    except Exception as exc:
+        logger.warning("TM risk seed failed (will retry next restart): %s", exc)
 
     # Import seed data from seed_data/ directory (Req 17.5, 17.6, 17.7)
     from app.services.importer import load_seed_data

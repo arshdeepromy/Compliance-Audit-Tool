@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}{{ job.site_name }} — {{ branding.company_name }}{% endblock %}
+
+{% block content %}
+<style>
+  .tm-page{width:100%;max-width:100%;padding:1rem 1.5rem;font-family:"Barlow",sans-serif;color:#e2e8f0}
+  .tm-page h2{font-family:"Barlow Condensed",sans-serif;font-size:26px;font-weight:800;color:#fff;margin-bottom:4px}
+  .tm-page .subtitle{color:#94a3b8;font-size:13px;margin-bottom:20px}
+  .dash-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:24px}
+  .stat-card{background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:16px;text-align:center}
+  .stat-card .stat-num{font-family:"Barlow Condensed",sans-serif;font-size:2rem;font-weight:800;line-height:1.1}
+  .stat-card .stat-label{font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
+  .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px}
+  .info-card{background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:16px}
+  .info-card dt{font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.3px;margin-bottom:2px}
+  .info-card dd{font-size:14px;color:#e2e8f0;margin:0 0 10px}
+  .btn{display:inline-block;padding:6px 14px;border-radius:4px;font-size:13px;font-weight:600;text-decoration:none;border:none;cursor:pointer;font-family:"Barlow",sans-serif}
+  .btn-primary{background:#f97316;color:#fff}.btn-primary:hover{background:#fb923c}
+  .btn-secondary{background:#1e293b;color:#94a3b8;border:1px solid #334155}.btn-secondary:hover{color:#fff;border-color:#f97316}
+  .top-actions{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+  .subject-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .subject-tag{background:#1e293b;padding:4px 10px;border-radius:4px;font-size:12px;color:#e2e8f0}
+  .status-badge{font-size:12px;font-weight:700;padding:3px 10px;border-radius:3px;text-transform:uppercase}
+  .st-draft{background:rgba(100,116,139,.15);color:#94a3b8}
+  .st-active{background:rgba(34,197,94,.15);color:#4ade80}
+  .st-completed{background:rgba(59,130,246,.15);color:#60a5fa}
+  .st-cancelled{background:rgba(239,68,68,.15);color:#f87171}
+</style>
+
+<div class="tm-page">
+  <h2>{{ job.site_name }} <span class="status-badge st-{{ job.status|lower }}">{{ job.status }}</span></h2>
+  <p class="subtitle">{{ job.job_number or '' }} {% if job.address %}— {{ job.address }}{% endif %}</p>
+
+  <div class="dash-grid">
+    <div class="stat-card"><div class="stat-num" style="color:#e2e8f0">{{ risks|length }}</div><div class="stat-label">Total Risks</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:#ef4444">{{ critical }}</div><div class="stat-label">Critical</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:#f97316">{{ high }}</div><div class="stat-label">High</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:#eab308">{{ medium }}</div><div class="stat-label">Medium</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:#22c55e">{{ low }}</div><div class="stat-label">Low</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:#f97316">{{ job.control_completion_pct }}%</div><div class="stat-label">Controls Done</div></div>
+  </div>
+
+  <div class="top-actions">
+    <a href="{{ url_for('tm_jobs.job_subjects', job_id=job.id) }}" class="btn btn-primary">Edit Subjects</a>
+    <a href="{{ url_for('tm_jobs.job_risks', job_id=job.id) }}" class="btn btn-primary">View Risk Register</a>
+    <a href="{{ url_for('tm_jobs.job_report', job_id=job.id) }}" class="btn btn-secondary">Print Report</a>
+    <a href="{{ url_for('tm_jobs.admin_subjects') }}" class="btn btn-secondary">⚙ Manage Subjects</a>
+    <a href="{{ url_for('tm_jobs.job_list') }}" class="btn btn-secondary">← All Jobs</a>
+  </div>
+
+  {% if selected_subjects %}
+  <h3 style="font-family:'Barlow Condensed',sans-serif;font-size:16px;color:#94a3b8;margin-bottom:8px">Selected Risk Subjects</h3>
+  <div class="subject-tags">
+    {% for s in selected_subjects %}
+    <span class="subject-tag">{{ s.icon }} {{ s.name }}</span>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="info-grid">
+    <div class="info-card">
+      <dl>
+        <dt>Client</dt><dd>{{ job.client_name or '—' }}</dd>
+        <dt>RCA</dt><dd>{{ job.rca_name or '—' }}</dd>
+        <dt>STMS</dt><dd>{{ job.stms_name or '—' }}</dd>
+      </dl>
+    </div>
+    <div class="info-card">
+      <dl>
+        <dt>Start Date</dt><dd>{{ job.start_date.strftime('%d %b %Y') if job.start_date else '—' }}</dd>
+        <dt>End Date</dt><dd>{{ job.end_date.strftime('%d %b %Y') if job.end_date else '—' }}</dd>
+        <dt>Speed Limit</dt><dd>{{ job.speed_limit_kmh or '—' }} km/h {% if job.work_zone_speed_kmh %}→ {{ job.work_zone_speed_kmh }} km/h work zone{% endif %}</dd>
+      </dl>
+    </div>
+  </div>
+</div>
+{% endblock %}

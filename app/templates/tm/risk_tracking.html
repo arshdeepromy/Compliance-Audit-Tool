@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}Risk Register — {{ job.site_name }}{% endblock %}
+
+{% block content %}
+<style>
+  .tm-page{width:100%;max-width:100%;padding:1rem 1.5rem;font-family:"Barlow",sans-serif;color:#e2e8f0}
+  .tm-page h2{font-family:"Barlow Condensed",sans-serif;font-size:26px;font-weight:800;color:#fff;margin-bottom:4px}
+  .tm-page .subtitle{color:#94a3b8;font-size:13px;margin-bottom:20px}
+  .dash-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:20px}
+  .stat-card{background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:12px;text-align:center}
+  .stat-card .stat-num{font-family:"Barlow Condensed",sans-serif;font-size:1.6rem;font-weight:800;line-height:1.1}
+  .stat-card .stat-label{font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+  .top-actions{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+  .btn{display:inline-block;padding:6px 14px;border-radius:4px;font-size:13px;font-weight:600;text-decoration:none;border:none;cursor:pointer;font-family:"Barlow",sans-serif}
+  .btn-primary{background:#f97316;color:#fff}.btn-primary:hover{background:#fb923c}
+  .btn-secondary{background:#1e293b;color:#94a3b8;border:1px solid #334155}.btn-secondary:hover{color:#fff;border-color:#f97316}
+  .btn-sm{padding:4px 10px;font-size:12px}
+  .subject-group{margin-bottom:24px}
+  .sg-header{display:flex;align-items:center;gap:10px;padding:10px 12px;background:#16213e;border-radius:6px 6px 0 0;cursor:pointer;user-select:none}
+  .sg-icon{font-size:22px}
+  .sg-name{font-family:"Barlow Condensed",sans-serif;font-size:16px;font-weight:700;color:#fff}
+  .sg-count{font-size:11px;color:#64748b;margin-left:auto}
+  .sg-body{border:1px solid #1e293b;border-top:none;border-radius:0 0 6px 6px}
+  .risk-table{width:100%;border-collapse:collapse}
+  .risk-table th{padding:8px 10px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:#64748b;border-bottom:1px solid #1e293b;font-family:"Barlow Condensed",sans-serif;font-weight:700}
+  .risk-table td{padding:7px 10px;border-bottom:1px solid #1e293b;font-size:12px;vertical-align:middle}
+  .risk-table tr:hover td{background:#0f172a}
+  .risk-link{color:#e2e8f0;text-decoration:none;font-weight:600}.risk-link:hover{color:#f97316}
+  .level-badge{display:inline-block;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:700;text-transform:uppercase}
+  .level-critical{background:rgba(239,68,68,.2);color:#f87171}
+  .level-high{background:rgba(249,115,22,.2);color:#fb923c}
+  .level-medium{background:rgba(234,179,8,.2);color:#eab308}
+  .level-low{background:rgba(34,197,94,.2);color:#22c55e}
+  .level-unrated{background:rgba(100,116,139,.2);color:#94a3b8}
+  .ctrl-prog{font-size:11px;color:#94a3b8}
+  .ctrl-prog .done{color:#4ade80;font-weight:700}
+  .status-badge{font-size:10px;font-weight:700;padding:2px 6px;border-radius:3px;text-transform:uppercase}
+  .st-open{background:rgba(239,68,68,.15);color:#f87171}
+  .st-controlled{background:rgba(34,197,94,.15);color:#4ade80}
+  .st-closed{background:rgba(59,130,246,.15);color:#60a5fa}
+  .st-na{background:rgba(100,116,139,.15);color:#64748b}
+  .add-risk-form{background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:16px;margin-bottom:20px;display:none}
+  .add-risk-form.show{display:block}
+  .add-risk-form .form-row{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
+  .add-risk-form .form-group{display:flex;flex-direction:column;gap:3px}
+  .add-risk-form label{font-size:11px;color:#64748b;text-transform:uppercase}
+  .add-risk-form input,.add-risk-form select{background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:6px 8px;border-radius:4px;font-size:12px;font-family:"Barlow",sans-serif}
+</style>
+
+<div class="tm-page">
+  <h2>Risk Register — {{ job.site_name }}</h2>
+  <p class="subtitle">{{ job.job_number or '' }} — {{ total }} active risks</p>
+
+  <div class="dash-grid">
+    <div class="stat-card"><div class="stat-num" style="color:#e2e8f0">{{ total }}</div><div class="stat-label">Total</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:#ef4444">{{ critical }}</div><div class="stat-label">Critical</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:#f97316">{{ high }}</div><div class="stat-label">High</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:#eab308">{{ medium }}</div><div class="stat-label">Medium</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:#22c55e">{{ low }}</div><div class="stat-label">Low</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:#f97316">{{ job.control_completion_pct }}%</div><div class="stat-label">Controls</div></div>
+  </div>
+
+  <div class="top-actions">
+    <a href="{{ url_for('tm_jobs.job_detail', job_id=job.id) }}" class="btn btn-secondary">← Dashboard</a>
+    <a href="{{ url_for('tm_jobs.job_subjects', job_id=job.id) }}" class="btn btn-secondary">Edit Subjects</a>
+    <button class="btn btn-primary" onclick="document.getElementById('add-risk-form').classList.toggle('show')">+ Add Custom Risk</button>
+    <a href="{{ url_for('tm_jobs.job_report', job_id=job.id) }}" class="btn btn-secondary">Print Report</a>
+  </div>
+
+  <div class="add-risk-form" id="add-risk-form">
+    <form method="post" action="{{ url_for('tm_jobs.risk_add', job_id=job.id) }}">
+      <div class="form-row">
+        <div class="form-group"><label>Subject</label>
+          <select name="subject_id" required>
+            {% for s in subjects %}<option value="{{ s.id }}">{{ s.icon }} {{ s.name }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="form-group" style="flex:1"><label>Title</label><input name="title" required placeholder="Risk title"></div>
+        <div class="form-group"><label>Likelihood</label><select name="likelihood">{% for i in range(1,6) %}<option value="{{ i }}">{{ i }} — {{ likelihood_labels[i] }}</option>{% endfor %}</select></div>
+        <div class="form-group"><label>Severity</label><select name="severity">{% for i in range(1,6) %}<option value="{{ i }}">{{ i }} — {{ severity_labels[i] }}</option>{% endfor %}</select></div>
+        <div class="form-group"><button type="submit" class="btn btn-primary btn-sm">Add</button></div>
+      </div>
+    </form>
+  </div>
+
+  {% for group in groups %}
+  <div class="subject-group">
+    <div class="sg-header" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none'">
+      <span class="sg-icon">{{ group.subject.icon }}</span>
+      <span class="sg-name">{{ group.subject.name }}</span>
+      <span class="sg-count">{{ group.risks|selectattr('status','ne','NA')|list|length }} risks</span>
+    </div>
+    <div class="sg-body">
+      <table class="risk-table">
+        <thead><tr><th>Risk</th><th>Inherent</th><th>Residual</th><th>Controls</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          {% for r in group.risks %}
+          {% set inh_level = calc_risk_level(r.inherent_score) %}
+          {% set res_level = calc_risk_level(r.residual_score) if r.residual_score else 'Unrated' %}
+          <tr{% if r.status == 'NA' %} style="opacity:.4"{% endif %}>
+            <td><a href="{{ url_for('tm_jobs.risk_edit', job_id=job.id, risk_id=r.id) }}" class="risk-link">{{ r.title }}</a></td>
+            <td><span class="level-badge level-{{ inh_level|lower }}">{{ r.inherent_score }} — {{ inh_level }}</span></td>
+            <td>
+              {% if r.residual_score %}
+              <span class="level-badge level-{{ res_level|lower }}">{{ r.residual_score }} — {{ res_level }}</span>
+              {% else %}<span class="level-badge level-unrated">—</span>{% endif %}
+            </td>
+            <td><span class="ctrl-prog"><span class="done">{{ r.controls_done }}</span>/{{ r.controls_total }}</span></td>
+            <td><span class="status-badge st-{{ r.status|lower }}">{{ r.status }}</span></td>
+            <td><a href="{{ url_for('tm_jobs.risk_edit', job_id=job.id, risk_id=r.id) }}" class="btn btn-secondary btn-sm">Edit</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endfor %}
+
+  {% if not groups %}
+  <div style="text-align:center;padding:40px;color:#64748b;font-size:14px">
+    No risks yet. <a href="{{ url_for('tm_jobs.job_subjects', job_id=job.id) }}" style="color:#f97316">Select risk subjects</a> to populate the register.
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

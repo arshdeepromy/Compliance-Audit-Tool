@@ -47,13 +47,10 @@ def run_migrations_online():
     flask_app = create_app(run_startup=False)
 
     with flask_app.app_context():
-        # Override the alembic.ini URL with the Flask app's database URI
         connectable = db.engine
 
         with connectable.connect() as connection:
             # Pre-create alembic_version with a wider version_num column
-            # Our descriptive revision IDs exceed the default 32-char limit
-            # which PostgreSQL enforces (SQLite does not)
             from sqlalchemy import inspect as sa_inspect
             inspector = sa_inspect(connection)
             if "alembic_version" not in inspector.get_table_names():
@@ -69,10 +66,12 @@ def run_migrations_online():
             context.configure(
                 connection=connection,
                 target_metadata=target_metadata,
+                transaction_per_migration=True,
             )
 
             with context.begin_transaction():
                 context.run_migrations()
+            connection.commit()
 
 
 if context.is_offline_mode():

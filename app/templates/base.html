@@ -32,6 +32,7 @@
     <nav class="header-nav" aria-label="Main navigation">
       {% if g.current_user %}
         <a href="{{ url_for('audits.audit_list') }}" style="color: {{ branding.header_text_colour if branding.header_text_colour else '#ffffff' }};">Audits</a>
+        <a href="{{ url_for('tm_jobs.job_list') }}" style="color: {{ branding.header_text_colour if branding.header_text_colour else '#ffffff' }};">Jobs</a>
         <a href="{{ url_for('audits.compliance_matrix') }}" style="color: {{ branding.header_text_colour if branding.header_text_colour else '#ffffff' }};">Compliance</a>
         <a href="{{ url_for('risks.risk_register') }}" style="color: {{ branding.header_text_colour if branding.header_text_colour else '#ffffff' }};">Risks</a>
         {% set user_roles = g.current_user.roles.lower().split(',') %}

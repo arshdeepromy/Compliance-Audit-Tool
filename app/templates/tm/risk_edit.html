@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}Edit Risk — {{ risk.title }}{% endblock %}
+
+{% block content %}
+<style>
+  .tm-edit{max-width:1200px;margin:0 auto;padding:1.5rem;font-family:"Barlow",sans-serif;color:#e2e8f0}
+  .tm-edit h2{font-family:"Barlow Condensed",sans-serif;font-size:22px;font-weight:800;color:#fff;margin-bottom:16px}
+  .two-panel{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media(max-width:900px){.two-panel{grid-template-columns:1fr}}
+  .panel{background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:16px}
+  .panel h3{font-family:"Barlow Condensed",sans-serif;font-size:16px;font-weight:700;color:#f97316;margin-bottom:12px}
+  .form-group{display:flex;flex-direction:column;gap:3px;margin-bottom:12px}
+  .form-group label{font-size:11px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.3px}
+  .form-group input,.form-group select,.form-group textarea{background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:7px 10px;border-radius:4px;font-size:13px;font-family:"Barlow",sans-serif}
+  .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:#f97316;outline:none}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .btn{display:inline-block;padding:7px 16px;border-radius:4px;font-size:13px;font-weight:600;text-decoration:none;border:none;cursor:pointer;font-family:"Barlow",sans-serif}
+  .btn-primary{background:#f97316;color:#fff}.btn-primary:hover{background:#fb923c}
+  .btn-secondary{background:#1e293b;color:#94a3b8;border:1px solid #334155}
+  .form-actions{margin-top:16px;display:flex;gap:10px}
+  .ctrl-list{list-style:none;padding:0;margin:0}
+  .ctrl-item{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid #1e293b}
+  .ctrl-item:last-child{border-bottom:none}
+  .ctrl-cb{width:18px;height:18px;accent-color:#f97316;cursor:pointer;flex-shrink:0;margin-top:2px}
+  .ctrl-text{font-size:12px;color:#e2e8f0;line-height:1.4}
+  .ctrl-text.done{text-decoration:line-through;color:#64748b}
+  .ctrl-hier{font-size:10px;font-weight:700;text-transform:uppercase;padding:1px 5px;border-radius:2px;flex-shrink:0}
+  .h-eliminate{background:rgba(239,68,68,.2);color:#f87171}
+  .h-substitute{background:rgba(249,115,22,.2);color:#fb923c}
+  .h-isolate{background:rgba(168,85,247,.2);color:#a855f7}
+  .h-engineer{background:rgba(59,130,246,.2);color:#60a5fa}
+  .h-admin{background:rgba(234,179,8,.2);color:#eab308}
+  .h-ppe{background:rgba(34,197,94,.2);color:#4ade80}
+  .hier-group{margin-bottom:12px}
+  .hier-group-title{font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;padding-bottom:4px;border-bottom:1px solid #1e293b}
+  .impl-info{font-size:10px;color:#64748b;margin-top:2px}
+  .level-badge{display:inline-block;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:700;text-transform:uppercase}
+  .level-critical{background:rgba(239,68,68,.2);color:#f87171}
+  .level-high{background:rgba(249,115,22,.2);color:#fb923c}
+  .level-medium{background:rgba(234,179,8,.2);color:#eab308}
+  .level-low{background:rgba(34,197,94,.2);color:#22c55e}
+  .level-unrated{background:rgba(100,116,139,.2);color:#94a3b8}
+</style>
+
+<div class="tm-edit">
+  <h2>{{ risk.subject.icon }} {{ risk.title }}</h2>
+
+  <form method="post">
+    <div class="two-panel">
+      <div class="panel">
+        <h3>Risk Details</h3>
+        <div class="form-group"><label>Title</label><input name="title" value="{{ risk.title }}" required></div>
+        <div class="form-group"><label>Description</label><textarea name="description" rows="3">{{ risk.description or '' }}</textarea></div>
+        <div class="form-row">
+          <div class="form-group"><label>Inherent Likelihood</label>
+            <select name="likelihood">{% for i in range(1,6) %}<option value="{{ i }}" {% if risk.likelihood == i %}selected{% endif %}>{{ i }} — {{ likelihood_labels[i] }}</option>{% endfor %}</select>
+          </div>
+          <div class="form-group"><label>Inherent Severity</label>
+            <select name="severity">{% for i in range(1,6) %}<option value="{{ i }}" {% if risk.severity == i %}selected{% endif %}>{{ i }} — {{ severity_labels[i] }}</option>{% endfor %}</select>
+          </div>
+        </div>
+        <div style="margin-bottom:12px">
+          {% set inh_level = calc_risk_level(risk.inherent_score) %}
+          Inherent: <span class="level-badge level-{{ inh_level|lower }}">{{ risk.inherent_score }} — {{ inh_level }}</span>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Residual Likelihood</label>
+            <select name="residual_likelihood"><option value="">—</option>{% for i in range(1,6) %}<option value="{{ i }}" {% if risk.residual_likelihood == i %}selected{% endif %}>{{ i }} — {{ likelihood_labels[i] }}</option>{% endfor %}</select>
+          </div>
+          <div class="form-group"><label>Residual Severity</label>
+            <select name="residual_severity"><option value="">—</option>{% for i in range(1,6) %}<option value="{{ i }}" {% if risk.residual_severity == i %}selected{% endif %}>{{ i }} — {{ severity_labels[i] }}</option>{% endfor %}</select>
+          </div>
+        </div>
+        {% if risk.residual_score %}
+        {% set res_level = calc_risk_level(risk.residual_score) %}
+        <div style="margin-bottom:12px">Residual: <span class="level-badge level-{{ res_level|lower }}">{{ risk.residual_score }} — {{ res_level }}</span></div>
+        {% endif %}
+        <div class="form-group"><label>Status</label>
+          <select name="status">{% for s in risk_statuses %}<option value="{{ s }}" {% if risk.status == s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select>
+        </div>
+        <div class="form-group"><label>Causes (one per line)</label><textarea name="causes" rows="4">{% if risk.causes %}{% for c in risk.causes %}{{ c }}
+{% endfor %}{% endif %}</textarea></div>
+        <div class="form-group"><label>Consequences (one per line)</label><textarea name="consequences" rows="3">{% if risk.consequences %}{% for c in risk.consequences %}{{ c }}
+{% endfor %}{% endif %}</textarea></div>
+        <div class="form-group"><label>Emergency Action</label><textarea name="emergency_action" rows="3">{{ risk.emergency_action or '' }}</textarea></div>
+        <div class="form-group"><label>CoPTTM Reference</label><input name="copttm_ref" value="{{ risk.copttm_ref or '' }}"></div>
+        <div class="form-group"><label>Notes</label><textarea name="notes" rows="2">{{ risk.notes or '' }}</textarea></div>
+      </div>
+
+      <div class="panel">
+        <h3>Controls ({{ risk.controls_done }}/{{ risk.controls_total }} implemented)</h3>
+        {% set controls_by_hier = {} %}
+        {% for c in risk.controls %}
+          {% if c.hierarchy not in controls_by_hier %}{% if controls_by_hier.update({c.hierarchy: []}) %}{% endif %}{% endif %}
+          {% if controls_by_hier[c.hierarchy].append(c) %}{% endif %}
+        {% endfor %}
+        {% for h in hierarchy_order %}
+        {% if h in controls_by_hier %}
+        <div class="hier-group">
+          <div class="hier-group-title">{{ h }}</div>
+          <ul class="ctrl-list">
+            {% for c in controls_by_hier[h] %}
+            <li class="ctrl-item">
+              <input type="checkbox" class="ctrl-cb" data-url="{{ url_for('tm_jobs.toggle_control', job_id=job.id, risk_id=risk.id, control_id=c.id) }}" {% if c.is_implemented %}checked{% endif %}>
+              <div>
+                <div class="ctrl-text{% if c.is_implemented %} done{% endif %}">{{ c.control }}</div>
+                {% if c.is_implemented and c.implemented_by %}
+                <div class="impl-info">✓ {{ c.implemented_by }}{% if c.implemented_at %} — {{ c.implemented_at.strftime('%d %b %Y %H:%M') }}{% endif %}</div>
+                {% endif %}
+              </div>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Save Changes</button>
+      <a href="{{ url_for('tm_jobs.job_risks', job_id=job.id) }}" class="btn btn-secondary">← Back to Register</a>
+    </div>
+  </form>
+</div>
+
+<script>
+document.querySelectorAll('.ctrl-cb').forEach(function(cb) {
+  cb.addEventListener('change', function() {
+    var url = this.dataset.url;
+    var textEl = this.parentElement.querySelector('.ctrl-text');
+    fetch(url, {method: 'POST', headers: {'Content-Type': 'application/json'}})
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (textEl) textEl.classList.toggle('done', data.implemented);
+      });
+  });
+});
+</script>
+{% endblock %}

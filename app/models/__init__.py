@@ -25,3 +25,12 @@ from app.models.scoping import (  # noqa: F401
     ScopingProfile,
     CriterionApplicability,
 )
+from app.models.tm_risk import (  # noqa: F401
+    TMRiskSubject,
+    TMRiskTemplate,
+    TMRiskTemplateControl,
+    TMJobSite,
+    TMJobSiteSubject,
+    TMJobSiteRisk,
+    TMJobSiteRiskControl,
+)

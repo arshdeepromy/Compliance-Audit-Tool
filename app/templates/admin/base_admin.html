@@ -59,6 +59,7 @@
     <a href="{{ url_for('templates.template_list') }}" class="{% if admin_page == 'templates' %}active{% endif %}">Audit Templates</a>
     <a href="{{ url_for('admin.activity_logs') }}" class="{% if admin_page == 'logs' %}active{% endif %}">Activity Logs</a>
     <a href="{{ url_for('admin.import_legacy') }}" class="{% if admin_page == 'import' %}active{% endif %}">Import</a>
+    <a href="{{ url_for('tm_jobs.admin_subjects') }}" class="{% if admin_page == 'tm_subjects' %}active{% endif %}">Risk Subjects</a>
   </nav>
   <div class="admin-body">
     {% block admin_content %}{% endblock %}
